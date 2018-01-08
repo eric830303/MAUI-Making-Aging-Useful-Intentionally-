@@ -31,6 +31,7 @@ int main(int argc, char **argv)
 	// Check commands from input
 	if( circuit.checkParameter(argc, argv, &message) != 0 )//-1 mean error
 	{
+        circuit.readParameter() ;//read VTA Lib Info
 		if( message.empty() )
 		{	
 			// Commands & Help message
@@ -38,6 +39,7 @@ int main(int argc, char **argv)
 			cout << "  <option>:\n";
 			cout << "      -nondcc                Don't consider placing any DCC in clock tree. (default disable)\n";
 			cout << "      -nonaging              Don't consider any aging in clock tree. (default disable)\n";
+            cout << "      -nonVTA                Don't do Vth assignment\n";
 			cout << "      -mindcc                Minimize the number of DCCs placed in clock tree. (default disable)\n";
 			cout << "                               Enable when \'-nondcc\' option enable.\n";
 			cout << "      -tc_recheck            Check Tc again after binary search. (default disable)\n";
@@ -127,10 +129,11 @@ int main(int argc, char **argv)
 	midtime = chrono::steady_clock::now();
 	//-------- DCC Constraint -----------------------
     //1.
-	circuit.dccPlacementByMasked();//100% understand
+	circuit.dccPlacementByMasked();
 	//2.
-	circuit.dccConstraint();//100% understand
-    
+	circuit.dccConstraint();
+    //3.
+    circuit.VTAConstraint();
 	//-------- Generate all kinds of DCC deployment--
 	circuit.genDccPlacementCandidate();//100% understand
 	endtime = chrono::steady_clock::now();
@@ -144,7 +147,7 @@ int main(int argc, char **argv)
 		cout << CYAN"\033[36mTc " << RESET "= " << circuit.getTc() << "\033[0m\n";
 		midtime = chrono::steady_clock::now();
 		//---- Timing constraint method (Clauses)--------
-		double slack = circuit.timingConstraint();//100% understand
+		circuit.timingConstraint();//100% understand
 		//---- Generate CNF file ------------------------
 		circuit.dumpClauseToCnfFile();//100% understand
 		endtime = chrono::steady_clock::now();

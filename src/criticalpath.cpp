@@ -235,7 +235,7 @@ long CriticalPath::nodeLocationInClockPath( char who, ClockTreeNode *node )
 /////////////////////////////////////////////////////////////////////
 ClockTreeNode *CriticalPath::findLastSameParentNode(void)
 {
-	if(this->_pathtype != FFtoFF)
+	if( this->_pathtype != FFtoFF )
 		return nullptr;
 	ClockTreeNode *findnode = nullptr;
 	for( long loop = 0;;loop++ )
