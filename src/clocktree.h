@@ -210,16 +210,17 @@ public:
 	
 
     void    timingConstraint_givDCC_givVTA(CriticalPath *,
-                                           int dcc1, int dcc2,
+                                           double stDCCType  , double edDCCType,
                                            ClockTreeNode *n1, ClockTreeNode *n2,
-                                           int Vth1, int Vth2,
-                                           ClockTreeNode *header1, ClockTreeNode *header2
+                                           double stVth_ofs , double edVth_ofs ,
+                                           ClockTreeNode *stHeader, ClockTreeNode *edHeader
                                             );
     void    timingConstraint_doDCC_doVTA(CriticalPath*);
     void    timingConstraint_givDCC_doVTA(  CriticalPath *,
-                                            int dcc1, int dcc2,
-                                            ClockTreeNode *n1, ClockTreeNode *n2
+                                            double stDCCType  , double edDCCType,
+                                            ClockTreeNode *n1, ClockTreeNode *n2,
                                          );
+    void    timingConstraint_doDCC_ndoVTA(CriticalPath*);
     
     //---Timing-related ------------------------------------------------------
     void adjustOriginTc(void);
@@ -227,7 +228,7 @@ public:
     void tcRecheck(void);
     void calClkLaten_nDcc_nVTA(CriticalPath *, double *, double *);
     void calClkLaten_nDcc_VTA(CriticalPath *, double *, double *);
-    void calClkLaten_givDcc_givVTA();
+    double calClkLaten_givDcc_givVTA( vector<ClockTreeNode*>clkpath, double DCCType, ClockTreeNode* DCCLoc, double VthType, ClockTreeNode* Header );
     vector<double> calClkLaten_Dcc_VTA(vector<ClockTreeNode *>, ClockTreeNode *);
     vector<double> calClkLaten_Dcc_nVTA(vector<ClockTreeNode *>, ClockTreeNode *);
     
