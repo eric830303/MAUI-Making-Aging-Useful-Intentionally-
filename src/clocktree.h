@@ -18,13 +18,15 @@
 #include <set>
 
 // Factor of DCC delay based on logic effort
-#define DCCDELAY20PA (1.33)		// 20% DCC Delay
-#define DCCDELAY40PA (1.33)		// 40% DCC Delay
-#define DCCDELAY50PA (1.33)		// 50% DCC Delay
-#define DCCDELAY80PA (1.67)		// 80% DCC Delay
+#define DCCDELAY20PA    (1.33)		// 20% DCC Delay
+#define DCCDELAY40PA    (1.33)		// 40% DCC Delay
+#define DCCDELAY50PA    (1.33)		// 50% DCC Delay
+#define DCCDELAY80PA    (1.67)		// 80% DCC Delay
 
-#define PRECISION (4)			// Precision of real number
-#define PATHMASKPERCENT (1.0)	// Mask how many percentage of critical path (0~1)
+#define PRECISION       (4)			// Precision of real number
+#define PATHMASKPERCENT (1.0)	    // Mask how many percentage of critical path (0~1)
+#define TenYear_Sec     (315360000)
+#define COF_A           (0.0039/2)
 
 using namespace std;
 
@@ -210,25 +212,27 @@ public:
 	
 
     void    timingConstraint_givDCC_givVTA(CriticalPath *,
-                                           double stDCCType  , double edDCCType,
+                                           double stDCCType , double edDCCType,
                                            ClockTreeNode *n1, ClockTreeNode *n2,
-                                           double stVth_ofs , double edVth_ofs ,
+                                           int stLibIndex   , int edLibIndex ,
                                            ClockTreeNode *stHeader, ClockTreeNode *edHeader
                                             );
     void    timingConstraint_doDCC_doVTA(CriticalPath*);
     void    timingConstraint_givDCC_doVTA(  CriticalPath *,
                                             double stDCCType  , double edDCCType,
-                                            ClockTreeNode *n1, ClockTreeNode *n2,
+                                            ClockTreeNode *n1, ClockTreeNode *n2
                                          );
     void    timingConstraint_doDCC_ndoVTA(CriticalPath*);
     
-    //---Timing-related ------------------------------------------------------
+    //---VTA-related -------------------------------------------------------------
+    double  getAgingRate_givDC_givVth( double DC, int LibIndex ) ;
+    //---Timing-related ----------------------------------------------------------
     void adjustOriginTc(void);
     void updateAllPathTiming(void);
     void tcRecheck(void);
     void calClkLaten_nDcc_nVTA(CriticalPath *, double *, double *);
     void calClkLaten_nDcc_VTA(CriticalPath *, double *, double *);
-    double calClkLaten_givDcc_givVTA( vector<ClockTreeNode*>clkpath, double DCCType, ClockTreeNode* DCCLoc, double VthType, ClockTreeNode* Header );
+    double calClkLaten_givDcc_givVTA( vector<ClockTreeNode*>clkpath, double DCCType, ClockTreeNode* DCCLoc, int LibIndex, ClockTreeNode* Header );
     vector<double> calClkLaten_Dcc_VTA(vector<ClockTreeNode *>, ClockTreeNode *);
     vector<double> calClkLaten_Dcc_nVTA(vector<ClockTreeNode *>, ClockTreeNode *);
     
@@ -257,16 +261,48 @@ public:
     vector<ClockTreeNode *> getFFChildren(ClockTreeNode *);
 };
 
-/////////////////////////////////////////////////////////////////////
-//
-// Calculate the aging rate of buffer from duty cycle
-//
-/////////////////////////////////////////////////////////////////////
-double getAgingRate_givDC_givVth( double DC, double VthOffset )
+/*-------------------------------------------------------------
+ Func Name:
+    getAgingRatee_givDC_givVth()
+ Introduction:
+    Calculate the aging rate of buffer
+    by given duty cycle and given Vth offset.
+ Note:
+    The aging rate will differ from ones that gotten from seniors
+--------------------------------------------------------------*/
+double ClockTree::getAgingRate_givDC_givVth( double DC, int Libindex )
 {
+    if( Libindex != -1 )
+        assert( Libindex >= this->getLibList().size() )  ;
+    //---- Sv -------------------------------------------------------
+    double Sv = 0 ;
+    if( Libindex != -1 )
+    {
+        if( DC == 0.2 )
+            Sv = this->getLibList().at(Libindex)->_Sv[0] ;
+        else if( DC == 0.4 )
+            Sv = this->getLibList().at(Libindex)->_Sv[1] ;
+        else if( DC == 0.5 )
+            Sv = this->getLibList().at(Libindex)->_Sv[2] ;
+        else if( DC == 0.8 )
+            Sv = this->getLibList().at(Libindex)->_Sv[3] ;
+        else
+        {
+            cerr << "[Error] Irrecognized duty cycle in func \"getAgingRate_givDC_givVth (double DC, int LibIndex )\"    \n" ;
+            return -1 ;
+        }
+    }
+    else Sv = 0 ;
     
+    //---- Vth offset -----------------------------------------------
+    double Vth_offset = 0 ;
+    if( Libindex != -1 )
+        Vth_offset = this->getLibList().at(Libindex)->_VTH_OFFSET ;
     
-    return 0.0 ;
+    //---- Aging rate -----------------------------------------------
+    double Vth_nbti = ( 1 - Sv*Vth_offset )*( COF_A )*( pow( DC*( TenYear_Sec ), 0.2) );
+    return (1 + Vth_nbti*2) ;
+    
 }
 inline double getAgingRateByDutyCycle(double dc)
 	{ return (1 + (((-0.117083333333337) * (dc) * (dc)) + (0.248750000000004 * (dc)) + 0.0400333333333325)); }
