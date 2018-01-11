@@ -1639,10 +1639,10 @@ void ClockTree::timingConstraint_ndoDCC_ndoVTA( CriticalPath *path, bool update,
 	datareqtime += (path->getTsu() * this->_agingtsu) + this->_tc;
     
 	//------- Arrival time --------------------------------------------------------------
-	dataarrtime += path->getTinDelay() + (path->getTcq() * this->_agingtcq) + (path->getDij() * this->_agingdij);
+    dataarrtime += path->getTinDelay() + (path->getTcq() * this->_agingtcq) + (path->getDij() * this->_agingdij);
 	newslack = datareqtime - dataarrtime  ;
 
-	if( update )
+    if( update )
     {
         path->setArrivalTime(dataarrtime) ;
         path->setRequiredTime(datareqtime);

@@ -141,49 +141,49 @@ public:
 	~CriticalPath(void);
 	
 	//-- Setter methods ----------------------------------------------------------------------
-	void setEndPointName(string name) { this->_endpointname = name; }
-	void setPathType(int type) { this->_pathtype =  type; }
-	void setCi(double ci) { this->_ci = ci; }
-	void setCj(double cj) { this->_cj = cj; }
-	void setTcq(double tcq) { this->_tcq = tcq; }
-	void setDij(double dij) { this->_dij = dij; }
-	void setTsu(double tsu) { this->_tsu = tsu; }
-	void setTinDelay(double tindelay) { this->_tindelay = tindelay; }
-	void setClockUncertainty(double clkuncert) { this->_clkuncertainty = clkuncert; }
-	void setArrivalTime(double arrivaltime) { this->_arrivaltime = arrivaltime; }
-	void setRequiredTime(double requiredtime) { this->_requiredtime = requiredtime; }
-	void setSlack(double slack) { this->_slack = slack; }
-	void setDccPlacementCandidate(void);
-	//void setStartPointName(string name) { this->_startpointname = name; }
-	//void setPathNum(long number) { this->_pathnum = number; }
+	void    setEndPointName(string name)            { this->_endpointname   = name          ; }
+	void    setPathType(int type)                   { this->_pathtype       = type          ; }
+	void    setCi(double ci)                        { this->_ci             = ci            ; }
+	void    setCj(double cj)                        { this->_cj             = cj            ; }
+	void    setTcq(double tcq)                      { this->_tcq            = tcq           ; }
+	void    setDij(double dij)                      { this->_dij            = dij           ; }
+	void    setTsu(double tsu)                      { this->_tsu            = tsu           ; }
+	void    setTinDelay(double tindelay)            { this->_tindelay       = tindelay      ; }
+	void    setClockUncertainty(double clkuncert)   { this->_clkuncertainty = clkuncert     ; }
+	void    setArrivalTime(double arrivaltime)      { this->_arrivaltime    = arrivaltime   ; }
+	void    setRequiredTime(double requiredtime)    { this->_requiredtime   = requiredtime  ; }
+	void    setSlack(double slack)                  { this->_slack          = slack         ; }
+	void    setDccPlacementCandidate(void);
+	//void  setStartPointName(string name)          { this->_startpointname = name          ; }
+	//void  setPathNum(long number)                 { this->_pathnum        = number        ; }
 	
 	//-- Getter methods ---------------------------------------------------------------------
-	string getStartPointName(void) { return _startpointname; }
-	string getEndPointName(void) { return _endpointname; }
-	int getPathType(void) { return _pathtype; }
-	long getPathNum(void) { return _pathnum; }
-	double getCi(void) { return _ci; }
-	double getCj(void) { return _cj; }
-	double getTcq(void) { return _tcq; }
-	double getDij(void) { return _dij; }
-	double getTsu(void) { return _tsu; }
-	double getTinDelay(void) { return _tindelay; }
-	double getClockUncertainty(void) { return _clkuncertainty; }
-	double getArrivalTime(void) { return _arrivaltime; }
-	double getRequiredTime(void) { return _requiredtime; }
-	double getSlack(void) { return _slack; }
-	vector<ClockTreeNode *>& getStartPonitClkPath(void) { return _startpclkpath; }
-	vector<ClockTreeNode *>& getEndPonitClkPath(void) { return _endpclkpath; }
-	vector<GateData *>& getGateList(void) { return _gatelist; }
+	string  getStartPointName(void)                 { return _startpointname                ; }
+	string  getEndPointName(void)                   { return _endpointname                  ; }
+	int     getPathType(void)                       { return _pathtype                      ; }
+	long    getPathNum(void)                        { return _pathnum                       ; }
+	double  getCi(void)                             { return _ci                            ; }
+	double  getCj(void)                             { return _cj                            ; }
+	double  getTcq(void)                            { return _tcq                           ; }
+	double  getDij(void)                            { return _dij                           ; }
+	double  getTsu(void)                            { return _tsu                           ; }
+	double  getTinDelay(void)                       { return _tindelay                      ; }
+	double  getClockUncertainty(void)               { return _clkuncertainty                ; }
+	double  getArrivalTime(void)                    { return _arrivaltime                   ; }
+	double  getRequiredTime(void)                   { return _requiredtime                  ; }
+	double  getSlack(void)                          { return _slack                         ; }
+	vector<ClockTreeNode *>& getStartPonitClkPath(void) { return _startpclkpath             ; }
+	vector<ClockTreeNode *>& getEndPonitClkPath(void)   { return _endpclkpath               ; }
+	vector<GateData *>& getGateList(void)               { return _gatelist                  ; }
 	vector<vector<ClockTreeNode *> >& getDccPlacementCandi(void) { return _dccplacementcandi; }
 	
 	//-- Other methods -------------------------------------------------------------------------
-	bool isEndPointSameAsStartPoint(void);
-	long nodeLocationInClockPath(char, ClockTreeNode *);
-	ClockTreeNode *findLastSameParentNode(void);
-	ClockTreeNode *findDccInClockPath(char);
-	void printCriticalPath(bool verbose = 1);
-	void printDccPlacementCandidate(void);
+	bool isEndPointSameAsStartPoint(void)               ;
+	long nodeLocationInClockPath(char, ClockTreeNode *) ;
+	ClockTreeNode *findLastSameParentNode(void)         ;
+	ClockTreeNode *findDccInClockPath(char)             ;
+	void printCriticalPath(bool verbose = 1)            ;
+	void printDccPlacementCandidate(void)               ;
 };
 
 #endif	// CRITICALPATH_H
