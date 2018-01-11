@@ -282,6 +282,34 @@ ClockTreeNode *CriticalPath::findDccInClockPath(char who)
 	}
 	return findnode;
 }
+/*---------------------------------------------------------------------------------
+ Func Name:
+    findVTAInClockPath
+ Intro:
+    Used in UpdateAllPathTiming
+-----------------------------------------------------------------------------------*/
+ClockTreeNode *CriticalPath::findVTAInClockPath(char who)
+{
+    ClockTreeNode *findnode = nullptr;
+    vector<ClockTreeNode *> clkpath;
+    // startpoint
+    if(who == 's')
+        clkpath = this->_startpclkpath;
+    // endpoint
+    else if(who == 'e')
+        clkpath = this->_endpclkpath;
+    else
+        return nullptr;
+    for(auto const &nodeptr : clkpath)
+    {
+        if( nodeptr->getIfPlaceHeader() )
+        {
+            findnode = nodeptr;
+            break;
+        }
+    }
+    return findnode;
+}
 
 /////////////////////////////////////////////////////////////////////
 //

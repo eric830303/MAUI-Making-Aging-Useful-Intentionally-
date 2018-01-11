@@ -135,7 +135,7 @@ int main(int argc, char **argv)
     //3.
     circuit.VTAConstraint();
 	//-------- Generate all kinds of DCC deployment--
-	circuit.genDccPlacementCandidate();//100% understand
+	circuit.genDccPlacementCandidate();
 	endtime = chrono::steady_clock::now();
 	dccconstrainttime = chrono::duration_cast<chrono::duration<double>>(endtime - midtime);
 	
@@ -147,9 +147,9 @@ int main(int argc, char **argv)
 		cout << CYAN"\033[36mTc " << RESET "= " << circuit.getTc() << "\033[0m\n";
 		midtime = chrono::steady_clock::now();
 		//---- Timing constraint method (Clauses)--------
-		circuit.timingConstraint();//100% understand
+		circuit.timingConstraint();
 		//---- Generate CNF file ------------------------
-		circuit.dumpClauseToCnfFile();//100% understand
+		circuit.dumpClauseToCnfFile();
 		endtime = chrono::steady_clock::now();
         //---- Constraint Time --------------------------
 		timingconstrainttime += chrono::duration_cast<chrono::duration<double>>(endtime - midtime);
@@ -159,7 +159,7 @@ int main(int argc, char **argv)
 		//---- MiniSat ----------------------------------
 		circuit.execMinisat();
 		//---- Set UB/LB Tc -----------------------------
-		circuit.tcBinarySearch();//100% understand
+		circuit.tcBinarySearch();
         //---- MiniSat Time -----------------------------
 		endtime = chrono::steady_clock::now();
 		sattime += chrono::duration_cast<chrono::duration<double>>(endtime - midtime);
@@ -174,7 +174,7 @@ int main(int argc, char **argv)
 	// Update the timing of each critical path with given "Optimal tc"
 	circuit.updateAllPathTiming();
 	// Minimize DCC deployment
-	circuit.minimizeDccPlacement();
+	//circuit.minimizeDccPlacement();
 	// Recheck the "Optimal tc"
 	circuit.tcRecheck();
 	endtime = chrono::steady_clock::now();
@@ -182,23 +182,13 @@ int main(int argc, char **argv)
 	
 	midtime = chrono::steady_clock::now();
 	// Insert buffers with the given "optimal Tc"
-	circuit.bufferInsertion();
+	//circuit.bufferInsertion();
 	// Minimize buffers placement
-	circuit.minimizeBufferInsertion();
+	//circuit.minimizeBufferInsertion();
 	endtime = chrono::steady_clock::now();
 	bufinstime = chrono::duration_cast<chrono::duration<double>>(endtime - midtime);
 	totaltime = chrono::duration_cast<chrono::duration<double>>(endtime - starttime);
 	
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
 	cout << "---------------------------------------------------------------------------\n";
 	cout << "\t*** # of most critical path        : " << circuit.getMostCriticalPath()->getPathNum();
 	cout << " (" << circuit.getMostCriticalPath()->getPathType() << ", " << circuit.getMostCriticalPath()->getStartPointName();

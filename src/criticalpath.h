@@ -57,25 +57,27 @@ public:
 class ClockTreeNode
 {
 private:
-	ClockTreeNode * _parent;
-	GateData        _gatedata;
+	ClockTreeNode * _parent         ;
+	GateData        _gatedata       ;
 	long            _nodenum, _depth;
-	int             _dcctype, _ifused;
+	int             _dcctype, _ifused,_LibIndex;
 	bool            _iflook , _ifplacedcc, _ifclkgating, _ifinsertbuf, _ifplaceHeader;
 	double          _gatingprobability, _insbufdelay;
 	vector<ClockTreeNode *> _children;
 
 public:
+    //-- Constructor/Destructor -------------------------------------------------------------
 	ClockTreeNode(ClockTreeNode *parent = nullptr, long num = 0, long depth = -1, int used = -1, int type = 0,
 	              bool look = 0, bool placedcc = 0, bool gating = 0, double probability = 0)
 	             : _parent(parent), _nodenum(num), _depth(depth), _ifused(used), _dcctype(type), _iflook(look),
 				   _ifplacedcc(placedcc), _ifclkgating(gating), _gatingprobability(probability),
-				   _ifinsertbuf(0), _insbufdelay(0) {}
+				   _ifinsertbuf(0), _insbufdelay(0), _ifplaceHeader(0), _LibIndex(-1) { }
 	~ClockTreeNode() {}
 	
 	//-- Setter methods ----------------------------------------------------------------------
 	void    setDccType(int, int) ;
 	void    setDccType(int type)                       { this->_dcctype        = type  ; }
+    void    setVTAType(int Lib)                        { this->_LibIndex       = Lib   ; }
 	void    setIfUsed(int used)                        { this->_ifused         = used  ; }
 	void    setIfLook(bool look)                       { this->_iflook         = look  ; }
 	void    setIfPlaceDcc(bool place)                  { this->_ifplacedcc     = place ; }
@@ -92,6 +94,8 @@ public:
 	long    getNodeNumber(void)                        { return _nodenum    ; }
 	long    getDepth(void)                             { return _depth      ; }
 	int     getDccType(void)                           { return _dcctype    ; }
+    int     getVTAType(void)                           { return _LibIndex   ; }
+    bool    getIfPlaceHeader(void)                     { return _ifplaceHeader ; }
 	double  getInsertBufferDelay(void)                 { return _insbufdelay; }
 	double  getGatingProbability(void)                 { return _gatingprobability; }
 	vector<ClockTreeNode *>& getChildren(void)         { return _children   ; }
@@ -182,6 +186,7 @@ public:
 	long nodeLocationInClockPath(char, ClockTreeNode *) ;
 	ClockTreeNode *findLastSameParentNode(void)         ;
 	ClockTreeNode *findDccInClockPath(char)             ;
+    ClockTreeNode *findVTAInClockPath(char)             ;
 	void printCriticalPath(bool verbose = 1)            ;
 	void printDccPlacementCandidate(void)               ;
 };
