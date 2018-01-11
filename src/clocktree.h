@@ -206,9 +206,11 @@ public:
 	void genDccPlacementCandidate(void);
     
     //---Timing Constraint---------------------------------------------------------
-	void    timingConstraint(void);
-    void    timingConstraint_ndoDCC_doVTA( CriticalPath * );
-    void    timingConstraint_ndoDCC_ndoVTA(CriticalPath * , bool update = 0, bool genclause = 1 );
+	void    timingConstraint(void);//A
+    void    timingConstraint_doDCC_ndoVTA (CriticalPath*);//A-B-1, Not Done
+    void    timingConstraint_doDCC_doVTA  (CriticalPath*);//A-B-2, Done
+    void    timingConstraint_ndoDCC_doVTA (CriticalPath*);//A-B-3,
+    void    timingConstraint_ndoDCC_ndoVTA(CriticalPath * , bool update = 0, bool genclause = 1 );//A-B-4, Done
 	
 
     void    timingConstraint_givDCC_givVTA(CriticalPath *,
@@ -216,45 +218,46 @@ public:
                                            ClockTreeNode *n1, ClockTreeNode *n2,
                                            int stLibIndex   , int edLibIndex ,
                                            ClockTreeNode *stHeader, ClockTreeNode *edHeader
-                                            );
-    void    timingConstraint_doDCC_doVTA(CriticalPath*);
+                                            );//A-B-2-C-D   Done
     void    timingConstraint_givDCC_doVTA(  CriticalPath *,
                                             double stDCCType  , double edDCCType,
                                             ClockTreeNode *n1, ClockTreeNode *n2
-                                         );
-    void    timingConstraint_doDCC_ndoVTA(CriticalPath*);
-    
+                                         );//A-B-2-C    Done
+    void    timingConstraint_givDCC_ndoVTA( CriticalPath *,
+                                            double stDCCType  , double edDCCType,
+                                            ClockTreeNode *n1, ClockTreeNode *n2
+                                           );//A-B-1-C
+    void    timingConstraint_ndoDCC_givVTA( );//Not Done
+    //---Clause ------------------------------------------------------------------
+    void    writeClause_givDCC( string &clause, ClockTreeNode* node, double DCCType  );
+    void    writeClause_givVTA( string &clause, ClockTreeNode* node, int    LibIndex );
     //---VTA-related -------------------------------------------------------------
     double  getAgingRate_givDC_givVth( double DC, int LibIndex ) ;
     //---Timing-related ----------------------------------------------------------
-    void adjustOriginTc(void);
-    void updateAllPathTiming(void);
-    void tcRecheck(void);
-    void calClkLaten_nDcc_nVTA(CriticalPath *, double *, double *);
-    void calClkLaten_nDcc_VTA(CriticalPath *, double *, double *);
-    double calClkLaten_givDcc_givVTA( vector<ClockTreeNode*>clkpath, double DCCType, ClockTreeNode* DCCLoc, int LibIndex, ClockTreeNode* Header );
-    vector<double> calClkLaten_Dcc_VTA(vector<ClockTreeNode *>, ClockTreeNode *);
-    vector<double> calClkLaten_Dcc_nVTA(vector<ClockTreeNode *>, ClockTreeNode *);
+    void    adjustOriginTc(void)        ;
+    void    updateAllPathTiming(void)   ;
+    void    tcRecheck(void)             ;
+    double  calClkLaten_givDcc_givVTA   (vector<ClockTreeNode*>clkpath, double DCCType, ClockTreeNode* DCCLoc, int LibIndex, ClockTreeNode* Header );
     
     //---Dumper -------------------------------------------------------------------
-	void dumpClauseToCnfFile(void);
-    void dumpToFile(void);
+	void    dumpClauseToCnfFile(void)      ;
+    void    dumpToFile(void)               ;
 	
 	//---Printer --------------------------------------------------------------------
-	void printClockTree(void);
-	void printSingleCriticalPath(long, bool verbose = 1);
-	void printSingleCriticalPath(char, string, bool verbose = 1);
-	void printAllCriticalPath(void);
-	void printDccList(void);
-	void printClockGatingList(void);
-	void printBufferInsertedList(void);
+	void    printClockTree(void);
+	void    printSingleCriticalPath(long, bool verbose = 1);
+	void    printSingleCriticalPath(char, string, bool verbose = 1);
+	void    printAllCriticalPath(void);
+	void    printDccList(void);
+	void    printClockGatingList(void);
+	void    printBufferInsertedList(void);
     
     //---Vth Lib --------------------------------------------------------------------
-    double calConvergentVth( double dc, double VthOffset ) ;
-    double calSv( double dc, double VthOffset, double VthFin ) ;
+    double  calConvergentVth( double dc, double VthOffset ) ;
+    double  calSv( double dc, double VthOffset, double VthFin ) ;
     //---Other ----------------------------------------------------------------------
-    void execMinisat(void);
-    void tcBinarySearch(double);
+    void    execMinisat(void);
+    void    tcBinarySearch(void);
     ClockTreeNode *searchClockTreeNode(string);
     ClockTreeNode *searchClockTreeNode(long);
     vector<CriticalPath *> searchCriticalPath(char, string);

@@ -104,24 +104,24 @@ int main(int argc, char **argv)
 	chrono::system_clock::time_point nowtime = chrono::system_clock::now();
 	time_t tt = chrono::system_clock::to_time_t(nowtime);
 	cout << "\t*** Time                           : " << ctime(&tt);
-	cout << "\t*** Timing report                  : " << circuit.getTimingReportFileName() << "\n";
-	cout << "\t*** Timing report location         : " << circuit.getTimingReportLocation() << "\n";
-	cout << "\t*** Timing report design           : " << circuit.getTimingReportDesign() << "\n";
-	cout << "\t*** Tc in timing report (Origin)   : " << circuit.getOriginTc() << "\n";
-	cout << "\t*** Total critical paths           : " << circuit.getTotalPathNumber() << "\n";
-	cout << "\t*** # of critical paths in used    : " << circuit.getPathUsedNumber() << "\n";
-	cout << "\t*** # of PI to FF paths            : " << circuit.getPiToFFNumber() << "\n";
-	cout << "\t*** # of FF to PO paths            : " << circuit.getFFToPoNumber() << "\n";
-	cout << "\t*** # of FF to FF paths            : " << circuit.getFFToFFNumber() << "\n";
-	cout << "\t*** Clock tree level (max)         : " << circuit.getMaxTreeLevel() << "\n";
-	cout << "\t*** Total clock tree nodes         : " << circuit.getTotalNodeNumber() << "\n";
-	cout << "\t*** Total # of FF nodes            : " << circuit.getTotalFFNumber() << "\n";
-	cout << "\t*** Total # of clock buffer nodes  : " << circuit.getTotalBufferNumber() << "\n";
-	cout << "\t*** # of FF nodes in used          : " << circuit.getFFUsedNumber() << "\n";
-	cout << "\t*** # of clock buffer nodes in used: " << circuit.getBufferUsedNumber() << "\n";
+	cout << "\t*** Timing report                  : " << circuit.getTimingReportFileName()                              << "\n";
+	cout << "\t*** Timing report location         : " << circuit.getTimingReportLocation()                              << "\n";
+	cout << "\t*** Timing report design           : " << circuit.getTimingReportDesign()                                << "\n";
+	cout << "\t*** Tc in timing report (Origin)   : " << circuit.getOriginTc()                                          << "\n";
+	cout << "\t*** Total critical paths           : " << circuit.getTotalPathNumber()                                   << "\n";
+	cout << "\t*** # of critical paths in used    : " << circuit.getPathUsedNumber()                                    << "\n";
+	cout << "\t*** # of PI to FF paths            : " << circuit.getPiToFFNumber()                                      << "\n";
+	cout << "\t*** # of FF to PO paths            : " << circuit.getFFToPoNumber()                                      << "\n";
+	cout << "\t*** # of FF to FF paths            : " << circuit.getFFToFFNumber()                                      << "\n";
+	cout << "\t*** Clock tree level (max)         : " << circuit.getMaxTreeLevel()                                      << "\n";
+	cout << "\t*** Total clock tree nodes         : " << circuit.getTotalNodeNumber()                                   << "\n";
+	cout << "\t*** Total # of FF nodes            : " << circuit.getTotalFFNumber()                                     << "\n";
+	cout << "\t*** Total # of clock buffer nodes  : " << circuit.getTotalBufferNumber()                                 << "\n";
+	cout << "\t*** # of FF nodes in used          : " << circuit.getFFUsedNumber()                                      << "\n";
+	cout << "\t*** # of clock buffer nodes in used: " << circuit.getBufferUsedNumber()                                  << "\n";
 	cout << "\t*** No. last same parent           : " << circuit.getFirstChildrenNode()->getGateData()->getGateName();
-	cout << " (" << circuit.getFirstChildrenNode()->getNodeNumber() << ")\n";
-	cout << "\t*** # of clock gating cells        : " << circuit.getTotalClockGatingNumber() << "\n";
+	cout << " ("                                      << circuit.getFirstChildrenNode()->getNodeNumber()                << ")\n";
+	cout << "\t*** # of clock gating cells        : " << circuit.getTotalClockGatingNumber()                            << "\n";
 	circuit.printClockGatingList();
 	cout << "---------------------------------------------------------------------------\n";
 	
@@ -159,7 +159,7 @@ int main(int argc, char **argv)
 		//---- MiniSat ----------------------------------
 		circuit.execMinisat();
 		//---- Set UB/LB Tc -----------------------------
-		circuit.tcBinarySearch(slack);//100% understand
+		circuit.tcBinarySearch();//100% understand
         //---- MiniSat Time -----------------------------
 		endtime = chrono::steady_clock::now();
 		sattime += chrono::duration_cast<chrono::duration<double>>(endtime - midtime);

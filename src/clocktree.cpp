@@ -1589,20 +1589,20 @@ void ClockTree::timingConstraint(void)
 {
     printf( YELLOW"\t[Timing Constraint] " RESET"Tc range: %f - %f ...\033[0m\n", this->_tclowbound, this->_tcupbound ) ;
 	
-	this->_timingconstraintlist.clear();//set<string>
+	this->_timingconstraintlist.clear();
 	for( auto const& path: this->_pathlist )
 	{
 		if( (path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF) ) continue;
 		//--No DCC insertion ----------------------------------
 		this->timingConstraint_ndoDCC_ndoVTA(path);//done
-        this->timingConstraint_ndoDCC_doVTA(path) ;//Not done
+        this->timingConstraint_ndoDCC_doVTA(path) ;//done
         
 		//--DCC Insertion && VTA ------------------------------
         if( this->_placedcc )
         {
-            this->timingConstraint_doDCC_ndoVTA(path);
+            this->timingConstraint_doDCC_ndoVTA(path);//done
             if( this->ifdoVTA() )
-                this->timingConstraint_doDCC_doVTA(path);
+                this->timingConstraint_doDCC_doVTA(path);//done
         }
 	}
 }
@@ -1628,7 +1628,8 @@ void ClockTree::timingConstraint_ndoDCC_ndoVTA( CriticalPath *path, bool update,
     double datareqtime = 0 ;
 	
     //------- Ci & Cj ------------------------------------------------------------------
-	this->calClkLaten_nDcc_nVTA( path, &datareqtime, &dataarrtime );
+	dataarrtime =  this->calClkLaten_givDcc_givVTA( path->getStartPonitClkPath(), 0, NULL, 0, NULL  );
+    datareqtime =  this->calClkLaten_givDcc_givVTA( path->getEndPonitClkPath()  , 0, NULL, 0, NULL  );
 	if( update )
     {
         path->setCi(dataarrtime) ;
@@ -1681,6 +1682,80 @@ void ClockTree::timingConstraint_ndoDCC_ndoVTA( CriticalPath *path, bool update,
 		else
 			cerr << "\033[32m[Info]: Timing Constraint List Full!\033[0m\n";
 	}
+}
+/*------------------------------------------------------------------------------------
+ FuncName:
+    timingConstraint_doDcc_ndoVTA
+ Introduction:
+    Do timing constraint iterate DCC insertion, but don't do VTA
+ -------------------------------------------------------------------------------------*/
+void ClockTree::timingConstraint_doDCC_ndoVTA( CriticalPath *path )
+{
+    if( path == nullptr )
+        return  ;
+    
+    //List all possible combination of VTA with a given DCC deployment
+    for( auto path: this->_pathlist )
+    {
+        vector<vector<ClockTreeNode *> > dcccandi = path->getDccPlacementCandi();
+        for( int i = 0 ; i < dcccandi.size(); i ++ )
+        {
+            if( path->getPathType() == FFtoFF )
+            {
+                long candilocleft  = path->nodeLocationInClockPath('s', dcccandi.at(i).back() /*Clk node*/ );//location id, 's' mean start clk path
+                long candilocright = path->nodeLocationInClockPath('e', dcccandi.at(i).back() /*Clk node*/ );//location id, 'e' mean end   clk path
+                long sameparentloc = path->nodeLocationInClockPath('s', path->findLastSameParentNode());
+                if( dcccandi.at(i).size() == 1 )
+                {
+                    // Insert DCC on common part
+                    if((candilocleft != -1) && (candilocleft <= sameparentloc))
+                    {
+                        this->timingConstraint_givDCC_givVTA( path, 0.2, -1, dcccandi.at(i).front(), NULL, -1, -1, NULL, NULL ) ;
+                        this->timingConstraint_givDCC_givVTA( path, 0.4, -1, dcccandi.at(i).front(), NULL, -1, -1, NULL, NULL ) ;
+                        this->timingConstraint_givDCC_givVTA( path, 0.8, -1, dcccandi.at(i).front(), NULL, -1, -1, NULL, NULL ) ;
+                    }
+                    // Insert DCC on the right branch part
+                    else if( candilocleft < candilocright )
+                    {
+                        this->timingConstraint_givDCC_givVTA( path, -1, 0.2, dcccandi.at(i).front(), NULL, -1, -1, NULL, NULL ) ;
+                        this->timingConstraint_givDCC_givVTA( path, -1, 0.4, dcccandi.at(i).front(), NULL, -1, -1, NULL, NULL ) ;
+                        this->timingConstraint_givDCC_givVTA( path, -1, 0.8, dcccandi.at(i).front(), NULL, -1, -1, NULL, NULL ) ;
+                    }
+                    // Insert DCC on the left branch part
+                    else if( candilocleft > candilocright )
+                    {
+                        this->timingConstraint_givDCC_givVTA( path, 0.2,  -1, dcccandi.at(i).front(), NULL, -1, -1, NULL, NULL ) ;
+                        this->timingConstraint_givDCC_givVTA( path, 0.4,  -1, dcccandi.at(i).front(), NULL, -1, -1, NULL, NULL ) ;
+                        this->timingConstraint_givDCC_givVTA( path, 0.8,  -1, dcccandi.at(i).front(), NULL, -1, -1, NULL, NULL ) ;
+                    }
+                }
+                else//insert 2 dcc
+                {
+                    this->timingConstraint_givDCC_givVTA( path, 0.2, 0.2, dcccandi.at(i).front(), NULL, -1, -1, NULL, NULL ) ;
+                    this->timingConstraint_givDCC_givVTA( path, 0.2, 0.4, dcccandi.at(i).front(), NULL, -1, -1, NULL, NULL ) ;
+                    this->timingConstraint_givDCC_givVTA( path, 0.2, 0.8, dcccandi.at(i).front(), NULL, -1, -1, NULL, NULL ) ;
+                    this->timingConstraint_givDCC_givVTA( path, 0.4, 0.2, dcccandi.at(i).front(), NULL, -1, -1, NULL, NULL ) ;
+                    this->timingConstraint_givDCC_givVTA( path, 0.4, 0.4, dcccandi.at(i).front(), NULL, -1, -1, NULL, NULL ) ;
+                    this->timingConstraint_givDCC_givVTA( path, 0.4, 0.8, dcccandi.at(i).front(), NULL, -1, -1, NULL, NULL ) ;
+                    this->timingConstraint_givDCC_givVTA( path, 0.8, 0.2, dcccandi.at(i).front(), NULL, -1, -1, NULL, NULL ) ;
+                    this->timingConstraint_givDCC_givVTA( path, 0.8, 0.4, dcccandi.at(i).front(), NULL, -1, -1, NULL, NULL ) ;
+                    this->timingConstraint_givDCC_givVTA( path, 0.8, 0.8, dcccandi.at(i).front(), NULL, -1, -1, NULL, NULL ) ;
+                }
+            }
+            else if( path->getPathType() == FFtoPO )
+            {
+                this->timingConstraint_givDCC_givVTA( path, 0.2, -1, dcccandi.at(i).front(), NULL, -1, -1, NULL, NULL ) ;
+                this->timingConstraint_givDCC_givVTA( path, 0.4, -1, dcccandi.at(i).front(), NULL, -1, -1, NULL, NULL ) ;
+                this->timingConstraint_givDCC_givVTA( path, 0.8, -1, dcccandi.at(i).front(), NULL, -1, -1, NULL, NULL ) ;
+            }
+            else if( path->getPathType() == PItoFF )
+            {
+                this->timingConstraint_givDCC_givVTA( path,  -1, 0.2, dcccandi.at(i).front(), NULL, -1, -1, NULL, NULL ) ;
+                this->timingConstraint_givDCC_givVTA( path,  -1, 0.4, dcccandi.at(i).front(), NULL, -1, -1, NULL, NULL ) ;
+                this->timingConstraint_givDCC_givVTA( path,  -1, 0.8, dcccandi.at(i).front(), NULL, -1, -1, NULL, NULL ) ;
+            }
+        }
+    }
 }
 /*------------------------------------------------------------------------------------
  FuncName:
@@ -1747,23 +1822,72 @@ void ClockTree::timingConstraint_doDCC_doVTA( CriticalPath *path )
                 this->timingConstraint_givDCC_doVTA( path, 0.2, -1, dcccandi.at(i).front(), NULL );
                 this->timingConstraint_givDCC_doVTA( path, 0.4, -1, dcccandi.at(i).front(), NULL );
                 this->timingConstraint_givDCC_doVTA( path, 0.8, -1, dcccandi.at(i).front(), NULL );
+                // -1 denotes the path does not exist
             }
             else if( path->getPathType() == PItoFF )
             {
-                this->timingConstraint_givDCC_doVTA( path, 0.2, -1, dcccandi.at(i).front(), NULL );
-                this->timingConstraint_givDCC_doVTA( path, 0.4, -1, dcccandi.at(i).front(), NULL );
-                this->timingConstraint_givDCC_doVTA( path, 0.8, -1, dcccandi.at(i).front(), NULL );
+                this->timingConstraint_givDCC_doVTA( path, -1, 0.2, dcccandi.at(i).front(), NULL );
+                this->timingConstraint_givDCC_doVTA( path, -1, 0.4, dcccandi.at(i).front(), NULL );
+                this->timingConstraint_givDCC_doVTA( path, -1, 0.8, dcccandi.at(i).front(), NULL );
+                // -1 denotes the path does not exist
             }
         }
     }
 }
-
 /*------------------------------------------------------------------------------------
  FuncName:
-    timingConstraint_givDCC_VTA
+    timingConstraint_ndoDcc_doVTA
+ Introduction:
+    Do timing constraint iterate DCC VTA
+ -------------------------------------------------------------------------------------*/
+void ClockTree::timingConstraint_ndoDCC_doVTA( CriticalPath *path )
+{
+    if( path == nullptr ) return ;
+    vector<ClockTreeNode*> stClkPath = path->getStartPonitClkPath() ;
+    vector<ClockTreeNode*> edClkPath = path->getEndPonitClkPath() ;
+    
+    if( path->getPathType() == FFtoPO )
+    {
+        for( int i = 0 ; i < stClkPath.size(); i++ )
+            for( int LibIndex = 0 ; LibIndex < this->getLibList().size() ; LibIndex++ )
+                this->timingConstraint_givDCC_givVTA( path, -1, -1, NULL, NULL, LibIndex, -1, stClkPath.at(i), NULL);
+    }
+    else if( path->getPathType() == PItoFF )
+    {
+        for( int i = 0 ; i < edClkPath.size(); i++ )
+            for( int LibIndex = 0 ; LibIndex < this->getLibList().size() ; LibIndex++ )
+                this->timingConstraint_givDCC_givVTA( path, -1, -1, NULL, NULL, -1, LibIndex, NULL, edClkPath.at(i));
+    }
+    else if( path->getPathType() == FFtoFF )
+    {
+        long sameparentloc = path->nodeLocationInClockPath('s', path->findLastSameParentNode() );
+        
+        //Part 1: One header at left clk path.
+        for( long i = 0 ; i < stClkPath.size(); i++ )
+            for( int LibIndex = 0 ; LibIndex < this->getLibList().size() ; LibIndex++ )
+                this->timingConstraint_givDCC_givVTA( path, -1, -1, NULL, NULL, LibIndex, -1, stClkPath.at(i), NULL );
+        
+        //Part 2: One header at right clk path.
+        for( long i = sameparentloc + 1 ; i < edClkPath.size(); i++ )
+            for( int LibIndex = 0 ; LibIndex < this->getLibList().size() ; LibIndex++ )
+                this->timingConstraint_givDCC_givVTA( path, -1, -1, NULL, NULL, -1, LibIndex, NULL, edClkPath.at(i));
+        
+        //Part 3: Two headers at both branches.
+        for( long i = sameparentloc + 1 ; i < stClkPath.size(); i++ )
+            for( int stLibIndex = 0 ; stLibIndex < this->getLibList().size() ; stLibIndex++ )
+                for( long j = sameparentloc + 1 ; j < edClkPath.size(); j++ )
+                    for( int edLibIndex = 0 ; edLibIndex < this->getLibList().size() ; edLibIndex++ )
+                        this->timingConstraint_givDCC_givVTA( path, -1, -1, NULL, NULL, stLibIndex, edLibIndex, stClkPath.at(i),edClkPath.at(j) );
+    }
+}
+/*------------------------------------------------------------------------------------
+ FuncName:
+    B-1, timingConstraint_givDCC_doVTA
  Introduction:
     After DCC insertion is determined (given), iterate the combination of VTA
     in the given pipeline
+ Support:
+    Do DCC, and Do VTA
  -------------------------------------------------------------------------------------*/
 void ClockTree::timingConstraint_givDCC_doVTA(  CriticalPath *path,
                                                 double stDccType, double edDccType,
@@ -1782,44 +1906,43 @@ void ClockTree::timingConstraint_givDCC_doVTA(  CriticalPath *path,
         //Part 1: One header at left clk path.
         for( long i = 0 ; i < stClkPath.size(); i++ )
             for( int LibIndex = 0 ; LibIndex < this->getLibList().size() ; LibIndex++ )
-                this->timingConstraint_givDCC_givVTA( path, stDccType, edDccType, stDccLoc, edDccLoc, LibIndex, 0, stClkPath.at(i), NULL );
+                this->timingConstraint_givDCC_givVTA( path, stDccType, edDccType, stDccLoc, edDccLoc, LibIndex, -1, stClkPath.at(i), NULL );
         
         //Part 2: One header at right clk path.
         for( long i = sameparentloc + 1 ; i < edClkPath.size(); i++ )
-             for( int LibIndex = 0 ; LibIndex < this->getLibList().size() ; LibIndex++ )
-                this->timingConstraint_givDCC_givVTA( path, stDccType, edDccType, stDccLoc, edDccLoc, 0, LibIndex, NULL, edClkPath.at(i));
+            for( int LibIndex = 0 ; LibIndex < this->getLibList().size() ; LibIndex++ )
+                this->timingConstraint_givDCC_givVTA( path, stDccType, edDccType, stDccLoc, edDccLoc, -1, LibIndex, NULL, edClkPath.at(i));
         
         //Part 3: Two headers at both branches.
         for( long i = sameparentloc + 1 ; i < stClkPath.size(); i++ )
-            for( long j = sameparentloc + 1 ; j < edClkPath.size(); j++ )
-                 for( int LibIndex = 0 ; LibIndex < this->getLibList().size() ; LibIndex++ )
-                this->timingConstraint_givDCC_givVTA( path, stDccType, edDccType, stDccLoc, edDccLoc, LibIndex, LibIndex, stClkPath.at(i), edClkPath.at(i) );
+            for( int stLibIndex = 0 ; stLibIndex < this->getLibList().size() ; stLibIndex++ )
+                for( long j = sameparentloc + 1 ; j < edClkPath.size(); j++ )
+                    for( int edLibIndex = 0 ; edLibIndex < this->getLibList().size() ; edLibIndex++ )
+                        this->timingConstraint_givDCC_givVTA( path, stDccType, edDccType, stDccLoc, edDccLoc, stLibIndex, edLibIndex, stClkPath.at(i),edClkPath.at(j) );
     }
     else if( path->getPathType() == PItoFF )
     {
         for( int i = 0 ; i < edClkPath.size(); i++ )
             for( int LibIndex = 0 ; LibIndex < this->getLibList().size() ; LibIndex++ )
-                this->timingConstraint_givDCC_givVTA( path, stDccType, edDccType, stDccLoc, edDccLoc, 0, LibIndex, NULL, edClkPath.at(i));
+                this->timingConstraint_givDCC_givVTA( path, -1, edDccType, NULL, edDccLoc, -1, LibIndex, NULL, edClkPath.at(i));
     }
     else if( path->getPathType() == FFtoPO )
     {
         for( int i = 0 ; i < stClkPath.size(); i++ )
-             for( int LibIndex = 0 ; LibIndex < this->getLibList().size() ; LibIndex++ )
-                this->timingConstraint_givDCC_givVTA( path, stDccType, edDccType, stDccLoc, edDccLoc, LibIndex, 0, stClkPath.at(i), NULL);
+            for( int LibIndex = 0 ; LibIndex < this->getLibList().size() ; LibIndex++ )
+                this->timingConstraint_givDCC_givVTA( path, stDccType, -1, stDccLoc, NULL, LibIndex, -1, stClkPath.at(i), NULL);
     }
 }
+
 /*------------------------------------------------------------------------------------
  FuncName:
-    timingConstraint_givDCC_givVTA
+    B-2 timingConstraint_givDCC_givVTA, caller is B-1
  Introduction:
     After DCC insertion, VTA are given, estimate whether timing violation occurs
- Parameter:
- 
- Operation:
-    genclause   = 0           => Do not generate clause
-                = 1 (default) => Generate clause
-    update      = 0 (default) => Do not update the timing info of the pipeline
-                = 1           => Update timing info of the pipeline
+ Support:
+        Do DCC, and     Do VTA
+    Not Do DCC, but     Do VTA
+        Do DCC, and Not Do VTA
  -------------------------------------------------------------------------------------*/
 void ClockTree::timingConstraint_givDCC_givVTA( CriticalPath *path,
                                                 double stDCCType, double edDCCType,
@@ -1835,13 +1958,12 @@ void ClockTree::timingConstraint_givDCC_givVTA( CriticalPath *path,
     double  cj          = 0 ;
     double  avl_time    = 0 ;//arrival time
     double  req_time    = 0 ;//require time
-    
     int     PathType    = path->getPathType() ;
     //------- Ci & Cj ------------------------------------------------------------------
     if( PathType == FFtoFF || PathType == FFtoPO )
         ci = this->calClkLaten_givDcc_givVTA( path->getStartPonitClkPath(), stDCCType, stDCCLoc, stLibIndex, stHeader );//Has consider aging
     if( PathType == FFtoFF || PathType == PItoFF )
-        cj = this->calClkLaten_givDcc_givVTA( path->getEndPonitClkPath(),   stDCCType, edDCCLoc, edLibIndex, edHeader );//Has consider aging
+        cj = this->calClkLaten_givDcc_givVTA( path->getEndPonitClkPath(),   edDCCType, edDCCLoc, edLibIndex, edHeader );//Has consider aging
     //------- Require time --------------------------------------------------------------
     req_time += cj ;
     req_time += (path->getTsu() * this->_agingtsu) + this->_tc;
@@ -1854,45 +1976,151 @@ void ClockTree::timingConstraint_givDCC_givVTA( CriticalPath *path,
     string clause = "" ;
     if( newslack < 0 )
     {
-        if( PathType == FFtoPO )
+        
+        //-- PItoFF ----------------------------------------------------------------------
+        if( path->getPathType() == FFtoPO )
         {
             for( auto clknode: path->getStartPonitClkPath() )
             {
-                //DCC Formulat...
+                //-- DCC Formulation -----------------------------------------------------
                 if( clknode->ifPlacedDcc() && clknode != stDCCLoc )
-                    this->writeClause_givDCC( &clause, clknode, 0 );
+                    this->writeClause_givDCC( clause, clknode, 0 );
                 else if( clknode->ifPlacedDcc() && clknode == stDCCLoc )
-                    this->writeClause_givDCC( &clause, clknode, 0 );
+                    this->writeClause_givDCC( clause, clknode, stDCCType );
                 
-                //VTA Formulat...
+                //-- VTA Formulation ------------------------------------------------------
                 if( clknode == stHeader )
-                    this->writeClause_givVTA( &clause, clknode, stLibIndex );
+                    this->writeClause_givVTA( clause, clknode, stLibIndex );
                 else
-                    this->writeClause_givVTA( &clause, clknode, -1 );
+                    this->writeClause_givVTA( clause, clknode, -1 );//-1 denotes that Vth is not changed
             }
         }
-        else if( PathType == PItoFF )
+        //--  FFtoPO ---------------------------------------------------------------------
+        else if( path->getPathType() == PItoFF )
         {
-            
+            for( auto clknode: path->getEndPonitClkPath() )
+            {
+                //-- DCC Formulation -----------------------------------------------------
+                if( clknode->ifPlacedDcc() && clknode != edDCCLoc )
+                    this->writeClause_givDCC( clause, clknode, 0 );
+                else if( clknode->ifPlacedDcc() && clknode == edDCCLoc )
+                    this->writeClause_givDCC( clause, clknode, edDCCType );
+                
+                //-- VTA Formulation ------------------------------------------------------
+                if( clknode == edHeader )
+                    this->writeClause_givVTA( clause, clknode, edLibIndex );
+                else
+                    this->writeClause_givVTA( clause, clknode, -1 );//-1 denotes that Vth is not changed
+            }
         }
-        else if( PathType == FFtoFF )
+        //-- FFtoFF ------------------------------------------------------------------------
+        else
         {
+            ClockTreeNode *sameparent = path->findLastSameParentNode() ;
+            long  commonparent = path->nodeLocationInClockPath( 's',sameparent );
             
-        }
-    }
+            for( auto clknode: path->getStartPonitClkPath() )
+            {
+                //-- DCC Formulation -----------------------------------------------------
+                if( clknode->ifPlacedDcc() && clknode != stDCCLoc )
+                    this->writeClause_givDCC( clause, clknode, 0 );
+                else if( clknode->ifPlacedDcc() && clknode == stDCCLoc )
+                    this->writeClause_givDCC( clause, clknode, stDCCType );
+                
+                //-- VTA Formulation ------------------------------------------------------
+                if( clknode == stHeader )
+                    this->writeClause_givVTA( clause, clknode, stLibIndex );
+                else
+                    this->writeClause_givVTA( clause, clknode, -1 );
+            }
+            for( long k = commonparent+1; k < path->getEndPonitClkPath().size(); k++ )
+            {
+                ClockTreeNode* clknode = path->getEndPonitClkPath().at(k) ;
+                //-- DCC Formulation -----------------------------------------------------
+                if( clknode->ifPlacedDcc() && clknode != edDCCLoc )
+                    this->writeClause_givDCC( clause, clknode, 0 );
+                else if( clknode->ifPlacedDcc() && clknode == edDCCLoc )
+                    this->writeClause_givDCC( clause, clknode, edDCCType );
+                
+                //-- VTA Formulation ------------------------------------------------------
+                if( clknode == edHeader )
+                    this->writeClause_givVTA( clause, clknode, edLibIndex );
+                else
+                    this->writeClause_givVTA( clause, clknode, -1 );
+            }//for(k)
+        }//FFtoFF
+        
+        clause += "0" ;
+        if( this->_timingconstraintlist.size() < (this->_timingconstraintlist.max_size()-1) )
+            this->_timingconstraintlist.insert(clause) ;
+        else
+            cerr << "\033[32m[Info]: Timing Constraint List Full!\033[0m\n";
+        
+    }//if( newslack < 0 )
+}
+
+/*------------------------------------------------------------------------------------
+ FuncName:
+    (1) writeClause_givDCC
+    (2) writeClsuse_givVTA
+ Introduction:
+    (1) Write associated clause by given DCC scenario
+    (2) Write associated clause by given VTA
+ Boolean Variables:
+    (A) nodenum     => B0
+    (B) nodenum + 1 => B1
+    (C) nodenum + 2 => B2
+        B0 and B1 are used to encode DCC insertion
+        B2 is used to encode VTA
+ -------------------------------------------------------------------------------------*/
+void ClockTree::writeClause_givDCC( string &clause, ClockTreeNode *node, double DCCType )
+{
+    if( node == NULL ) return ;
+    long nodenum = node->getNodeNumber() ;
+    
+    if( DCCType == 0.5 )
+            clause += to_string(nodenum) + " " + to_string(nodenum + 1) + " ";
+    else if( DCCType == 0.2 )
+            clause += to_string(nodenum) + " " + to_string((nodenum + 1 ) * -1) + " ";
+    else if( DCCType == 0.4 )
+            clause += to_string(nodenum * -1) + " " + to_string(nodenum + 1 ) + " ";
+    else if( DCCType == 0.8 )
+            clause += to_string(nodenum * -1) + " " + to_string((nodenum + 1 ) * -1 ) + " ";
+    else
+        cerr << "[Error] Unrecongnized duty cycle in func \"writeClause_givDCC( string&, ClockTreeNode*, double ) in clocktree.cpp\"  \n" ;
+}
+void ClockTree::writeClause_givVTA( string &clause, ClockTreeNode *node, int LibIndex )
+{
+    if( node == NULL ) return ;
+    long nodenum = node->getNodeNumber() ;
+    
+    //--- Vth is Not Changed ----------------------------------------------------------
+    if( LibIndex == -1 )
+        clause += to_string( nodenum + 2 ) + " ";
+    else if( LibIndex == 0 )
+        clause += to_string( ( nodenum + 2 )*(-1) ) + " " ;
+    //--- Vth id Indeed Changed --------------------------------------------------------
+    else
+        cerr << "[Error] Unrecongnized Vth Type in func \"writeClause_givVTA( string&, ClockTreeNode*, double ) in clocktree.cpp\"  \n" ;
 }
 /*------------------------------------------------------------------------------------
  FuncName:
-    timingConstraint_givDCC_givVTA
+ timingConstraint_givDCC_givVTA
  Introduction:
-    After DCC insertion, VTA are given, estimate whether timing violation occurs
+ After DCC insertion, VTA are given, estimate whether timing violation occurs
  -------------------------------------------------------------------------------------*/
 double ClockTree::calClkLaten_givDcc_givVTA(    vector<ClockTreeNode *> clkpath,
-                                                double DCCType,  ClockTreeNode *DCCLoc,
-                                                int    LibIndex, ClockTreeNode *Header
+                                            double DCCType,  ClockTreeNode *DCCLoc,
+                                            int    LibIndex, ClockTreeNode *Header
                                             )
 {
-    //----Declare -----------------------------------------------
+    //-- Check ------------------------------------------------------------------------
+    //edClkPath of FFtoPO does not exist
+    //StClkPath of PItoFF does not exist
+    if( clkpath.size() <= 0 ) return 0 ;
+    
+    
+    //----Declare --------------------------------------------------------------------
     double  laten       =   0   ;
     bool    meetDCCLoc  = false ;
     bool    meetHeader  = false ;
@@ -1909,6 +2137,7 @@ double ClockTree::calClkLaten_givDcc_givVTA(    vector<ClockTreeNode *> clkpath,
         if( clkpath.at(i) != this->_clktreeroot )
             minbufdelay = min( buftime, minbufdelay );
         
+        //--- Cal AgingRate of Clock Buffer -----------------------------------------
         //--- First meet DCC Location -----------------------------------------------
         if( ( clkpath.at(i) == DCCLoc ) && (!meetDCCLoc) )
         {
@@ -1947,252 +2176,7 @@ double ClockTree::calClkLaten_givDcc_givVTA(    vector<ClockTreeNode *> clkpath,
     return laten ;
 }
 
-/////////////////////////////////////////////////////////////////////
-//
-// ClockTree Class - Public Method
-// Assess if the critical path occurs timing violation when inserting
-// DCCs (violating the setup time requirement)
-// Input parameter:
-// citime: clock latency of startpoint
-// cjtime: clock latency of endpoint
-// dcctype1: type of DCC 1
-// dcctype2: type of DCC 2
-// candinode1: pointer of DCC 1 (location)
-// candinode2: pointer of DCC 2 (location)
-// clkpath1: clock path 1 containing DCC 1
-// clkpath2: clock path 2 containing DCC 2
-// genclause: 0          => do not generate a clause
-//            1 (default)=> generate a clause
-// update: 0 (default) => do not update the timing information of critical path
-//         1           => update the timing information of critical path
-//
-/////////////////////////////////////////////////////////////////////
-/*
-double ClockTree::assessTimingWithDcc( CriticalPath *path, double citime, double cjtime, int dcctype1, int dcctype2,
-									   ClockTreeNode *candinode1, ClockTreeNode *candinode2,
-									   vector<ClockTreeNode *> clkpath1, vector<ClockTreeNode *> clkpath2,
-									   bool genclause, bool update )
-{
-	double newslack = 0, dataarrtime = 0, datareqtime = 0;
-	// Require time
-	datareqtime = cjtime + (path->getTsu() * this->_agingtsu) + this->_tc;
-	// Arrival time
-	dataarrtime = citime + path->getTinDelay() + (path->getTcq() * this->_agingtcq) + (path->getDij() * this->_agingdij);
-	newslack = datareqtime - dataarrtime;
-	if( update )
-	{
-		path->setCi(citime), path->setCj(cjtime);
-        path->setArrivalTime(dataarrtime)       ;
-        path->setRequiredTime(datareqtime)      ;
-        path->setSlack(newslack)                ;
-	}
-	//---- Timing violationprint -----------
-	if( (newslack < 0) && genclause )
-	{
-		string clause;
-		// Deal with two type of critical path (PItoFF and FFtoPO)
-		if((path->getPathType() == PItoFF) || (path->getPathType() == FFtoPO))
-		{
-			// Generate the clause
-			for( auto const& nodeptr: clkpath1 )
-			{
-				if((nodeptr != candinode1) && nodeptr->ifPlacedDcc())
-					this->writeClauseByDccType(nodeptr, &clause, 0);
-				else if((nodeptr == candinode1) && nodeptr->ifPlacedDcc())
-					this->writeClauseByDccType(nodeptr, &clause, dcctype1);
-			}
-		}
-		// Deal with the FF to FF critical path
-		else if( path->getPathType() == FFtoFF )
-		{
-			ClockTreeNode *sameparent = path->findLastSameParentNode();
-			long sameparentloc = path->nodeLocationInClockPath('s', sameparent);
-			// Generate the clause based on the clock path 1
-			for( auto const& nodeptr: clkpath1 )
-			{
-				if((nodeptr != candinode1) && nodeptr->ifPlacedDcc())
-					this->writeClauseByDccType(nodeptr, &clause, 0);
-				else if((nodeptr == candinode1) && nodeptr->ifPlacedDcc())
-					this->writeClauseByDccType(nodeptr, &clause, dcctype1);
-			}
-			// Generate the clause based on the branch clock path 2
-			for(long loop = (sameparentloc + 1);loop < clkpath2.size();loop++)
-			{
-				if(candinode2 == nullptr)
-					this->writeClauseByDccType(clkpath2.at(loop), &clause, 0);
-				else
-				{
-					if((clkpath2.at(loop) != candinode2) && (clkpath2.at(loop)->ifPlacedDcc()))
-						this->writeClauseByDccType(clkpath2.at(loop), &clause, 0);
-					else if((clkpath2.at(loop) == candinode2) && (clkpath2.at(loop)->ifPlacedDcc()))
-						this->writeClauseByDccType(clkpath2.at(loop), &clause, dcctype2);
-				}
-			}
-		}
-		clause += "0";
-		if(this->_timingconstraintlist.size() < (this->_timingconstraintlist.max_size()-1))
-			this->_timingconstraintlist.insert(clause);
-		else
-			cerr << "\033[32m[Info]: Timing Constraint List Full!\033[0m\n";
-	}
-	return newslack;
-}
-*/
-/////////////////////////////////////////////////////////////////////
-//
-// ClockTree Class - Public Method
-// Calculate the clock latency of the startpoint/endpoint without
-// any inserted DCCs
-// Input parameter:
-// datareqtime: clock latency of the endpoint
-// dataarrtime: clock latency of the startpoint
-//
-/////////////////////////////////////////////////////////////////////
-void ClockTree::calClkLaten_nDcc_nVTA( CriticalPath *path, double *datareqtime, double *dataarrtime )
-{
-	if( path == nullptr )   return ;
-    
-	bool   dealstart = 0, dealend = 0;
-	double agingrate = 1;
-	switch( path->getPathType() )
-	{
-		case PItoFF:
-			dealend = 1   ;
-			break;
-		case FFtoPO:
-			dealstart = 1 ;
-			break;
-		case FFtoFF:
-			dealstart = 1 ;
-			dealend   = 1 ;
-			break;
-		default:
-			break;
-	}
-	
-	if( dealstart && ( dataarrtime != nullptr ) )
-	{
-		double dutycycle = 0.5 ;
-		vector<ClockTreeNode *> sclkpath = path->getStartPonitClkPath();
-		if( this->_aging )//Consider aging
-			agingrate = roundNPrecision( getAgingRateByDutyCycle(dutycycle), PRECISION) ;
-        
-		for( long loop = 0;loop < (sclkpath.size() - 1);loop++ )
-		{
-			*dataarrtime += (sclkpath.at(loop)->getGateData()->getWireTime() + sclkpath.at(loop)->getGateData()->getGateTime()) * agingrate;
-			// Meet the clock gating cells
-			if( sclkpath.at(loop)->ifClockGating() && this->_aging )
-			{
-				dutycycle = roundNPrecision(dutycycle * (1 - sclkpath.at(loop)->getGatingProbability()), PRECISION);
-				agingrate = roundNPrecision(getAgingRateByDutyCycle(dutycycle), PRECISION);
-			}
-		}
-		*dataarrtime += sclkpath.back()->getGateData()->getWireTime() * agingrate;
-	}
-	// Calculate the clock latency of the endpoint
-    
-	if( dealend && ( datareqtime != nullptr ) )
-	{
-		double dutycycle = 0.5;
-		vector<ClockTreeNode *> eclkpath = path->getEndPonitClkPath();
-		if( this->_aging )
-			agingrate = roundNPrecision(getAgingRateByDutyCycle(dutycycle), PRECISION);
-        
-		for(long loop = 0;loop < (eclkpath.size() - 1);loop++)
-		{
-			*datareqtime += (eclkpath.at(loop)->getGateData()->getWireTime() + eclkpath.at(loop)->getGateData()->getGateTime()) * agingrate;
-			// Meet the clock gating cells
-			if( eclkpath.at(loop)->ifClockGating() && this->_aging )
-			{
-				dutycycle = roundNPrecision(dutycycle * (1 - eclkpath.at(loop)->getGatingProbability()), PRECISION);
-				agingrate = roundNPrecision(getAgingRateByDutyCycle(dutycycle), PRECISION);
-			}
-		}
-		*datareqtime += eclkpath.back()->getGateData()->getWireTime() * agingrate;
-	}
-}
 
-/////////////////////////////////////////////////////////////////////
-//
-// ClockTree Class - Public Method
-// Calculate the clock latency of the startpoint/endpoint based on
-// specific dcc deployment
-// Input parameter:
-// clkpath: clock path of the critical path
-// candinode: pointer of DCC (location)
-//
-/////////////////////////////////////////////////////////////////////
-/*
-vector<double> ClockTree::calculateClockLatencyWithDcc( vector<ClockTreeNode *> clkpath, ClockTreeNode *candinode )
-{
-    vector<double> clklatency(3, 0)   ;//Calculate 3 possible latency of 3 DCC
-    vector<double> oneclklatency(1, 0);
-	bool   isfront        = 1   ;
-    double minbufdelay    = 999 ;
-    double dutycycle20    = 0.5, dutycycle40 = 0.5, dutycycle80 = 0.5, dutycycleondcc = 0.5;
-	double agingrate20dcc = roundNPrecision(getAgingRateByDutyCycle(dutycycle20), PRECISION);
-    double agingrate40dcc = agingrate20dcc ;
-    double agingrate80dcc = agingrate20dcc ;
-	for( long loop = 0; loop < (clkpath.size() - 1); loop++ )
-	{
-		ClockTreeNode *node = clkpath.at(loop);
-        //wire_delay + gate_delay
-		double buftime = node->getGateData()->getWireTime() + node->getGateData()->getGateTime();
-		// Find the minimization delay of buffer in the clock path
-		if( node != this->_clktreeroot )
-			minbufdelay = min( buftime, minbufdelay );
-        // The node before the DCC (dir: root->FF)
-		if( isfront )
-		{
-			if((node != candinode) && (node->ifClockGating()))
-				dutycycleondcc = roundNPrecision(dutycycleondcc * (1 - node->getGatingProbability()), PRECISION);
-			// Meet the DCC
-			else if(node == candinode)
-			{
-				isfront = 0;
-                dutycycle20 = 0.2 ; dutycycle40 = 0.4 ; dutycycle80 = 0.8 ;
-				agingrate20dcc = roundNPrecision(getAgingRateByDutyCycle(dutycycle20), PRECISION);
-				agingrate40dcc = roundNPrecision(getAgingRateByDutyCycle(dutycycle40), PRECISION);
-				agingrate80dcc = roundNPrecision(getAgingRateByDutyCycle(dutycycle80), PRECISION);
-				
-			}
-		}
-		clklatency.at(0) += buftime * agingrate20dcc;
-		clklatency.at(1) += buftime * agingrate40dcc;
-		clklatency.at(2) += buftime * agingrate80dcc;
-		// Meet the clock gating cells
-		if(node->ifClockGating())
-		{
-			dutycycle20 = roundNPrecision(dutycycle20 * (1 - node->getGatingProbability()), PRECISION);
-			dutycycle40 = roundNPrecision(dutycycle40 * (1 - node->getGatingProbability()), PRECISION);
-			dutycycle80 = roundNPrecision(dutycycle80 * (1 - node->getGatingProbability()), PRECISION);
-			agingrate20dcc = roundNPrecision(getAgingRateByDutyCycle(dutycycle20), PRECISION);
-			agingrate40dcc = roundNPrecision(getAgingRateByDutyCycle(dutycycle40), PRECISION);
-			agingrate80dcc = roundNPrecision(getAgingRateByDutyCycle(dutycycle80), PRECISION);
-		}
-	}
-	clklatency.at(0) += clkpath.back()->getGateData()->getWireTime() * agingrate20dcc;
-	clklatency.at(1) += clkpath.back()->getGateData()->getWireTime() * agingrate40dcc;
-	clklatency.at(2) += clkpath.back()->getGateData()->getWireTime() * agingrate80dcc;
-	if( candinode != nullptr )
-	{
-		double dccagingrate = roundNPrecision(getAgingRateByDutyCycle(dutycycleondcc), PRECISION);
-		clklatency.at(0) += minbufdelay * dccagingrate * DCCDELAY20PA;
-		clklatency.at(1) += minbufdelay * dccagingrate * DCCDELAY40PA;
-		clklatency.at(2) += minbufdelay * dccagingrate * DCCDELAY80PA;
-		if(candinode->getDccType() == 20)
-			oneclklatency.front() = clklatency.front();
-		else if(candinode->getDccType() == 40)
-			oneclklatency.front() = clklatency.at(1);
-		else if(candinode->getDccType() == 80)
-			oneclklatency.front() = clklatency.back();
-	}
-	if(oneclklatency.front() != 0)
-		return oneclklatency;
-	else
-		return clklatency;
-}
-*/
 /////////////////////////////////////////////////////////////////////
 //
 // ClockTree Class - Public Method
@@ -2290,7 +2274,8 @@ void ClockTree::execMinisat(void)
 // Change the boundary of Binary search and search for the optimal Tc
 //
 /////////////////////////////////////////////////////////////////////
-void ClockTree::tcBinarySearch(double slack)
+void ClockTree::tcBinarySearch( )
+//void ClockTree::tcBinarySearch(double slack)
 {
     // Place DCCs
     if( this->_placedcc )
@@ -2327,6 +2312,7 @@ void ClockTree::tcBinarySearch(double slack)
         cnffile.close();
     }
     // Do not place DCCs
+    /*
     else if(!this->_placedcc)
     {
         // Change the lower boundary
@@ -2343,6 +2329,7 @@ void ClockTree::tcBinarySearch(double slack)
             this->_tc = floorNPrecision((this->_tcupbound + this->_tclowbound) / 2, PRECISION);
         }
     }
+     */
 }
 
 
@@ -2355,11 +2342,96 @@ void ClockTree::tcBinarySearch(double slack)
 /////////////////////////////////////////////////////////////////////
 void ClockTree::updateAllPathTiming(void)
 {
-    if( this->_besttc == 0 )
-		return;
+    //-- Check ----------------------------------------------------------------------
+    if( this->_besttc == 0 )    return ;
+    
+    //-- Declare ----------------------------------------------------------------------
 	double minslack = 9999;
 	this->_tc = this->_besttc;
 	// Place DCCs
+    if( this->_placedcc )
+    {
+        for( auto const& node: this->_buflist )
+            node.second->setIfPlaceDcc(0) ;
+        fstream cnffile;
+        string line = "" ;
+        string lastsatfile = this->_outputdir + "cnfoutput_" + to_string(this->_tc);
+        if( !isFileExist(lastsatfile) )
+        {
+            cerr << "\033[31m[Error]: File \"" << lastsatfile << "\" does not found!\033[0m\n";
+            return;
+        }
+        cnffile.open(lastsatfile, ios::in);
+        if(!cnffile.is_open())
+        {
+            cerr << "\033[31m[Error]: Cannot open " << lastsatfile << "\033[0m\n";
+            cnffile.close();
+            return;
+        }
+        // Get the DCC deployment from the MiniSat output file
+        getline(cnffile, line);
+        if( (line.size() == 3) && (line.find("SAT") != string::npos) )
+        {
+            getline( cnffile, line ) ;
+            vector<string> strspl = stringSplit(line, " ");
+            //for( long loop = 0; ; loop += 2 )//Senior
+            for( long loop = 0; ; loop += 3 )
+            {
+                if( stoi( strspl[loop] ) == 0 )
+                    break ;
+                if( (stoi(strspl.at(loop)) > 0) || (stoi(strspl.at(loop + 1)) > 0) )
+                {
+                    ClockTreeNode *findnode = this->searchClockTreeNode(abs(stoi(strspl.at(loop))));
+                    if( findnode != nullptr )
+                    {
+                        findnode->setIfPlaceDcc(1);
+                        findnode->setDccType(stoi(strspl.at(loop)), stoi(strspl.at(loop + 1)));
+                        this->_dcclist.insert(pair<string, ClockTreeNode *> (findnode->getGateData()->getGateName(), findnode));
+                    }
+                }
+            }
+        }
+        else
+        {
+            cerr << "\033[31m[Error]: File \"" << lastsatfile << "\" is not SAT!\033[0m\n";
+            return ;
+        }
+        cnffile.close();
+        for( auto const& path: this->_pathlist )
+        {
+            if((path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF))
+                continue;
+            // Update timing information
+            double slack = this->updatePathTimingWithDcc(path, 1);
+            
+            if( slack < minslack )
+            {
+                this->_mostcriticalpath = path;
+                minslack = min( slack, minslack );
+            }
+        }
+    }
+    // Do not place DCCs
+    else
+    {
+        for(auto const& path: this->_pathlist)
+        {
+            if((path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF))
+                continue;
+            // Update timing information
+            double slack = this->timingConstraint_nDcc_nVTA( path, 0 , 1 ) ; //assessTimingWithoutDcc(path, 0, 1);
+            if( slack < minslack )
+            {
+                this->_mostcriticalpath = path;
+                minslack = min(slack, minslack);
+            }
+        }
+    }
+    // Count the DCCs inserting at final buffer
+    for(auto const& node: this->_dcclist)
+        if(node.second->ifPlacedDcc() && node.second->isFinalBuffer())
+            this->_dccatlastbufnum++;
+    /*
 	if( this->_placedcc )
 	{
 		for( auto const& node: this->_buflist )
@@ -2385,7 +2457,8 @@ void ClockTree::updateAllPathTiming(void)
 		{
 			getline( cnffile, line ) ;
 			vector<string> strspl = stringSplit(line, " ");
-			for( long loop = 0; ; loop += 2 )
+			//for( long loop = 0; ; loop += 2 )//Senior
+            for( long loop = 0; ; loop += 3 )
 			{
 				if( stoi( strspl[loop] ) == 0 )
 					break ;
@@ -2397,15 +2470,14 @@ void ClockTree::updateAllPathTiming(void)
 						findnode->setIfPlaceDcc(1);
 						findnode->setDccType(stoi(strspl.at(loop)), stoi(strspl.at(loop + 1)));
 						this->_dcclist.insert(pair<string, ClockTreeNode *> (findnode->getGateData()->getGateName(), findnode));
-					}
-                    
+                    }
 				}
 			}
 		}
 		else
 		{
 			cerr << "\033[31m[Error]: File \"" << lastsatfile << "\" is not SAT!\033[0m\n";
-			return;
+			return ;
 		}
 		cnffile.close();
 		for( auto const& path: this->_pathlist )
@@ -2442,6 +2514,7 @@ void ClockTree::updateAllPathTiming(void)
 	for(auto const& node: this->_dcclist)
 		if(node.second->ifPlacedDcc() && node.second->isFinalBuffer())
 			this->_dccatlastbufnum++;
+     */
 }
 
 /////////////////////////////////////////////////////////////////////
