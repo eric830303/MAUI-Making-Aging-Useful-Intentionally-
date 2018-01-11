@@ -31,7 +31,6 @@ int main(int argc, char **argv)
 	// Check commands from input
 	if( circuit.checkParameter(argc, argv, &message) != 0 )//-1 mean error
 	{
-        circuit.readParameter() ;//read VTA Lib Info
 		if( message.empty() )
 		{	
 			// Commands & Help message
@@ -77,6 +76,8 @@ int main(int argc, char **argv)
 			return 0;
 		}
 	}
+    else
+        circuit.readParameter() ;//read VTA Lib Info
 	
 	// Parameters storing execution time of each part of framework
 	chrono::steady_clock::time_point starttime, endtime, midtime;
@@ -173,9 +174,10 @@ int main(int argc, char **argv)
 	cout << "\033[32m[Info]: Updating Timing Information of Each Path...\033[0m\n";
 	// Update the timing of each critical path with given "Optimal tc"
 	circuit.updateAllPathTiming();
-	// Minimize DCC deployment
+	// Minimize DCC deploymentwhere
 	//circuit.minimizeDccPlacement();
 	// Recheck the "Optimal tc"
+    cout << "\033[32m[Info]: Tc recheck...\033[0m\n";
 	circuit.tcRecheck();
 	endtime = chrono::steady_clock::now();
 	checktime = chrono::duration_cast<chrono::duration<double>>(endtime - midtime);

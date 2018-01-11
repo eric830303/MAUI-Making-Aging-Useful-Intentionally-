@@ -264,49 +264,6 @@ public:
     vector<ClockTreeNode *> getFFChildren(ClockTreeNode *);
 };
 
-/*-------------------------------------------------------------
- Func Name:
-    getAgingRatee_givDC_givVth()
- Introduction:
-    Calculate the aging rate of buffer
-    by given duty cycle and given Vth offset.
- Note:
-    The aging rate will differ from ones that gotten from seniors
---------------------------------------------------------------*/
-double ClockTree::getAgingRate_givDC_givVth( double DC, int Libindex )
-{
-    if( Libindex != -1 )
-        assert( Libindex >= this->getLibList().size() )  ;
-    //---- Sv -------------------------------------------------------
-    double Sv = 0 ;
-    if( Libindex != -1 )
-    {
-        if( DC == 0.2 )
-            Sv = this->getLibList().at(Libindex)->_Sv[0] ;
-        else if( DC == 0.4 )
-            Sv = this->getLibList().at(Libindex)->_Sv[1] ;
-        else if( DC == 0.5 )
-            Sv = this->getLibList().at(Libindex)->_Sv[2] ;
-        else if( DC == 0.8 )
-            Sv = this->getLibList().at(Libindex)->_Sv[3] ;
-        else
-        {
-            cerr << "[Error] Irrecognized duty cycle in func \"getAgingRate_givDC_givVth (double DC, int LibIndex )\"    \n" ;
-            return -1 ;
-        }
-    }
-    else Sv = 0 ;
-    
-    //---- Vth offset -----------------------------------------------
-    double Vth_offset = 0 ;
-    if( Libindex != -1 )
-        Vth_offset = this->getLibList().at(Libindex)->_VTH_OFFSET ;
-    
-    //---- Aging rate -----------------------------------------------
-    double Vth_nbti = ( 1 - Sv*Vth_offset )*( COF_A )*( pow( DC*( TenYear_Sec ), 0.2) );
-    return (1 + Vth_nbti*2) ;
-    
-}
 inline double getAgingRateByDutyCycle(double dc)
 	{ return (1 + (((-0.117083333333337) * (dc) * (dc)) + (0.248750000000004 * (dc)) + 0.0400333333333325)); }
 
