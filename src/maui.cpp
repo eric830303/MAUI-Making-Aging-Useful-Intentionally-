@@ -190,10 +190,12 @@ int main(int argc, char **argv)
 	endtime = chrono::steady_clock::now();
 	bufinstime = chrono::duration_cast<chrono::duration<double>>(endtime - midtime);
 	totaltime = chrono::duration_cast<chrono::duration<double>>(endtime - starttime);
-	
+    
 	cout << "---------------------------------------------------------------------------\n";
 	cout << "\t*** # of most critical path        : " << circuit.getMostCriticalPath()->getPathNum();
-	cout << " (" << circuit.getMostCriticalPath()->getPathType() << ", " << circuit.getMostCriticalPath()->getStartPointName();
+    cout << " (" ;
+    circuit.getMostCriticalPath()->coutPathType();
+    cout << ", " << circuit.getMostCriticalPath()->getStartPointName();
 	cout << " -> " << circuit.getMostCriticalPath()->getEndPointName() << ")\n";
 	cout << "\t*** Minimal slack                  : " << circuit.getMostCriticalPath()->getSlack() << "\n";
 	cout << "\t*** Optimal tc                     : \033[36m" << circuit.getBestTc() << "\033[0m\n";
@@ -204,6 +206,7 @@ int main(int argc, char **argv)
 	}
 	circuit.printDccList();
 	circuit.printBufferInsertedList();
+    circuit.printVTAList();
 	cout << "---------------------------------------------------------------------------\n";
 	cout << " ***** Execution time (unit: s) *****\n";
 	cout << "   Total                 : " << totaltime.count() << "\n";

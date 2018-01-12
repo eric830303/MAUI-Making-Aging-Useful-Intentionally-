@@ -60,9 +60,9 @@ private:
 	ClockTreeNode * _parent         ;
 	GateData        _gatedata       ;
 	long            _nodenum, _depth;
-	int             _dcctype, _ifused,_LibIndex;
+	int             _ifused,_LibIndex;
 	bool            _iflook , _ifplacedcc, _ifclkgating, _ifinsertbuf, _ifplaceHeader;
-	double          _gatingprobability, _insbufdelay;
+	double          _dcctype,_gatingprobability, _insbufdelay;
 	vector<ClockTreeNode *> _children;
 
 public:
@@ -76,7 +76,7 @@ public:
 	
 	//-- Setter methods ----------------------------------------------------------------------
 	void    setDccType(int, int) ;
-	void    setDccType(int type)                       { this->_dcctype        = type  ; }
+	void    setDccType(double type)                    { this->_dcctype        = type  ; }
     void    setVTAType(int Lib)                        { this->_LibIndex       = Lib   ; }
 	void    setIfUsed(int used)                        { this->_ifused         = used  ; }
 	void    setIfLook(bool look)                       { this->_iflook         = look  ; }
@@ -86,14 +86,14 @@ public:
 	void    setInsertBufferDelay(double delay)         { this->_insbufdelay    = delay ; }
 	void    setIfClockGating(bool gating)              { this->_ifclkgating    = gating; }
 	void    setGatingProbability(double probability)   { this->_gatingprobability = probability; }
-	//void  setParent(ClockTreeNode *parent)           { this->_parent         = parent; }
-	//void  setNodeNumber(long number)                 { this->_nodenum        = number; }
-	//void  setDepth(long depth)                       { this->_depth          = depth ; }
+	void    setParent(ClockTreeNode *parent)           { this->_parent         = parent; }
+	void    setNodeNumber(long number)                 { this->_nodenum        = number; }
+	void    setDepth(long depth)                       { this->_depth          = depth ; }
 	
 	//-- Getter methods ---------------------------------------------------------------------
 	long    getNodeNumber(void)                        { return _nodenum    ; }
 	long    getDepth(void)                             { return _depth      ; }
-	int     getDccType(void)                           { return _dcctype    ; }
+	double  getDccType(void)                           { return _dcctype    ; }
     int     getVTAType(void)                           { return _LibIndex   ; }
     bool    getIfPlaceHeader(void)                     { return _ifplaceHeader ; }
 	double  getInsertBufferDelay(void)                 { return _insbufdelay; }
@@ -176,6 +176,7 @@ public:
 	double  getArrivalTime(void)                    { return _arrivaltime                   ; }
 	double  getRequiredTime(void)                   { return _requiredtime                  ; }
 	double  getSlack(void)                          { return _slack                         ; }
+    void    coutPathType(void) ;
 	vector<ClockTreeNode *>& getStartPonitClkPath(void) { return _startpclkpath             ; }
 	vector<ClockTreeNode *>& getEndPonitClkPath(void)   { return _endpclkpath               ; }
 	vector<GateData *>& getGateList(void)               { return _gatelist                  ; }

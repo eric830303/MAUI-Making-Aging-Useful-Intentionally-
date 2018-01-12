@@ -74,7 +74,7 @@ private:
 	ClockTreeNode   *_clktreeroot, *_firstchildrennode;
 	CriticalPath    *_mostcriticalpath;
 	vector<CriticalPath *> _pathlist;
-	map<string, ClockTreeNode *> _ffsink, _buflist, _cglist, _dcclist;
+	map<string, ClockTreeNode *> _ffsink, _buflist, _cglist, _dcclist, _VTAlist ;
     
     //Constraint-related attribute
 	set<string> _VTAconstraintlist, _dccconstraintlist, _timingconstraintlist;
@@ -92,7 +92,7 @@ private:
 	void checkFirstChildrenFormRoot(void)   ;
 	void initTcBound(void)                  ;
 	void genDccConstraintClause(vector<vector<long> > *);
-	void genClauseByDccVTA(ClockTreeNode *, string *, int, int);
+	void genClauseByDccVTA(ClockTreeNode *, string *, double, int);
 	void deleteClockTree(void)              ;
     //-- Dumper ------------------------------------------------------------------
 	void dumpDccListToFile(void)            ;
@@ -249,6 +249,7 @@ public:
 	void    printSingleCriticalPath(char, string, bool verbose = 1);
 	void    printAllCriticalPath(void);
 	void    printDccList(void);
+    void    printVTAList(void);
 	void    printClockGatingList(void);
 	void    printBufferInsertedList(void);
     

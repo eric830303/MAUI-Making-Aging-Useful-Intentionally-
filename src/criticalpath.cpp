@@ -30,15 +30,15 @@
 void ClockTreeNode::setDccType(int bit1, int bit2)
 {
 	if((bit1 > 0) && (bit2 > 0))
-		this->_dcctype = 80;
+		this->_dcctype = 0.8;
 	else if((bit1 > 0) && (bit2 < 0))
-		this->_dcctype = 40;
+		this->_dcctype = 0.4;
 	else if((bit1 < 0) && (bit2 > 0))
-		this->_dcctype = 20;
+		this->_dcctype = 0.2;
 	else if((bit1 < 0) && (bit2 < 0))
-		this->_dcctype = 0;
+		this->_dcctype = 0.5;
 	else
-		this->_dcctype = -1;
+		this->_dcctype = 0.5;
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -381,4 +381,14 @@ void CriticalPath::printDccPlacementCandidate(void)
 			cout << nodeptr->getNodeNumber() << " ";
 		cout << "\n";
 	}
+}
+
+void CriticalPath::coutPathType()
+{
+    if( this->getPathType() == FFtoFF )
+        cout << "FFtoFF" ;
+    else if( this->getPathType() == PItoFF )
+        cout << "PItoFF" ;
+    else if( this->getPathType() == FFtoPO )
+        cout << "FFtoPO" ;
 }
