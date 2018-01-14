@@ -302,7 +302,7 @@ ClockTreeNode *CriticalPath::findVTAInClockPath(char who)
         return nullptr;
     for(auto const &nodeptr : clkpath)
     {
-        if( nodeptr->getIfPlaceHeader() )
+        if( nodeptr->getVTAType() != -1 )
         {
             findnode = nodeptr;
             break;
