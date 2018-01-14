@@ -292,6 +292,16 @@ public:
 //
 /////////////////////////////////////////////////////////////////////
 inline double getAgingRateByDutyCycle(double dc)
-	{ return (1 + (((-0.117083333333337) * (dc) * (dc)) + (0.248750000000004 * (dc)) + 0.0400333333333325)); }
+{
+    /*
+    if( dc == 0.2 )         return 1.118 ;
+    else if( dc == 0.4 )    return 1.1397;
+    else if( dc == 0.5 )    return 1.1472;
+    else if( dc == 0.8 )    return 1.1639;
+     */
+    return (1 + (((-0.117083333333337) * (dc) * (dc)) + (0.248750000000004 * (dc)) + 0.0400333333333325));
+    
+    //else return -1 ;
+}
 
 #endif  // CLOCKTREE_H
