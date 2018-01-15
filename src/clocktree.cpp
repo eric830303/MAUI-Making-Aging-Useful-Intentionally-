@@ -3161,13 +3161,13 @@ void ClockTree::printDccList(void)
 	if( !this->_placedcc)   return;
 	cout << "\t*** # of inserted DCCs             : " << this->_dcclist.size() << "\n";
 	cout << "\t*** # of DCCs placed at last buffer: " << this->_dccatlastbufnum << "\n";
-	cout << "\t*** Inserted DCCs List             : \n" ;
+	cout << "\t*** Inserted DCCs List             : " ;
 	if( !this->_placedcc || this->_dcclist.empty() )
-		cout << "\t\t\t\t\t\tN/A\n";
+		cout << "N/A\n";
 	else
     {
         int  ctr = 0 ;
-        cout << "\t\t\t\t\t\t" ;
+        //cout << "\t\t\t\t\t\t" ;
 		for( auto const& node: this->_dcclist )
         {
 			cout << node.first << "(" << node.second->getDccType() << ((node.second != this->_dcclist.rbegin()->second) ? "), " : ")\n");
@@ -3177,14 +3177,14 @@ void ClockTree::printDccList(void)
         }
     }
 	
-    cout << "\t*** DCCs Placed at Last Buffer     : \n";
+    cout << "\n\t*** DCCs Placed at Last Buffer     : ";
 	if( !this->_placedcc || (this->_dccatlastbufnum == 0) )
-		cout << "\t\t\t\t\t\tN/A\n";
+		cout << "N/A\n";
 	else
 	{
         int  ctr = 0 ;
         bool firstprint = true ;
-        cout << "\t\t\t\t\t\t" ;
+        //cout << "\t\t\t\t\t\t" ;
         for(auto const& node: this->_dcclist)
         {
             if(node.second->isFinalBuffer())
@@ -3209,13 +3209,13 @@ void ClockTree::printVTAList()
 {
     if( this->ifdoVTA() == false ) return ;
     cout << "\t*** # of inserted headers          : " << this->_VTAlist.size() << endl ;
-    cout << "\t*** Inserted header List           : \n" ;
+    cout << "\t*** Inserted header List           : " ;
     if( this->ifdoVTA() == false || this->_VTAlist.size() == 0 )
-        cout << "\t\t\t\t\t\tN/A\n";
+        cout << "N/A\n";
     else
     {
         int  ctr = 0 ;
-        cout << "\t\t\t\t\t\t" ;
+        //cout << "\t\t\t\t\t\t" ;
         for( auto const &header: this->_VTAlist )
         {
             cout << header.first << "(" << header.second->getVTAType() << ")," ;
