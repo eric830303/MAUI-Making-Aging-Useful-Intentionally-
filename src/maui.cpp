@@ -139,7 +139,8 @@ int main(int argc, char **argv)
 	circuit.genDccPlacementCandidate();
 	endtime = chrono::steady_clock::now();
 	dccconstrainttime = chrono::duration_cast<chrono::duration<double>>(endtime - midtime);
-	
+    string cmd = "rm -rf *.out *_output" ;
+    system( cmd.c_str() ) ;
     //-------- Binary Search -------------------------
 	printf( "\033[32m[Info]: Analyzing Timing Constraint and Searching Optimal Tc...\033[0m\n" );
 	double pretc = 0, prepretc = 0;
