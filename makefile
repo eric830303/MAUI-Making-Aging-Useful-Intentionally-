@@ -37,7 +37,7 @@ cleanall: clean deloutput
 	@printf "\033[32m[Info]:\033[0m Finish.\n"
 
 clean: clear
-	@printf "\033[32m[Info]:\033[0m Clean all SAT files.\n"
+	@printf "\033[32m[Info]:\033[0m Clean all SAT and obj files.\n"
 	@rm -rf *.out $(EXE)
 	@rm -rf *_output
 clear:
@@ -46,7 +46,8 @@ clear:
 
 deloutput:
 	@printf "\033[32m[Info]:\033[0m Delete all output files.\n"
-	@rm -rf ./$(OUTPUTFILE)
+	@rm -rf *.out
+	@rm -rf *_output
 #--------------------- CHECK -----------------------------------
 info:
 	@clear
