@@ -175,7 +175,7 @@ void ClockTree::checkFirstChildrenFormRoot(void)
 /////////////////////////////////////////////////////////////////////
 void ClockTree::initTcBound(void)
 {
-	this->_tcupbound  = ceilNPrecision( this->_tc * ((this->_aging) ? getAgingRateByDutyCycle(0.5) : 1.4), 1 );
+	this->_tcupbound  = ceilNPrecision( this->_tc * ((this->_aging) ? getAgingRate_givDC_givVth( 0.5, -1) : 1.4), 1 );
 	this->_tclowbound = floorNPrecision(this->_tc * 2 - this->_tcupbound, 1 );
 }
 
@@ -434,7 +434,7 @@ double ClockTree::calSv( double dc, double VthOffset, double VthFin  )
     double Right   = VthFin - VthOffset                     ;
     double Time    = dc*( this->getFinYear() )*( 31536000 ) ;
     double C       = 0.0039/2*( pow( Time, 0.2 ) )          ;
-    return -( Right/float(C) - 1 )/VthOffset                ;
+    return -( Right/(C) - 1 )/(VthOffset)                ;
 }
 void ClockTree::readParameter()
 {
@@ -466,10 +466,22 @@ void ClockTree::readParameter()
                     ptrTech->_VTH_CONVGNT[2] = this->calConvergentVth( 0.5, ptrTech->_VTH_OFFSET ) ;//No  DCC
                     ptrTech->_VTH_CONVGNT[3] = this->calConvergentVth( 0.8, ptrTech->_VTH_OFFSET ) ;//80% DCC
                     ptrTech->_Sv[0]          = this->calSv( 0.2, ptrTech->_VTH_OFFSET, ptrTech->_VTH_CONVGNT[0] ) ;//20% DCC
-                    ptrTech->_Sv[1]          = this->calSv( 0.4, ptrTech->_VTH_OFFSET, ptrTech->_VTH_CONVGNT[0] ) ;//40% DCC
-                    ptrTech->_Sv[2]          = this->calSv( 0.5, ptrTech->_VTH_OFFSET, ptrTech->_VTH_CONVGNT[0] ) ;//No  DCC
-                    ptrTech->_Sv[3]          = this->calSv( 0.8, ptrTech->_VTH_OFFSET, ptrTech->_VTH_CONVGNT[0] ) ;//80% DCC
+                    ptrTech->_Sv[1]          = this->calSv( 0.4, ptrTech->_VTH_OFFSET, ptrTech->_VTH_CONVGNT[1] ) ;//40% DCC
+                    ptrTech->_Sv[2]          = this->calSv( 0.5, ptrTech->_VTH_OFFSET, ptrTech->_VTH_CONVGNT[2] ) ;//No  DCC
+                    ptrTech->_Sv[3]          = this->calSv( 0.8, ptrTech->_VTH_OFFSET, ptrTech->_VTH_CONVGNT[3] ) ;//80% DCC
                     this->getLibList().push_back( ptrTech ) ;
+                    
+                    printf( GREEN"[Info] Aging Rates\n" );
+                    printf( CYAN"\tFin Year "   RESET"= %d\n", this->getFinYear() );
+                    printf( CYAN"\tVth Offset " RESET"= %f\n", ptrTech->_VTH_OFFSET );
+                    printf( CYAN"\tDelay gain  (20,nominal) " RESET"= %f\n",  getAgingRate_givDC_givVth( 0.2, -1 ) );
+                    printf( CYAN"\tDelay gain  (40,nominal) " RESET"= %f\n",  getAgingRate_givDC_givVth( 0.4, -1 ) );
+                    printf( CYAN"\tDelay gain  (50,nominal) " RESET"= %f\n",  getAgingRate_givDC_givVth( 0.5, -1 ) );
+                    printf( CYAN"\tDelay gain  (60,nominal) " RESET"= %f\n",  getAgingRate_givDC_givVth( 0.8, -1 ) );
+                    printf( CYAN"\tDelay gain  (20,VTA Buf) " RESET"= %f\n",  getAgingRate_givDC_givVth( 0.2, 0 )  );
+                    printf( CYAN"\tDelay gain  (40,VTA Buf) " RESET"= %f\n",  getAgingRate_givDC_givVth( 0.4, 0 )  );
+                    printf( CYAN"\tDelay gain  (50,VTA Buf) " RESET"= %f\n",  getAgingRate_givDC_givVth( 0.5, 0 )  );
+                    printf( CYAN"\tDelay gain  (60,VTA Buf) " RESET"= %f\n",  getAgingRate_givDC_givVth( 0.8, 0 )  );
                 }
             }
         }
@@ -1191,7 +1203,7 @@ void ClockTree::adjustOriginTc(void)
 	}
 	if( minslack < 0 )
 		tcdiff = abs(minslackpath->getSlack());
-	else if(minslack > (this->_origintc * (roundNPrecision(getAgingRateByDutyCycle(0.5), PRECISION) - 1)))
+	else if(minslack > (this->_origintc * (roundNPrecision( getAgingRate_givDC_givVth( 0.5, -1 ), PRECISION) - 1)))
 		tcdiff = (this->_origintc - floorNPrecision(((this->_origintc - minslackpath->getSlack()) * 1.2), PRECISION)) * -1;
 	if( tcdiff != 0 )
 	{
@@ -1356,36 +1368,54 @@ void ClockTree::VTAConstraintFFtoFF( CriticalPath *path )
     this->_VTAconstraintlist.insert( clause );
     
     //Part A. Formulate possible pairs of nodes in stClkPath
-    for( int L1 = 0 ; L1 < stClkPath.size()-2; L1++ )
+    if( this->ifdoVTA() )
     {
-        for( int L2 = L1 + 1 ; L2 < stClkPath.size()-1; L2++ )
+        for( int L1 = 0 ; L1 < stClkPath.size()-2; L1++ )
         {
-            clause = to_string( (stClkPath.at(L1)->getNodeNumber()+2) * -1 ) + " " + to_string( (stClkPath.at(L2)->getNodeNumber()+2) * -1 )+ " 0" ;
+            for( int L2 = L1 + 1 ; L2 < stClkPath.size()-1; L2++ )
+            {
+                clause = to_string( (stClkPath.at(L1)->getNodeNumber()+2) * -1 ) + " " + to_string( (stClkPath.at(L2)->getNodeNumber()+2) * -1 )+ " 0" ;
+                this->_VTAconstraintlist.insert( clause );
+            }
+            
+            if( stClkPath.at(L1) == commonParent ) idCommonParent = L1 ;
+        }
+        //Part B. Formulate possible pairs of nodes in edClkPath
+        //L1 range: root <-> common parent
+        //L2 range: right child of common parent <-> right end
+        for( int L1 = 0 ; L1 <= idCommonParent; L1++ )
+        {
+            for( int L2 = idCommonParent + 1 ; L2 < edClkPath.size()-1; L2++ )
+            {
+                clause = to_string( (edClkPath.at(L1)->getNodeNumber()+2) * -1 ) + " " + to_string( (edClkPath.at(L2)->getNodeNumber()+2) * -1 )+ " 0" ;
+                this->_VTAconstraintlist.insert( clause );
+            }
+        }
+        //Part C. Formulate possible pairs of nodes in edClkPath
+        for( int L1 = idCommonParent + 1 ; L1 < edClkPath.size()-2; L1++ )
+        {
+            for( int L2 = L1 + 1 ; L2 < edClkPath.size()-1; L2++ )
+            {
+                clause = to_string( (edClkPath.at(L1)->getNodeNumber()+2) * -1 ) + " " + to_string( (edClkPath.at(L2)->getNodeNumber()+2) * -1 )+ " 0" ;
+                this->_VTAconstraintlist.insert( clause );
+            }
+        }
+    }
+    //-- Not Do VTA ------------------------------------------------------
+    else
+    {
+        for( int L1 = 0 ; L1 < stClkPath.size()-2; L1++ )
+        {
+            clause = to_string( (stClkPath.at(L1)->getNodeNumber()+2) * -1) + " 0" ;
             this->_VTAconstraintlist.insert( clause );
         }
-        
-        if( stClkPath.at(L1) == commonParent ) idCommonParent = L1 ;
-    }
-    //Part B. Formulate possible pairs of nodes in edClkPath
-    //L1 range: root <-> common parent
-    //L2 range: right child of common parent <-> right end
-    for( int L1 = 0 ; L1 <= idCommonParent; L1++ )
-    {
-        for( int L2 = idCommonParent + 1 ; L2 < edClkPath.size()-1; L2++ )
+        for( int L1 = idCommonParent + 1  ; L1 < edClkPath.size()-2; L1++ )
         {
-            clause = to_string( (edClkPath.at(L1)->getNodeNumber()+2) * -1 ) + " " + to_string( (edClkPath.at(L2)->getNodeNumber()+2) * -1 )+ " 0" ;
+            clause = to_string( (edClkPath.at(L1)->getNodeNumber()+2) * -1) + " 0" ;
             this->_VTAconstraintlist.insert( clause );
         }
     }
-    //Part C. Formulate possible pairs of nodes in edClkPath
-    for( int L1 = idCommonParent + 1 ; L1 < edClkPath.size()-2; L1++ )
-    {
-        for( int L2 = L1 + 1 ; L2 < edClkPath.size()-1; L2++ )
-        {
-            clause = to_string( (edClkPath.at(L1)->getNodeNumber()+2) * -1 ) + " " + to_string( (edClkPath.at(L2)->getNodeNumber()+2) * -1 )+ " 0" ;
-            this->_VTAconstraintlist.insert( clause );
-        }
-    }
+    
 }
 void ClockTree::VTAConstraintPItoFF( CriticalPath *path )
 {
@@ -1397,11 +1427,23 @@ void ClockTree::VTAConstraintPItoFF( CriticalPath *path )
     //Part Z. Don't Put Header at FF
     clause = to_string( (edClkPath.back()->getNodeNumber()+2) * -1 ) + " 0" ;
     this->_VTAconstraintlist.insert( clause );
-    for( int L1 = 0 ; L1 < edClkPath.size()-2; L1++ )
+    
+    if( this->ifdoVTA() )
     {
-        for( int L2 = L1 + 1 ; L2 < edClkPath.size()-1; L2++ )
+        for( int L1 = 0 ; L1 < edClkPath.size()-2; L1++ )
         {
-            clause = to_string( (edClkPath.at(L1)->getNodeNumber()+2) * -1 ) + " " + to_string( (edClkPath.at(L2)->getNodeNumber()+2) * -1 )+ " 0" ;
+            for( int L2 = L1 + 1 ; L2 < edClkPath.size()-1; L2++ )
+            {
+                clause = to_string( (edClkPath.at(L1)->getNodeNumber()+2) * -1 ) + " " + to_string( (edClkPath.at(L2)->getNodeNumber()+2) * -1 )+ " 0" ;
+                this->_VTAconstraintlist.insert( clause );
+            }
+        }
+    }
+    else
+    {
+        for( int L1 = 0 ; L1 < edClkPath.size()-2; L1++ )
+        {
+            clause = to_string( (edClkPath.at(L1)->getNodeNumber()+2) * -1) + " 0" ;
             this->_VTAconstraintlist.insert( clause );
         }
     }
@@ -1414,11 +1456,22 @@ void ClockTree::VTAConstraintFFtoPO( CriticalPath *path )
     
     clause = to_string( (stClkPath.back()->getNodeNumber()+2) * -1 ) + " 0" ;
     this->_VTAconstraintlist.insert( clause );
-    for( int L1 = 0 ; L1 < stClkPath.size()-2; L1++ )
+    if( this->ifdoVTA() )
     {
-        for( int L2 = L1 + 1 ; L2 < stClkPath.size()-1; L2++ )
+        for( int L1 = 0 ; L1 < stClkPath.size()-2; L1++ )
         {
-            clause = to_string( (stClkPath.at(L1)->getNodeNumber()+2) * -1 ) + " " + to_string( (stClkPath.at(L2)->getNodeNumber()+2) * -1 )+ " 0" ;
+            for( int L2 = L1 + 1 ; L2 < stClkPath.size()-1; L2++ )
+            {
+                clause = to_string( (stClkPath.at(L1)->getNodeNumber()+2) * -1 ) + " " + to_string( (stClkPath.at(L2)->getNodeNumber()+2) * -1 )+ " 0" ;
+                this->_VTAconstraintlist.insert( clause );
+            }
+        }
+    }
+    else
+    {
+        for( int L1 = 0 ; L1 < stClkPath.size()-2; L1++ )
+        {
+            clause = to_string( (stClkPath.at(L1)->getNodeNumber()+2) * -1) + " 0" ;
             this->_VTAconstraintlist.insert( clause );
         }
     }
@@ -2011,9 +2064,9 @@ double ClockTree::timingConstraint_givDCC_givVTA(   CriticalPath *path,
                     this->writeClause_givDCC( clause, clknode, stDCCType );
                 
                 //-- VTA Formulation ------------------------------------------------------
-                if( clknode == stHeader )
+                if( this->ifdoVTA() && clknode == stHeader )
                     this->writeClause_givVTA( clause, clknode, stLibIndex );
-                else
+                else if( this->ifdoVTA() )
                     this->writeClause_givVTA( clause, clknode, -1 );//-1 denotes that node is not header
             }
         }
@@ -2030,9 +2083,9 @@ double ClockTree::timingConstraint_givDCC_givVTA(   CriticalPath *path,
                     this->writeClause_givDCC( clause, clknode, edDCCType );
                 
                 //-- VTA Formulation ------------------------------------------------------
-                if( clknode == edHeader )
+                if( this->ifdoVTA() && clknode == edHeader )
                     this->writeClause_givVTA( clause, clknode, edLibIndex );
-                else
+                else if( this->ifdoVTA() )
                     this->writeClause_givVTA( clause, clknode, -1 );//-1 denotes that node is not header
             }
         }
@@ -2052,9 +2105,9 @@ double ClockTree::timingConstraint_givDCC_givVTA(   CriticalPath *path,
                     this->writeClause_givDCC( clause, clknode, stDCCType );
                 
                 //-- VTA Formulation ------------------------------------------------------
-                if( clknode == stHeader )
+                if( this->ifdoVTA() && clknode == stHeader )
                     this->writeClause_givVTA( clause, clknode, stLibIndex );
-                else
+                else if( this->ifdoVTA() )
                     this->writeClause_givVTA( clause, clknode, -1 );
             }
             for( long k = commonparent+1; k < path->getEndPonitClkPath().size(); k++ )
@@ -2068,9 +2121,9 @@ double ClockTree::timingConstraint_givDCC_givVTA(   CriticalPath *path,
                     this->writeClause_givDCC( clause, clknode, edDCCType );
                 
                 //-- VTA Formulation ------------------------------------------------------
-                if( clknode == edHeader )
+                if( this->ifdoVTA() && clknode == edHeader )
                     this->writeClause_givVTA( clause, clknode, edLibIndex );
-                else
+                else if( this->ifdoVTA() )
                     this->writeClause_givVTA( clause, clknode, -1 );
             }//for(k)
         }//FFtoFF
