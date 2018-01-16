@@ -1341,8 +1341,21 @@ void ClockTree::dccPlacementByMasked(void)
 ----------------------------------------------------------------------------*/
 void ClockTree::VTAConstraint(void)
 {
-    if( !this->_doVTA ) return ;
+    if( this->ifdoVTA() == false )
+    {
+        for( auto const& node: this->_buflist )//_buflist = map< string, clknode * >
+        {
+            string clause ;
+            clause = to_string((node.second->getNodeNumber()+2) * -1) + " 0";
+            
+            if( this->_VTAconstraintlist.size() < (this->_VTAconstraintlist.max_size()-2) )
+                this->_dccconstraintlist.insert(clause);
+            else
+                    cerr << "\033[32m[Info]: DCC Constraint List Full!\033[0m\n";
+        }
+    }
 
+    if( this->ifdoVTA() == true )
     for( auto path : this->_pathlist )
     {
         if( path->getPathType() == FFtoFF )         this->VTAConstraintFFtoFF( path ) ;
@@ -1361,15 +1374,16 @@ void ClockTree::VTAConstraintFFtoFF( CriticalPath *path )
     int     idCommonParent = 0 ;
     string  clause = "" ;
     
-    //Part Z. Don't Put Header at FF
+    //-- Don't Put Header at FF ---------------------------------------------------
     clause = to_string( (stClkPath.back()->getNodeNumber()+2) * -1 ) + " 0" ;
     this->_VTAconstraintlist.insert( clause );
     clause = to_string( (edClkPath.back()->getNodeNumber()+2) * -1 ) + " 0" ;
     this->_VTAconstraintlist.insert( clause );
     
-    //Part A. Formulate possible pairs of nodes in stClkPath
+    //-- Do VTA --------------------------------------------------------------------
     if( this->ifdoVTA() )
     {
+        //Each pairs of nodes in stClkPath
         for( int L1 = 0 ; L1 < stClkPath.size()-2; L1++ )
         {
             for( int L2 = L1 + 1 ; L2 < stClkPath.size()-1; L2++ )
@@ -1380,7 +1394,7 @@ void ClockTree::VTAConstraintFFtoFF( CriticalPath *path )
             
             if( stClkPath.at(L1) == commonParent ) idCommonParent = L1 ;
         }
-        //Part B. Formulate possible pairs of nodes in edClkPath
+        //Each pairs of nodes in edClkPath
         //L1 range: root <-> common parent
         //L2 range: right child of common parent <-> right end
         for( int L1 = 0 ; L1 <= idCommonParent; L1++ )
@@ -1391,7 +1405,7 @@ void ClockTree::VTAConstraintFFtoFF( CriticalPath *path )
                 this->_VTAconstraintlist.insert( clause );
             }
         }
-        //Part C. Formulate possible pairs of nodes in edClkPath
+        //Each pairs of nodes in edClkPath
         for( int L1 = idCommonParent + 1 ; L1 < edClkPath.size()-2; L1++ )
         {
             for( int L2 = L1 + 1 ; L2 < edClkPath.size()-1; L2++ )
@@ -1401,21 +1415,6 @@ void ClockTree::VTAConstraintFFtoFF( CriticalPath *path )
             }
         }
     }
-    //-- Not Do VTA ------------------------------------------------------
-    else
-    {
-        for( int L1 = 0 ; L1 < stClkPath.size()-2; L1++ )
-        {
-            clause = to_string( (stClkPath.at(L1)->getNodeNumber()+2) * -1) + " 0" ;
-            this->_VTAconstraintlist.insert( clause );
-        }
-        for( int L1 = idCommonParent + 1  ; L1 < edClkPath.size()-2; L1++ )
-        {
-            clause = to_string( (edClkPath.at(L1)->getNodeNumber()+2) * -1) + " 0" ;
-            this->_VTAconstraintlist.insert( clause );
-        }
-    }
-    
 }
 void ClockTree::VTAConstraintPItoFF( CriticalPath *path )
 {
@@ -1428,6 +1427,7 @@ void ClockTree::VTAConstraintPItoFF( CriticalPath *path )
     clause = to_string( (edClkPath.back()->getNodeNumber()+2) * -1 ) + " 0" ;
     this->_VTAconstraintlist.insert( clause );
     
+    //-- Do VTA --------------------------------------------------------------------
     if( this->ifdoVTA() )
     {
         for( int L1 = 0 ; L1 < edClkPath.size()-2; L1++ )
@@ -1439,14 +1439,6 @@ void ClockTree::VTAConstraintPItoFF( CriticalPath *path )
             }
         }
     }
-    else
-    {
-        for( int L1 = 0 ; L1 < edClkPath.size()-2; L1++ )
-        {
-            clause = to_string( (edClkPath.at(L1)->getNodeNumber()+2) * -1) + " 0" ;
-            this->_VTAconstraintlist.insert( clause );
-        }
-    }
 }
 void ClockTree::VTAConstraintFFtoPO( CriticalPath *path )
 {
@@ -1456,6 +1448,7 @@ void ClockTree::VTAConstraintFFtoPO( CriticalPath *path )
     
     clause = to_string( (stClkPath.back()->getNodeNumber()+2) * -1 ) + " 0" ;
     this->_VTAconstraintlist.insert( clause );
+    //-- Do VTA --------------------------------------------------------------------
     if( this->ifdoVTA() )
     {
         for( int L1 = 0 ; L1 < stClkPath.size()-2; L1++ )
@@ -1465,14 +1458,6 @@ void ClockTree::VTAConstraintFFtoPO( CriticalPath *path )
                 clause = to_string( (stClkPath.at(L1)->getNodeNumber()+2) * -1 ) + " " + to_string( (stClkPath.at(L2)->getNodeNumber()+2) * -1 )+ " 0" ;
                 this->_VTAconstraintlist.insert( clause );
             }
-        }
-    }
-    else
-    {
-        for( int L1 = 0 ; L1 < stClkPath.size()-2; L1++ )
-        {
-            clause = to_string( (stClkPath.at(L1)->getNodeNumber()+2) * -1) + " 0" ;
-            this->_VTAconstraintlist.insert( clause );
         }
     }
 }
@@ -2272,7 +2257,7 @@ double ClockTree::calClkLaten_givDcc_givVTA(    vector<ClockTreeNode *> clkpath,
 /////////////////////////////////////////////////////////////////////
 void ClockTree::dumpClauseToCnfFile(void)
 {
-	if( !this->_placedcc )  return ;
+	//if( !this->_placedcc )  return ;
 	fstream cnffile ;
 	string cnfinput = this->_outputdir + "cnfinput_" + to_string(this->_tc);
 	if( !isDirectoryExist(this->_outputdir) )
@@ -2306,8 +2291,10 @@ void ClockTree::dumpClauseToCnfFile(void)
 /////////////////////////////////////////////////////////////////////
 void ClockTree::execMinisat(void)
 {
+    /*
     if(!this->_placedcc)
         return;
+     */
     // MiniSat input file
     string cnfinput = this->_outputdir + "cnfinput_" + to_string(this->_tc);
     // MiniSat output file
@@ -2364,7 +2351,7 @@ void ClockTree::tcBinarySearch( )
 //void ClockTree::tcBinarySearch(double slack)
 {
     // Place DCCs
-    if( this->_placedcc )
+    if( this->_placedcc || this->ifdoVTA() )
     {
         fstream cnffile;
         string line, cnfoutput = this->_outputdir + "cnfoutput_" + to_string(this->_tc);//Minisat results
@@ -2397,25 +2384,35 @@ void ClockTree::tcBinarySearch( )
         }
         cnffile.close();
     }
-    // Do not place DCCs
-    /*
-    else if(!this->_placedcc)
+    else
     {
+        double minslack = 9999 ;
+        for( auto const& path: this->_pathlist )
+        {
+            if((path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF))
+                continue;
+            // Update timing information
+            double slack = this->UpdatePathTiming( path, false );
+            
+            if( slack < minslack )
+            {
+                minslack = min( slack, minslack );
+            }
+        }
         // Change the lower boundary
-        if(slack <= 0)
+        if( minslack <= 0)
         {
             this->_tclowbound = this->_tc;
             this->_tc = ceilNPrecision((this->_tcupbound + this->_tclowbound) / 2, PRECISION);
         }
         // Change the upper boundary
-        else if(slack > 0)
+        else if( minslack > 0)
         {
             this->_besttc = this->_tc;
             this->_tcupbound = this->_tc;
             this->_tc = floorNPrecision((this->_tcupbound + this->_tclowbound) / 2, PRECISION);
         }
     }
-     */
 }
 
 
@@ -2428,12 +2425,8 @@ void ClockTree::tcBinarySearch( )
 /////////////////////////////////////////////////////////////////////
 void ClockTree::updateAllPathTiming(void)
 {
-    //-- Check --------------------------------------------------------------------------
-    if( this->_besttc == 0 )    return ;
-    
     //-- Declare -------------------------------------------------------------------------
 	double minslack = 9999          ;
-	this->_tc       = this->_besttc ;
 	
     //-- Read CNF (Minisat Output) -------------------------------------------------------
     fstream cnffile;
@@ -2455,6 +2448,7 @@ void ClockTree::updateAllPathTiming(void)
     //-- DCC or VTA Decoding --------------------------------------------------------------
     if( this->_placedcc || this->ifdoVTA() )
     {
+        this->_tc = this->_besttc ;
         //-- Init -------------------------------------------------------------------------
         for( auto const& node: this->_buflist )
         {
@@ -2566,7 +2560,6 @@ void ClockTree::updateAllPathTiming(void)
 // Minimize the DCC deployment based on the optimal Tc
 //
 /////////////////////////////////////////////////////////////////////
-/*
 void ClockTree::minimizeDccPlacement(void)
 {
 	if(!this->_mindccplace || !this->_placedcc || (this->_besttc == 0))
@@ -2614,7 +2607,7 @@ void ClockTree::minimizeDccPlacement(void)
 			if((path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF))
 				continue;
 			// Assess if the critical path occurs timing violation in the DCC deployment
-			double slack = this->updatePathTimingWithDcc(path, 0);
+			double slack = this->UpdatePathTiming( path, false ) ;
 			if(slack < 0)
 			{
 				endflag = 0;
@@ -2661,7 +2654,6 @@ void ClockTree::minimizeDccPlacement(void)
 		if(node.second->ifPlacedDcc() && node.second->isFinalBuffer())
 			this->_dccatlastbufnum++;
 }
-*/
 /////////////////////////////////////////////////////////////////////
 //
 // ClockTree Class - Public Method

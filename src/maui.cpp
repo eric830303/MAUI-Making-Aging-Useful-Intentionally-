@@ -176,10 +176,10 @@ int main(int argc, char **argv)
 	// Update the timing of each critical path with given "Optimal tc"
 	circuit.updateAllPathTiming();
 	// Minimize DCC deploymentwhere
-	//circuit.minimizeDccPlacement();
+	circuit.minimizeDccPlacement();
 	// Recheck the "Optimal tc"
     cout << "\033[32m[Info]: Tc recheck...\033[0m\n";
-	//circuit.tcRecheck();
+	circuit.tcRecheck();
 	endtime = chrono::steady_clock::now();
 	checktime = chrono::duration_cast<chrono::duration<double>>(endtime - midtime);
 	
