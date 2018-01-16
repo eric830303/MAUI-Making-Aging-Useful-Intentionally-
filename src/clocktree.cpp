@@ -477,11 +477,11 @@ void ClockTree::readParameter()
                     printf( CYAN"\tDelay gain  (20,nominal) " RESET"= %f\n",  getAgingRate_givDC_givVth( 0.2, -1 ) );
                     printf( CYAN"\tDelay gain  (40,nominal) " RESET"= %f\n",  getAgingRate_givDC_givVth( 0.4, -1 ) );
                     printf( CYAN"\tDelay gain  (50,nominal) " RESET"= %f\n",  getAgingRate_givDC_givVth( 0.5, -1 ) );
-                    printf( CYAN"\tDelay gain  (60,nominal) " RESET"= %f\n",  getAgingRate_givDC_givVth( 0.8, -1 ) );
+                    printf( CYAN"\tDelay gain  (80,nominal) " RESET"= %f\n",  getAgingRate_givDC_givVth( 0.8, -1 ) );
                     printf( CYAN"\tDelay gain  (20,VTA Buf) " RESET"= %f\n",  getAgingRate_givDC_givVth( 0.2, 0 )  );
                     printf( CYAN"\tDelay gain  (40,VTA Buf) " RESET"= %f\n",  getAgingRate_givDC_givVth( 0.4, 0 )  );
                     printf( CYAN"\tDelay gain  (50,VTA Buf) " RESET"= %f\n",  getAgingRate_givDC_givVth( 0.5, 0 )  );
-                    printf( CYAN"\tDelay gain  (60,VTA Buf) " RESET"= %f\n",  getAgingRate_givDC_givVth( 0.8, 0 )  );
+                    printf( CYAN"\tDelay gain  (80,VTA Buf) " RESET"= %f\n",  getAgingRate_givDC_givVth( 0.8, 0 )  );
                 }
             }
         }
@@ -2229,7 +2229,7 @@ double ClockTree::calClkLaten_givDcc_givVTA(    vector<ClockTreeNode *> clkpath,
         }
     }
     
-    laten += clkpath.back()->getGateData()->getWireTime() * agingrate ;
+    laten += clkpath.back()->getGateData()->getWireTime() * getAgingRate_givDC_givVth( DC, -1 ) ;
     
     if( DCCLoc != NULL )
     {
