@@ -1577,6 +1577,7 @@ void ClockTree::genDccPlacementCandidate(void)
 /////////////////////////////////////////////////////////////////////
 double ClockTree::timingConstraint(void)
 {
+    if( this->_placedcc == false && this->ifdoVTA() == false ) return -1 ;
     printf( YELLOW"\t[Timing Constraint] " RESET"Tc range: %f - %f ...\033[0m\n", this->_tclowbound, this->_tcupbound ) ;
     int id = 0 ;
 	this->_timingconstraintlist.clear();
@@ -2257,7 +2258,7 @@ double ClockTree::calClkLaten_givDcc_givVTA(    vector<ClockTreeNode *> clkpath,
 /////////////////////////////////////////////////////////////////////
 void ClockTree::dumpClauseToCnfFile(void)
 {
-	//if( !this->_placedcc )  return ;
+	if( !this->_placedcc && !(this->ifdoVTA()) )  return ;
 	fstream cnffile ;
 	string cnfinput = this->_outputdir + "cnfinput_" + to_string(this->_tc);
 	if( !isDirectoryExist(this->_outputdir) )
@@ -2404,6 +2405,8 @@ void ClockTree::tcBinarySearch( )
         {
             this->_tclowbound = this->_tc;
             this->_tc = ceilNPrecision((this->_tcupbound + this->_tclowbound) / 2, PRECISION);
+            printf( YELLOW"\t[Slack] " RESET "slack = " RED"%f \033[0m\n", minslack ) ;
+            printf( YELLOW"\t[Binary Search] " RESET"Next Tc range: %f - %f \033[0m\n", _tclowbound, _tcupbound ) ;
         }
         // Change the upper boundary
         else if( minslack > 0)
@@ -2411,6 +2414,8 @@ void ClockTree::tcBinarySearch( )
             this->_besttc = this->_tc;
             this->_tcupbound = this->_tc;
             this->_tc = floorNPrecision((this->_tcupbound + this->_tclowbound) / 2, PRECISION);
+            printf( YELLOW"\t[Slack] " RESET "slack = " GREEN"%f \033[0m\n", minslack ) ;
+            printf( YELLOW"\t[Binary Search] " RESET"Next Tc range: %f - %f \033[0m\n", _tclowbound, _tcupbound ) ;
         }
     }
 }
@@ -2428,27 +2433,27 @@ void ClockTree::updateAllPathTiming(void)
     //-- Declare -------------------------------------------------------------------------
 	double minslack = 9999          ;
 	
-    //-- Read CNF (Minisat Output) -------------------------------------------------------
-    fstream cnffile;
-    string  line = "" ;
-    string  lastsatfile = "";
-    lastsatfile = this->_outputdir + "cnfoutput_" + to_string(this->_besttc);
-    if( !isFileExist(lastsatfile) )
-    {
-        cerr << "\033[31m[Error]: File \"" << lastsatfile << "\" does not found!\033[0m\n";
-        return;
-    }
-    cnffile.open(lastsatfile, ios::in);
-    if( !cnffile.is_open() )
-    {
-        cerr << "\033[31m[Error]: Cannot open " << lastsatfile << "\033[0m\n";
-        cnffile.close();
-        return;
-    }
     //-- If Place DCC or VTA --------------------------------------------------------------
     //-- DCC or VTA Decoding --------------------------------------------------------------
     if( this->_placedcc || this->ifdoVTA() )
     {
+        //-- Read CNF (Minisat Output) -------------------------------------------------------
+        fstream cnffile;
+        string  line = "" ;
+        string  lastsatfile = "";
+        lastsatfile = this->_outputdir + "cnfoutput_" + to_string(this->_besttc);
+        if( !isFileExist(lastsatfile) )
+        {
+            cerr << "\033[31m[Error]: File \"" << lastsatfile << "\" does not found!\033[0m\n";
+            return;
+        }
+        cnffile.open(lastsatfile, ios::in);
+        if( !cnffile.is_open() )
+        {
+            cerr << "\033[31m[Error]: Cannot open " << lastsatfile << "\033[0m\n";
+            cnffile.close();
+            return;
+        }
         this->_tc = this->_besttc ;
         //-- Init -------------------------------------------------------------------------
         for( auto const& node: this->_buflist )
