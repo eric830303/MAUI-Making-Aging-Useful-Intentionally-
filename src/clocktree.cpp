@@ -2431,7 +2431,8 @@ void ClockTree::updateAllPathTiming(void)
     //-- Read CNF (Minisat Output) -------------------------------------------------------
     fstream cnffile;
     string  line = "" ;
-    string  lastsatfile = this->_outputdir + "cnfoutput_" + to_string(this->_tc);
+    string  lastsatfile = "";
+    lastsatfile = this->_outputdir + "cnfoutput_" + to_string(this->_besttc);
     if( !isFileExist(lastsatfile) )
     {
         cerr << "\033[31m[Error]: File \"" << lastsatfile << "\" does not found!\033[0m\n";
