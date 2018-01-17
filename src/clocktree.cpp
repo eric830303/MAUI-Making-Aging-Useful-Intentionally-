@@ -12,6 +12,7 @@
 #include <iterator>
 #include <fstream>
 #include <queue>
+#include <sstream>
 #include <fcntl.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
@@ -3447,18 +3448,19 @@ void ClockTree::printPath( CriticalPath*path, int mode )
     }
     //-- Declaratio -----------------------------------------------------------
     vector<ClockTreeNode*> stClkPath, edClkPath ;
-    int             index        = 0    ;
-    int             commonparent = 0    ;
     int             LibIndex     = -1   ;
-    bool            MeetParent   = 0    ;
     long            parentid     = 0    ;
     double          buftime      = 0    ;
     double          req_time     = 0    ;
     double          avl_time     = 0    ;
     double          slack        = 0    ;
     double          DC           = 0.5  ;
-
     GateData*       gatePtr      = NULL ;
+    ifstream        file  ;
+    string          line  ;
+    
+    file.open( "setting/path.txt", ios::in ) ;
+    
     
     //-- Assignment -----------------------------------------------------------
     if( path->getPathType() == FFtoFF || path->getPathType() == FFtoPO )
@@ -3466,47 +3468,82 @@ void ClockTree::printPath( CriticalPath*path, int mode )
     if( path->getPathType() == FFtoFF || path->getPathType() == PItoFF )
         edClkPath = path->getEndPonitClkPath() ;
     
-    //-- Print ----------------------------------------------------------------
+    //-- Preprocess -----------------------------------------------------------
     printf("--------------------------------------------------------\n");
     if( mode == -1 )
         printf( CYAN"[Topology-" YELLOW"Fresh" CYAN"] \n" RESET );
     else if( mode == 1 )
         printf( CYAN"[Topology-" YELLOW"10 year Aging" CYAN"] \n" RESET );
     else
+    {
         printf( CYAN"[Topology-" YELLOW"10 year Aging With Given Headers/DCCs" CYAN"] \n" RESET );
+        if( !file )
+        {
+            printf( RED"[Error] " RESET"Can't Read file\n") ;
+            return ;
+        }
+        while( getline( file, line ) )
+        {
+            long    BufID       = 0   ;
+            int     BufVthLib   = -1  ;
+            double  BufDCC      = 0.5 ;
+            istringstream   token( line )     ;
+            token >> BufID >> BufVthLib >> BufDCC ;
+            ClockTreeNode *buffer = searchClockTreeNode( BufID ) ;
+            if( buffer == NULL )
+            {
+                printf( RED"[Error] " RESET"Can't find clock node with id = %ld\n", BufID ) ;
+                return ;
+            }
+            buffer->setDccType( BufDCC )    ;
+            buffer->setVTAType( BufVthLib ) ;
+        }
+    }
     
     //-- Cal & Print ClockTree -------------------------------------------------
     if( path->getPathType() == FFtoFF )
     {
+        //-- Declaration -------------------------------------------------------
         printf( "PathType: " BLUE"FFtoFF\n" RESET );
-        ClockTreeNode*  Parent = path->findLastSameParentNode() ;
-        for( const auto clknode:edClkPath )
+        ClockTreeNode*  Parent  = path->findLastSameParentNode() ;
+        ClockTreeNode*  clknode = NULL ;
+        long            common  = Parent->getDepth() ;
+        
+        //-- Right Branch -------------------------------------------------------
+        for( int i = 0 ; i <= common; i++ )  printf("                      ");
+        for( long i = common +1; i < edClkPath.size(); i++ )
         {
+            clknode  = edClkPath.at(i) ;
             gatePtr  = clknode->getGateData() ;
             parentid = (clknode != this->_clktreeroot)?(clknode->getParent()->getNodeNumber() ):(0);
             buftime  = (clknode != edClkPath.back())?(gatePtr->getGateTime()+gatePtr->getWireTime()):(gatePtr->getWireTime());
             buftime *= (mode    != -1 )?(getAgingRate_givDC_givVth( DC, LibIndex )):(1);
-            avl_time+= (MeetParent)?(0):(buftime);
             req_time+= buftime ;
            
-            
             printf( "%s(%ld,%ld," RED"%f" RESET")--", gatePtr->getGateName().c_str() ,clknode->getNodeNumber(), parentid, buftime );
-            
-            if( clknode == Parent ){
-                MeetParent   = 1     ;
-                commonparent = index ;
-            }
-            index++ ;
         }
         printf( "  => " YELLOW"End/Cj/Right " RESET"Clk Path\n");
-        for( int i = 0 ; i <= commonparent; i++ )  printf("                      ");
+        for( int i = 0 ; i <= common; i++ )  printf("                      ");
         cout << "|\n" ;
-        for( int i = 0 ; i <= commonparent; i++ )  printf("                      ");
+        //-- Common Part ---------------------------------------------------------
+        for( long i = 0; i <= common; i++ )
+        {
+            clknode  = edClkPath.at(i) ;
+            gatePtr  = clknode->getGateData() ;
+            parentid = (clknode != this->_clktreeroot)?(clknode->getParent()->getNodeNumber() ):(0);
+            buftime  = (clknode != edClkPath.back())?(gatePtr->getGateTime()+gatePtr->getWireTime()):(gatePtr->getWireTime());
+            buftime *= (mode    != -1 )?(getAgingRate_givDC_givVth( DC, LibIndex )):(1);
+            avl_time+= (buftime);
+            req_time+= buftime ;
+            
+            printf( "%s(%ld,%ld," RED"%f" RESET")---", gatePtr->getGateName().c_str() ,clknode->getNodeNumber(), parentid, buftime );
+        }
+        cout << endl ;
+        for( int i = 0 ; i <= common; i++ )  printf("                      ");
         cout << "|\n" ;
-        for( int i = 0 ; i <= commonparent; i++ )  printf("                      " );
-        
-        ClockTreeNode* clknode = NULL ;
-        for( int i = commonparent+1; i < stClkPath.size(); i++ )
+        for( int i = 0 ; i <= common; i++ )  printf("                      " );
+        //-- Left Branch ---------------------------------------------------------
+        for( long i = common +1; i < stClkPath.size(); i++ )
         {
             clknode = stClkPath.at(i) ;
             gatePtr  = clknode->getGateData() ;
@@ -3515,8 +3552,7 @@ void ClockTree::printPath( CriticalPath*path, int mode )
             buftime *= (mode    != -1 )?(getAgingRate_givDC_givVth( DC, LibIndex )):(1);
             avl_time+= buftime ;
         
-            
-            printf( "%s(%ld,%ld," RED"%f" RESET")--", gatePtr->getGateName().c_str() ,edClkPath.at(i)->getNodeNumber(),  parentid,buftime );
+            printf( "%s(%ld,%ld," RED"%f" RESET")--", gatePtr->getGateName().c_str() ,stClkPath.at(i)->getNodeNumber(),  parentid,buftime );
         }
         printf( "  => " YELLOW"Start/Ci/Left " RESET"Clk Path\n");
     }
@@ -3550,6 +3586,7 @@ void ClockTree::printPath( CriticalPath*path, int mode )
         }
         printf( "=> " YELLOW"Start/Ci/Left " RESET"Clk Path\n");
     }
+    //-- Print Timing -------------------------------------------------
     double ci = avl_time ;
     double cj = req_time ;
     req_time += (path->getTsu() * this->_agingtsu) + this->_tc;
