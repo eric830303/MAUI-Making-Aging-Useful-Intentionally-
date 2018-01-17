@@ -521,6 +521,8 @@ int ClockTree::checkParameter(int argc, char **argv, string *message)
 			this->_mindccplace = 1;								// Minimize DCC deployment
 		else if(strcmp(argv[loop], "-tc_recheck") == 0)
 			this->_tcrecheck = 1;								// Recheck Tc
+        else if(strcmp(argv[loop], "-print=path") == 0)
+            this->_printpath = 1;
 		else if(strcmp(argv[loop], "-mask_leng") == 0)
 		{
 			if(!isRealNumber(string(argv[loop+1])) || (stod(string(argv[loop+1])) < 0) || (stod(string(argv[loop+1])) > 1))
@@ -3335,17 +3337,18 @@ void ClockTree::printBufferInsertedList(void)
 }
 /*-------------------------------------------------------------
  Func Name:
- getAgingRatee_givDC_givVth()
+    getAgingRatee_givDC_givVth()
  Introduction:
- Calculate the aging rate of buffer
- by given duty cycle and given Vth offset.
+    Calculate the aging rate of buffer
+    by given duty cycle and given Vth offset.
  Note:
- The aging rate will differ from ones that gotten from seniors
+    The aging rate will differ from ones that gotten from seniors
  --------------------------------------------------------------*/
 double ClockTree::getAgingRate_givDC_givVth( double DC, int Libindex )
 {
     //---- Sv -------------------------------------------------------
     double Sv = 0 ;
+    
     if( Libindex != -1 )
     {
         if( DC == 0.2 )
@@ -3364,13 +3367,205 @@ double ClockTree::getAgingRate_givDC_givVth( double DC, int Libindex )
     }
     else Sv = 0 ;
     
+    if( DC == -1 ) DC = 0.5 ;
     //---- Vth offset -----------------------------------------------
     double Vth_offset = 0 ;
     if( Libindex != -1 )
         Vth_offset = this->getLibList().at(Libindex)->_VTH_OFFSET ;
     
     //---- Aging rate -----------------------------------------------
-    double Vth_nbti = ( 1 - Sv*Vth_offset )*( COF_A )*( pow( DC*( TenYear_Sec ), 0.2) );
+    double Vth_nbti = ( 1 - Sv*Vth_offset )*( 0.0039/2 )*( pow( DC*( 315360000 ), 0.2) );
     return (1 + Vth_nbti*2 + Vth_offset* 2 ) ;
     
 }
+/*-------------------------------------------------------------
+ Func Name:
+    removeCNFFile()
+ --------------------------------------------------------------*/
+void ClockTree::removeCNFFile()
+{
+    string cmd = "rm -rf *.out" ;
+    system( cmd.c_str() ) ;
+    cmd = "*_output"      ;
+    system( cmd.c_str() ) ;
+}
+/*-------------------------------------------------------------
+ Func Name:
+    printPath
+ --------------------------------------------------------------*/
+void ClockTree::printPath()
+{
+    while( true )
+    {
+        int mode = -1 ;
+        printf("------------ " GREEN"Please input a number " RESET"---------------------\n");
+        printf( "   -1: Leave the loop\n" );
+        printf( "   Other: path id from 0 to %ld \n", this->_pathlist.size()-1 );
+        printf( "   Your input:" );
+        cin >> mode ;
+        if( mode < 0 ) break ;
+        else if( mode >=  this->_pathlist.size() )
+        {
+            printf( RED"   [ERROR] " RESET"Index is out of range\n" );
+            sleep( 2 );
+            system( "clear" );
+        }
+        else
+            printPath( mode );
+        
+     }
+}
+void ClockTree::printPath( int pathid )
+{
+    //-- Check ---------------------------------------------------------------
+    if( pathid >= this->_pathlist.size() || pathid < 0 )
+    {
+        cerr << RED"[ERROR] Path id is out of range\n ";
+        return ;
+    }
+    //-- Declaratio -----------------------------------------------------------
+    system( "clear" );
+    CriticalPath* path = this->_pathlist.at( pathid ) ;
+    
+    printf("------------------ " GREEN"Print Path " RESET"--------------------------\n");
+    printf("------ Following is the topology of the pipeline -------\n");
+    printf( CYAN"[How] " RESET"How to read ?\n");
+    printf("==> CLK_Node_Name( NodeID, ParentID, " RED"Buffer Delay" RESET" ) \n");
+    //-- Print (No Aging)----------------------------------------------------------------
+    printPath( path, -1 );
+    //-- Print (Aging)----------------------------------------------------------------
+    printPath( path, 1 ) ;
+    
+}
+void ClockTree::printPath( CriticalPath*path, int mode )
+{
+    //-- Check ---------------------------------------------------------------
+    if( path == NULL )
+    {
+        cerr << RED"[ERROR] Path id is out of range\n ";
+        return ;
+    }
+    //-- Declaratio -----------------------------------------------------------
+    vector<ClockTreeNode*> stClkPath, edClkPath ;
+    int             index        = 0    ;
+    int             commonparent = 0    ;
+    int             LibIndex     = -1   ;
+    bool            MeetParent   = 0    ;
+    long            parentid     = 0    ;
+    double          buftime      = 0    ;
+    double          req_time     = 0    ;
+    double          avl_time     = 0    ;
+    double          slack        = 0    ;
+    double          DC           = 0.5  ;
+
+    GateData*       gatePtr      = NULL ;
+    
+    //-- Assignment -----------------------------------------------------------
+    if( path->getPathType() == FFtoFF || path->getPathType() == FFtoPO )
+        stClkPath = path->getStartPonitClkPath() ;
+    if( path->getPathType() == FFtoFF || path->getPathType() == PItoFF )
+        edClkPath = path->getEndPonitClkPath() ;
+    
+    //-- Print ----------------------------------------------------------------
+    printf("--------------------------------------------------------\n");
+    if( mode == -1 )
+        printf( CYAN"[Topology-" YELLOW"Fresh" CYAN"] \n" RESET );
+    else if( mode == 1 )
+        printf( CYAN"[Topology-" YELLOW"10 year Aging" CYAN"] \n" RESET );
+    else
+        printf( CYAN"[Topology-" YELLOW"10 year Aging With Given Headers/DCCs" CYAN"] \n" RESET );
+    
+    //-- Cal & Print ClockTree -------------------------------------------------
+    if( path->getPathType() == FFtoFF )
+    {
+        printf( "PathType: " BLUE"FFtoFF\n" RESET );
+        ClockTreeNode*  Parent = path->findLastSameParentNode() ;
+        for( const auto clknode:edClkPath )
+        {
+            gatePtr  = clknode->getGateData() ;
+            parentid = (clknode != this->_clktreeroot)?(clknode->getParent()->getNodeNumber() ):(0);
+            buftime  = (clknode != edClkPath.back())?(gatePtr->getGateTime()+gatePtr->getWireTime()):(gatePtr->getWireTime());
+            buftime *= (mode    != -1 )?(getAgingRate_givDC_givVth( DC, LibIndex )):(1);
+            avl_time+= (MeetParent)?(0):(buftime);
+            req_time+= buftime ;
+           
+            
+            printf( "%s(%ld,%ld," RED"%f" RESET")--", gatePtr->getGateName().c_str() ,clknode->getNodeNumber(), parentid, buftime );
+            
+            if( clknode == Parent ){
+                MeetParent   = 1     ;
+                commonparent = index ;
+            }
+            index++ ;
+        }
+        printf( "  => " YELLOW"End/Cj/Right " RESET"Clk Path\n");
+        for( int i = 0 ; i <= commonparent; i++ )  printf("                      ");
+        cout << "|\n" ;
+        for( int i = 0 ; i <= commonparent; i++ )  printf("                      ");
+        cout << "|\n" ;
+        for( int i = 0 ; i <= commonparent; i++ )  printf("                      " );
+        
+        ClockTreeNode* clknode = NULL ;
+        for( int i = commonparent+1; i < stClkPath.size(); i++ )
+        {
+            clknode = stClkPath.at(i) ;
+            gatePtr  = clknode->getGateData() ;
+            parentid = (clknode != this->_clktreeroot)?(clknode->getParent()->getNodeNumber() ):(0);
+            buftime  = (clknode != stClkPath.back())?(gatePtr->getGateTime()+gatePtr->getWireTime()):(gatePtr->getWireTime());
+            buftime *= (mode    != -1 )?(getAgingRate_givDC_givVth( DC, LibIndex )):(1);
+            avl_time+= buftime ;
+        
+            
+            printf( "%s(%ld,%ld," RED"%f" RESET")--", gatePtr->getGateName().c_str() ,edClkPath.at(i)->getNodeNumber(),  parentid,buftime );
+        }
+        printf( "  => " YELLOW"Start/Ci/Left " RESET"Clk Path\n");
+    }
+    else if( path->getPathType() == PItoFF )
+    {
+        printf("PathType: " BLUE"PItoFF\n" RESET );
+        for( const auto clknode:edClkPath )
+        {
+            gatePtr = clknode->getGateData() ;
+            parentid = (clknode != this->_clktreeroot)?(clknode->getParent()->getNodeNumber() ):(0);
+            buftime  = (clknode != edClkPath.back())?(gatePtr->getGateTime()+gatePtr->getWireTime()):(gatePtr->getWireTime());
+            buftime *= (mode    != -1 )?(getAgingRate_givDC_givVth( DC, LibIndex) ):(1);
+            req_time+= buftime ;
+            
+            printf( "%s(%ld,%ld," RED"%f" RESET")--", gatePtr->getGateName().c_str() ,clknode->getNodeNumber(), parentid, buftime );
+        }
+        printf( "=> " YELLOW"End/Cj/Right " RESET"Clk Path\n");
+    }
+    else if( path->getPathType() == FFtoPO )
+    {
+        printf("PathType: " BLUE"FFtoPO\n" RESET );
+        for( const auto clknode:stClkPath )
+        {
+            gatePtr = clknode->getGateData() ;
+            parentid = (clknode != this->_clktreeroot)?(clknode->getParent()->getNodeNumber() ):(0);
+            buftime  = (clknode != stClkPath.back())?(gatePtr->getGateTime()+gatePtr->getWireTime()):(gatePtr->getWireTime());
+            buftime *= (mode    != -1 )?(getAgingRate_givDC_givVth(DC, LibIndex)):(1);
+            avl_time+= buftime ;
+            
+            printf( "%s(%ld,%ld," RED"%f" RESET")--", gatePtr->getGateName().c_str() ,clknode->getNodeNumber(), parentid, buftime );
+        }
+        printf( "=> " YELLOW"Start/Ci/Left " RESET"Clk Path\n");
+    }
+    double ci = avl_time ;
+    double cj = req_time ;
+    req_time += (path->getTsu() * this->_agingtsu) + this->_tc;
+    avl_time += path->getTinDelay() + (path->getTcq() * this->_agingtcq) + (path->getDij() * this->_agingdij);
+    slack = req_time - avl_time  ;
+    
+    printf( "\n");
+    printf( RESET"slack  = %f (ns)\n", slack );
+    printf( RESET"Tc     = %f (ns)\n", this->_tc );
+    printf( RESET"Ci     = %f (ns)\n", ci );
+    printf( RESET"Cj     = %f (ns)\n", cj );
+    printf( RESET"Cj-Ci  = %f (ns)\n", cj-ci );
+}
+
+
+
+
+
+

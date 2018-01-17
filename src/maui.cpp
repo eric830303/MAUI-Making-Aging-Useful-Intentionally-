@@ -39,6 +39,7 @@ int main(int argc, char **argv)
 			cout << "      -nondcc                Don't consider placing any DCC in clock tree. (default disable)\n";
 			cout << "      -nonaging              Don't consider any aging in clock tree. (default disable)\n";
             cout << "      -nonVTA                Don't do Vth assignment\n";
+            cout << "      -print=path            Print the pipeline\n";
 			cout << "      -mindcc                Minimize the number of DCCs placed in clock tree. (default disable)\n";
 			cout << "                               Enable when \'-nondcc\' option enable.\n";
 			cout << "      -tc_recheck            Check Tc again after binary search. (default disable)\n";
@@ -89,6 +90,8 @@ int main(int argc, char **argv)
 	circuit.parseTimingReport();
 	cout << "\033[32m[Info]: Close the timing report file.\033[0m\n";
     
+    
+    
 	//---- CLK Gating ------------------------------------------------
     //1. Replace some buffers in the clock tree to clock gating cells
 	circuit.clockGatingCellReplacement();
@@ -100,8 +103,14 @@ int main(int argc, char **argv)
 	circuit.adjustOriginTc();
 	endtime = chrono::steady_clock::now();
 	preprocesstime = chrono::duration_cast<chrono::duration<double>>(endtime - starttime);
+    
+    //-------- print pipeline -----------------------------------------
+    if( circuit.ifprintPath()){
+        circuit.printPath();
+        return 0;
+    }
 	cout << "---------------------------------------------------------------------------\n";
-	
+
 	chrono::system_clock::time_point nowtime = chrono::system_clock::now();
 	time_t tt = chrono::system_clock::to_time_t(nowtime);
 	cout << "\t*** Time                           : " << ctime(&tt);
@@ -128,25 +137,32 @@ int main(int argc, char **argv)
 	
 	cout << "\033[32m[Info]: Analyzing DCC Constraint...\033[0m\n";
 	midtime = chrono::steady_clock::now();
-	//-------- DCC Constraint -----------------------
+    
+    
+	//-------- Constraint -----------------------------------------------------------------
     //1.
 	circuit.dccPlacementByMasked();
 	//2.
 	circuit.dccConstraint();
     //3.
     circuit.VTAConstraint();
-	//-------- Generate all kinds of DCC deployment--
+    endtime = chrono::steady_clock::now();
+    dccconstrainttime = chrono::duration_cast<chrono::duration<double>>(endtime - midtime);
+	//-------- Generate all kinds of DCC deployment ----------------------------------------
 	circuit.genDccPlacementCandidate();
-	endtime = chrono::steady_clock::now();
-	dccconstrainttime = chrono::duration_cast<chrono::duration<double>>(endtime - midtime);
-    string cmd = "rm -rf *.out *_output" ;
-    system( cmd.c_str() ) ;
+	
+    //-------- Remove CNF file --------------------------------------------------------------
+    circuit.removeCNFFile() ;
+    
+    
+    
+    
     //-------- Binary Search -------------------------
-	printf( "\033[32m[Info]: Analyzing Timing Constraint and Searching Optimal Tc...\033[0m\n" );
+	printf( GREEN"[Info]: Analyzing Timing Constraint and Searching Optimal Tc...\033[0m\n" );
 	double pretc = 0, prepretc = 0;
 	while( 1 )
 	{
-		cout << CYAN"\033[36mTc " << RESET "= " << circuit.getTc() << "\033[0m\n";
+		cout << CYAN"Tc " << RESET "= " << circuit.getTc() << "\033[0m\n";
 		midtime = chrono::steady_clock::now();
 		//---- Timing constraint method (Clauses)--------
 		circuit.timingConstraint();
@@ -166,7 +182,6 @@ int main(int argc, char **argv)
 		endtime = chrono::steady_clock::now();
 		sattime += chrono::duration_cast<chrono::duration<double>>(endtime - midtime);
 		
-		// End of binary search
 		if( prepretc == circuit.getTc() )
 			break;
 	}

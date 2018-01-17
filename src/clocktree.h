@@ -58,7 +58,7 @@ class ClockTree
 {
 private:
 	int     _pathselect, _bufinsert, _gpupbound, _gplowbound, _minisatexecnum;
-	bool    _placedcc, _aging, _mindccplace, _tcrecheck, _clkgating, _dumpdcc, _dumpcg, _dumpbufins, _doVTA ;
+	bool    _placedcc, _aging, _mindccplace, _tcrecheck, _clkgating, _dumpdcc, _dumpcg, _dumpbufins, _doVTA, _printpath ;
 	long    _pathusednum, _pitoffnum, _fftoffnum, _fftoponum, _nonplacedccbufnum;
 	long    _totalnodenum, _ffusednum, _bufferusednum, _dccatlastbufnum;
 	long    _masklevel, _maxlevel, _insertbufnum;
@@ -103,7 +103,7 @@ public:
     //-Constructor-----------------------------------------------------------------
 	ClockTree(void)
 			 : _pathselect(0), _bufinsert(0), _placedcc(1), _doVTA(1), _VTH_LIB_cnt(0), _FIN_CONV_Year(100) ,_aging(1), _mindccplace(0), _tcrecheck(0), _clkgating(0),
-			   _dumpdcc(0), _dumpcg(0), _dumpbufins(0), _agingtcq(1.2), _agingdij(1.17), _agingtsu(1),
+			   _dumpdcc(0), _dumpcg(0), _dumpbufins(0), _agingtcq(1.2), _agingdij(1.17), _agingtsu(1),_printpath(0),
 			   _cgpercent(0.02), _pathusednum(0), _pitoffnum(0), _fftoffnum(0), _fftoponum(0),
 			   _masklevel(0), _maskleng(0.5), _maxlevel(0), _nonplacedccbufnum(0), _dccatlastbufnum(0), _insertbufnum(0),
 			   _totalnodenum(1), _ffusednum(0), _bufferusednum(0), _minisatexecnum(0), _gpupbound(70), _gplowbound(20), 
@@ -167,6 +167,7 @@ public:
 	vector<CriticalPath *>& getPathList(void)       { return _pathlist          ; }
     vector<VTH_TECH*>&      getLibList(void)        { return _VthTechList       ; }
 	//-- Bool Attr Access -------------------------------------------------------
+    bool ifprintPath(void)                          { return _printpath         ; }
 	bool ifPlaceDcc(void)                           { return _placedcc          ; }
 	bool ifAging(void)                              { return _aging             ; }
 	bool ifMinDccNumber(void)                       { return _mindccplace       ; }
@@ -239,7 +240,7 @@ public:
     void    tcRecheck(void)             ;
     double  calClkLaten_givDcc_givVTA   (vector<ClockTreeNode*>clkpath, double DCCType, ClockTreeNode* DCCLoc, int LibIndex, ClockTreeNode* Header );
     
-    //---Dumper -------------------------------------------------------------------
+    //---Dumper ------------------------------------------------------------------
 	void    dumpClauseToCnfFile(void)      ;
     void    dumpToFile(void)               ;
     double  UpdatePathTiming(CriticalPath*,bool update = true );
@@ -252,11 +253,14 @@ public:
     void    printVTAList(void);
 	void    printClockGatingList(void);
 	void    printBufferInsertedList(void);
-    
+    void    printPath(void);
+    void    printPath(int);
+    void    printPath(CriticalPath*, int Mode );
     //---Vth Lib --------------------------------------------------------------------
     double  calConvergentVth( double dc, double VthOffset ) ;
     double  calSv( double dc, double VthOffset, double VthFin ) ;
     //---Other ----------------------------------------------------------------------
+    void    removeCNFFile(void);
     void    execMinisat(void);
     void    tcBinarySearch(void);
     ClockTreeNode *searchClockTreeNode(string);
