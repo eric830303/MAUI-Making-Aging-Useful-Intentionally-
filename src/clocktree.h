@@ -256,6 +256,7 @@ public:
     void    printPath(void);
     void    printPath(int);
     void    printPath(CriticalPath*, int Mode );
+    void    printPath_givDCC_givVTA(CriticalPath* );
     //---Vth Lib --------------------------------------------------------------------
     double  calConvergentVth( double dc, double VthOffset ) ;
     double  calSv( double dc, double VthOffset, double VthFin ) ;

@@ -62,7 +62,8 @@ private:
 	long            _nodenum, _depth;
 	int             _ifused,_LibIndex;
 	bool            _iflook , _ifplacedcc, _ifclkgating, _ifinsertbuf, _ifplaceHeader;
-	double          _dcctype,_gatingprobability, _insbufdelay;
+    double          _dcctype,_gatingprobability, _insbufdelay ;
+    double          _buftime ;//only use in -print=path mode
 	vector<ClockTreeNode *> _children;
 
 public:
@@ -71,7 +72,7 @@ public:
 	              bool look = 0, bool placedcc = 0, bool gating = 0, double probability = 0)
 	             : _parent(parent), _nodenum(num), _depth(depth), _ifused(used), _dcctype(type), _iflook(look),
 				   _ifplacedcc(placedcc), _ifclkgating(gating), _gatingprobability(probability),
-				   _ifinsertbuf(0), _insbufdelay(0), _ifplaceHeader(0), _LibIndex(-1) { }
+				   _ifinsertbuf(0), _insbufdelay(0), _ifplaceHeader(0), _LibIndex(-1), _buftime(0) { }
 	~ClockTreeNode() {}
 	
 	//-- Setter methods ----------------------------------------------------------------------
@@ -89,7 +90,7 @@ public:
 	void    setParent(ClockTreeNode *parent)           { this->_parent         = parent; }
 	void    setNodeNumber(long number)                 { this->_nodenum        = number; }
 	void    setDepth(long depth)                       { this->_depth          = depth ; }
-	
+    void    setBufTime(double b)                       { this->_buftime        = b     ; }//only use in -print=path mode
 	//-- Getter methods ---------------------------------------------------------------------
 	long    getNodeNumber(void)                        { return _nodenum    ; }
 	long    getDepth(void)                             { return _depth      ; }
@@ -98,6 +99,7 @@ public:
     bool    getIfPlaceHeader(void)                     { return _ifplaceHeader ; }
 	double  getInsertBufferDelay(void)                 { return _insbufdelay; }
 	double  getGatingProbability(void)                 { return _gatingprobability; }
+    double  getBufTime()                               { return _buftime    ; }//only use in -print=path mode
 	vector<ClockTreeNode *>& getChildren(void)         { return _children   ; }
     ClockTreeNode   *getParent(void)                   { return _parent     ; }
     GateData        *getGateData(void)                 { return &_gatedata  ; }
