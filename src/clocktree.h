@@ -258,6 +258,7 @@ public:
 	void    printClockGatingList(void);
 	void    printBufferInsertedList(void);
     void    printSpace(long common);
+    //---Printer 2 ------------------------------------------------------------------
     void    printPath(void);
     void    printPath(int);
     void    printPath(CriticalPath*, int Mode );
@@ -268,6 +269,7 @@ public:
     void    printPathSlackTiming(CriticalPath*,double ci, double cj );
     void    printAssociatedCriticalPathAtEndPoint( CriticalPath* path );
     void    printAssociatedCriticalPathAtStartPoint( CriticalPath* path );
+    void    printClkNodeFeature( ClockTreeNode*,bool ) ;
     //---Vth Lib --------------------------------------------------------------------
     double  calConvergentVth( double dc, double VthOffset ) ;
     double  calSv( double dc, double VthOffset, double VthFin ) ;
