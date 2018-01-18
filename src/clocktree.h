@@ -63,6 +63,7 @@ private:
 	long    _totalnodenum, _ffusednum, _bufferusednum, _dccatlastbufnum;
 	long    _masklevel, _maxlevel, _insertbufnum;
 	double  _maskleng, _cgpercent;
+    double _tcAfterAdjust ;
     //Timing-related attribute
 	double _origintc, _besttc, _tc, _tcupbound, _tclowbound, _agingtcq, _agingdij, _agingtsu;
 
@@ -110,11 +111,12 @@ public:
 			   _origintc(0), _besttc(0), _tc(0), _tcupbound(0), _tclowbound(0),
 			   _clktreeroot(nullptr), _firstchildrennode(nullptr), _mostcriticalpath(nullptr),
 			   _timingreport(""), _timingreportfilename(""), _timingreportloc(""), _timingreportdesign(""),
-			   _cgfilename(""), _outputdir("") {}
+			   _cgfilename(""), _outputdir(""), _tcAfterAdjust(0) {}
 	//-Destructor------------------------------------------------------------------
     ~ClockTree(void);
 	
 	//-Setter methods---------------------------------------------------------------
+    void setTc_adjust( double t )               { this->_tcAfterAdjust  = t     ; }
     void setLibCount( int c )                   { this->_VTH_LIB_cnt    = c     ; }
     void setFinYear( int y )                    { this->_FIN_CONV_Year  = y     ; }
 	void setTc( double tc )                     { this->_tc             = tc    ; }
@@ -123,6 +125,7 @@ public:
 	void setOutputDirectoryPath( string path )  { this->_outputdir      = path  ; }
     void setIfVTA( bool b )                     { this->_doVTA          = b     ; }
 	//-Getter methods--------------------------------------------------------------
+    double  getTc_adjust( double t )                { return _tcAfterAdjust     ; }
     int     getLibCount(void)                       { return _VTH_LIB_cnt       ; }
     int     getFinYear(void)                        { return _FIN_CONV_Year     ; }
 	int     getPathSelection(void)                  { return _pathselect        ; }
@@ -243,6 +246,7 @@ public:
     //---Dumper ------------------------------------------------------------------
 	void    dumpClauseToCnfFile(void)      ;
     void    dumpToFile(void)               ;
+    void    dumpDccVTALeaderToFile(void)   ;
     double  UpdatePathTiming(CriticalPath*,bool update = true );
 	//---Printer --------------------------------------------------------------------
 	void    printClockTree(void);
@@ -262,6 +266,8 @@ public:
     void    printPItoFF_givFile(CriticalPath*,bool doDCCVTA );
     void    printFFtoPO_givFile(CriticalPath*,bool doDCCVTA );
     void    printPathSlackTiming(CriticalPath*,double ci, double cj );
+    void    printAssociatedCriticalPathAtEndPoint( CriticalPath* path );
+    void    printAssociatedCriticalPathAtStartPoint( CriticalPath* path );
     //---Vth Lib --------------------------------------------------------------------
     double  calConvergentVth( double dc, double VthOffset ) ;
     double  calSv( double dc, double VthOffset, double VthFin ) ;

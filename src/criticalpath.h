@@ -79,8 +79,8 @@ public:
 	
 	//-- Setter methods ----------------------------------------------------------------------
 	void    setDccType(int, int) ;
-    void    setDC(double DC)                           { this->_DC             = DC    ; }
-    void    setVthType(int Lib)                        { this->_VthType        = Lib   ; }
+    void    setDC(double DC)                           { this->_DC             = DC    ; }//only used in -print=path mode
+    void    setVthType(int Lib)                        { this->_VthType        = Lib   ; }//only used in -print=path mode
 	void    setDccType(double type)                    { this->_dcctype        = type  ; }
     void    setVTAType(int Lib)                        { this->_LibIndex       = Lib   ; }
 	void    setIfUsed(int used)                        { this->_ifused         = used  ; }
@@ -94,10 +94,10 @@ public:
 	void    setParent(ClockTreeNode *parent)           { this->_parent         = parent; }
 	void    setNodeNumber(long number)                 { this->_nodenum        = number; }
 	void    setDepth(long depth)                       { this->_depth          = depth ; }
-    void    setBufTime(double b)                       { this->_buftime        = b     ; }//only use in -print=path mode
+    void    setBufTime(double b)                       { this->_buftime        = b     ; }//only used in -print=path mode
 	//-- Getter methods ---------------------------------------------------------------------
-    double  getDC(void)                                { return _DC         ; }
-    int     getVthType(void)                           { return _VthType    ; }
+    double  getDC(void)                                { return _DC         ; }//only used in -print=path mode
+    int     getVthType(void)                           { return _VthType    ; }//only used in -print=path mode
 	long    getNodeNumber(void)                        { return _nodenum    ; }
 	long    getDepth(void)                             { return _depth      ; }
 	double  getDccType(void)                           { return _dcctype    ; }
@@ -105,7 +105,7 @@ public:
     bool    getIfPlaceHeader(void)                     { return _ifplaceHeader ; }
 	double  getInsertBufferDelay(void)                 { return _insbufdelay; }
 	double  getGatingProbability(void)                 { return _gatingprobability; }
-    double  getBufTime()                               { return _buftime    ; }//only use in -print=path mode
+    double  getBufTime()                               { return _buftime    ; }//only used in -print=path mode
 	vector<ClockTreeNode *>& getChildren(void)         { return _children   ; }
     ClockTreeNode   *getParent(void)                   { return _parent     ; }
     GateData        *getGateData(void)                 { return &_gatedata  ; }

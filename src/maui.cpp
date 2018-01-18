@@ -233,7 +233,8 @@ int main(int argc, char **argv)
 	cout << "   Finally check         : " << checktime.count() << "\n";
 	cout << "   Buffer insertion      : " << bufinstime.count() << "\n";
 	
-	circuit.dumpToFile();
+    
+    circuit.dumpDccVTALeaderToFile() ;//circuit.dumpToFile();
 	circuit.~ClockTree();
 	
 	exit(0);
