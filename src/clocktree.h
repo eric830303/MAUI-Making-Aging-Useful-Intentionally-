@@ -253,10 +253,15 @@ public:
     void    printVTAList(void);
 	void    printClockGatingList(void);
 	void    printBufferInsertedList(void);
+    void    printSpace(long common);
     void    printPath(void);
     void    printPath(int);
     void    printPath(CriticalPath*, int Mode );
-    void    printPath_givDCC_givVTA(CriticalPath* );
+    void    printPath_givFile(CriticalPath*,bool doDCCVTA );
+    void    printFFtoFF_givFile(CriticalPath*,bool doDCCVTA );
+    void    printPItoFF_givFile(CriticalPath*,bool doDCCVTA );
+    void    printFFtoPO_givFile(CriticalPath*,bool doDCCVTA );
+    void    printPathSlackTiming(CriticalPath*,double ci, double cj );
     //---Vth Lib --------------------------------------------------------------------
     double  calConvergentVth( double dc, double VthOffset ) ;
     double  calSv( double dc, double VthOffset, double VthFin ) ;

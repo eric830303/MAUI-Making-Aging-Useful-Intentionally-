@@ -64,6 +64,8 @@ private:
 	bool            _iflook , _ifplacedcc, _ifclkgating, _ifinsertbuf, _ifplaceHeader;
     double          _dcctype,_gatingprobability, _insbufdelay ;
     double          _buftime ;//only use in -print=path mode
+    double          _DC      ;
+    int             _VthType ;
 	vector<ClockTreeNode *> _children;
 
 public:
@@ -72,11 +74,13 @@ public:
 	              bool look = 0, bool placedcc = 0, bool gating = 0, double probability = 0)
 	             : _parent(parent), _nodenum(num), _depth(depth), _ifused(used), _dcctype(type), _iflook(look),
 				   _ifplacedcc(placedcc), _ifclkgating(gating), _gatingprobability(probability),
-				   _ifinsertbuf(0), _insbufdelay(0), _ifplaceHeader(0), _LibIndex(-1), _buftime(0) { }
+				   _ifinsertbuf(0), _insbufdelay(0), _ifplaceHeader(0), _LibIndex(-1), _buftime(0), _DC(0.5), _VthType(-1) { }
 	~ClockTreeNode() {}
 	
 	//-- Setter methods ----------------------------------------------------------------------
 	void    setDccType(int, int) ;
+    void    setDC(double DC)                           { this->_DC             = DC    ; }
+    void    setVthType(int Lib)                        { this->_VthType        = Lib   ; }
 	void    setDccType(double type)                    { this->_dcctype        = type  ; }
     void    setVTAType(int Lib)                        { this->_LibIndex       = Lib   ; }
 	void    setIfUsed(int used)                        { this->_ifused         = used  ; }
@@ -92,6 +96,8 @@ public:
 	void    setDepth(long depth)                       { this->_depth          = depth ; }
     void    setBufTime(double b)                       { this->_buftime        = b     ; }//only use in -print=path mode
 	//-- Getter methods ---------------------------------------------------------------------
+    double  getDC(void)                                { return _DC         ; }
+    int     getVthType(void)                           { return _VthType    ; }
 	long    getNodeNumber(void)                        { return _nodenum    ; }
 	long    getDepth(void)                             { return _depth      ; }
 	double  getDccType(void)                           { return _dcctype    ; }
