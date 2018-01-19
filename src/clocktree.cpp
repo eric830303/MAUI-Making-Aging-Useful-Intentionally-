@@ -249,7 +249,7 @@ void ClockTree::genClauseByDccVTA( ClockTreeNode *node, string *clause, double d
 		return ;
     
 	long nodenum = node->getNodeNumber();
-	if( dcctype == 0.5 )
+	if( dcctype == 0.5 || dcctype == -1 || dcctype == 0 )
 		*clause += to_string(nodenum) + " " + to_string(nodenum + 1) + " ";
     else if( dcctype == 0.2 )
         *clause += to_string(nodenum) + " " + to_string((nodenum + 1) * -1) + " ";
@@ -1692,6 +1692,7 @@ double ClockTree::timingConstraint(void)
     if( this->_placedcc == false && this->ifdoVTA() == false ) return -1 ;
     int id = 0 ;
 	this->_timingconstraintlist.clear();
+   
 	for( auto const& path: this->_pathlist )
 	{
 		if( (path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF) ) continue;
