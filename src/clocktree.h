@@ -58,7 +58,7 @@ class ClockTree
 {
 private:
 	int     _pathselect, _bufinsert, _gpupbound, _gplowbound, _minisatexecnum;
-	bool    _placedcc, _aging, _mindccplace, _tcrecheck, _clkgating, _dumpdcc, _dumpcg, _dumpbufins, _doVTA, _printpath ;
+	bool    _placedcc, _aging, _mindccplace, _tcrecheck, _clkgating, _dumpdcc, _dumpcg, _dumpbufins, _doVTA, _printpath, _dumpCNF, _checkCNF, _checkfile ;
 	long    _pathusednum, _pitoffnum, _fftoffnum, _fftoponum, _nonplacedccbufnum;
 	long    _totalnodenum, _ffusednum, _bufferusednum, _dccatlastbufnum;
 	long    _masklevel, _maxlevel, _insertbufnum;
@@ -110,7 +110,7 @@ public:
 			   _totalnodenum(1), _ffusednum(0), _bufferusednum(0), _minisatexecnum(0), _gpupbound(70), _gplowbound(20), 
 			   _origintc(0), _besttc(0), _tc(0), _tcupbound(0), _tclowbound(0),
 			   _clktreeroot(nullptr), _firstchildrennode(nullptr), _mostcriticalpath(nullptr),
-			   _timingreport(""), _timingreportfilename(""), _timingreportloc(""), _timingreportdesign(""),
+			   _timingreport(""), _timingreportfilename(""), _timingreportloc(""), _timingreportdesign(""),_dumpCNF(false), _checkCNF(false), _checkfile(false),
 			   _cgfilename(""), _outputdir(""), _tcAfterAdjust(0) {}
 	//-Destructor------------------------------------------------------------------
     ~ClockTree(void);
@@ -170,6 +170,9 @@ public:
 	vector<CriticalPath *>& getPathList(void)       { return _pathlist          ; }
     vector<VTH_TECH*>&      getLibList(void)        { return _VthTechList       ; }
 	//-- Bool Attr Access -------------------------------------------------------
+    bool ifCheckFile(void)                          { return _checkfile         ; }
+    bool ifCheckCNF(void)                           { return _checkCNF          ; }
+    bool ifDumpCNF(void)                            { return _dumpCNF           ; }
     bool ifprintPath(void)                          { return _printpath         ; }
 	bool ifPlaceDcc(void)                           { return _placedcc          ; }
 	bool ifAging(void)                              { return _aging             ; }
@@ -183,7 +186,7 @@ public:
     //---Setting ----------------------------------------------------------------
 	int     checkParameter(int, char **, string *);//read parameter from cmd line
     void    readParameter(void);                   //read parameter from text file
-    
+    void    InitClkTree(void);
     //---Parser -----------------------------------------------------------------
 	void    parseTimingReport(void);
     
@@ -245,6 +248,7 @@ public:
     
     //---Dumper ------------------------------------------------------------------
 	void    dumpClauseToCnfFile(void)      ;
+    void    dumpCNF(void)                  ;
     void    dumpToFile(void)               ;
     void    dumpDccVTALeaderToFile(void)   ;
     double  UpdatePathTiming(CriticalPath*,bool update = true );
@@ -274,6 +278,9 @@ public:
     double  calConvergentVth( double dc, double VthOffset ) ;
     double  calSv( double dc, double VthOffset, double VthFin ) ;
     //---Other ----------------------------------------------------------------------
+    void    MaskClkNode(void) ;
+    void    CheckTiming_givCNF();
+    void    CheckTiming_givFile();
     void    removeCNFFile(void);
     void    execMinisat(void);
     void    tcBinarySearch(void);

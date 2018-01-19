@@ -61,7 +61,7 @@ private:
 	GateData        _gatedata       ;
 	long            _nodenum, _depth;
 	int             _ifused,_LibIndex;
-	bool            _iflook , _ifplacedcc, _ifclkgating, _ifinsertbuf, _ifplaceHeader;
+	bool            _iflook , _ifplacedcc, _ifclkgating, _ifinsertbuf, _ifplaceHeader, _ifMasked ;
     double          _dcctype,_gatingprobability, _insbufdelay ;
     double          _buftime ;//only use in -print=path mode
     double          _DC      ;
@@ -74,7 +74,7 @@ public:
 	              bool look = 0, bool placedcc = 0, bool gating = 0, double probability = 0)
 	             : _parent(parent), _nodenum(num), _depth(depth), _ifused(used), _dcctype(type), _iflook(look),
 				   _ifplacedcc(placedcc), _ifclkgating(gating), _gatingprobability(probability),
-				   _ifinsertbuf(0), _insbufdelay(0), _ifplaceHeader(0), _LibIndex(-1), _buftime(0), _DC(0.5), _VthType(-1) { }
+				   _ifinsertbuf(0), _insbufdelay(0), _ifplaceHeader(0), _LibIndex(-1), _buftime(0), _DC(0.5), _VthType(-1), _ifMasked(true) { }
 	~ClockTreeNode() {}
 	
 	//-- Setter methods ----------------------------------------------------------------------
@@ -95,7 +95,9 @@ public:
 	void    setNodeNumber(long number)                 { this->_nodenum        = number; }
 	void    setDepth(long depth)                       { this->_depth          = depth ; }
     void    setBufTime(double b)                       { this->_buftime        = b     ; }//only used in -print=path mode
+    void    setifMasked(bool b)                        { this->_ifMasked       = b     ; }
 	//-- Getter methods ---------------------------------------------------------------------
+    bool    ifMasked(void)                             { return _ifMasked   ; }
     double  getDC(void)                                { return _DC         ; }//only used in -print=path mode
     int     getVthType(void)                           { return _VthType    ; }//only used in -print=path mode
 	long    getNodeNumber(void)                        { return _nodenum    ; }

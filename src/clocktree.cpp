@@ -525,6 +525,12 @@ int ClockTree::checkParameter(int argc, char **argv, string *message)
 			this->_tcrecheck = 1;								// Recheck Tc
         else if(strcmp(argv[loop], "-print=path") == 0)
             this->_printpath = 1;
+        else if(strcmp(argv[loop], "-dump=UNSAT_CNF") == 0)
+            this->_dumpCNF   = 1;
+        else if(strcmp(argv[loop], "-checkCNF") == 0)
+            this->_checkCNF  = 1;
+        else if(strcmp(argv[loop], "-checkFile") == 0)
+            this->_checkfile  = 1;
 		else if(strcmp(argv[loop], "-mask_leng") == 0)
 		{
 			if(!isRealNumber(string(argv[loop+1])) || (stod(string(argv[loop+1])) < 0) || (stod(string(argv[loop+1])) > 1))
@@ -1296,8 +1302,9 @@ void ClockTree::dccPlacementByMasked(void)
 				starttemp.pop_back() ;
 			// Mask by level
 			for( auto const &nodeptr : starttemp )
-				if( nodeptr->getDepth() <= (this->_maxlevel - this->_masklevel) )
+                if( nodeptr->getDepth() <= (this->_maxlevel - this->_masklevel) ){
 					nodeptr->setIfPlaceDcc(1);
+                }
 		}
 		// Deal with the clock path of the endpoint
 		if( dealend )
@@ -1330,6 +1337,106 @@ void ClockTree::dccPlacementByMasked(void)
 					nodeptr->setIfPlaceDcc(1);
 		}
 	}
+}
+
+void ClockTree::MaskClkNode( void )
+{
+    if( !this->_placedcc )//-nondcc
+        return ;
+    long pathcount = 0;
+    for( auto const &pathptr : this->_pathlist )
+    {
+        //if(pathcount > (long)(this->_pathusednum * PATHMASKPERCENT))
+        //    break;
+        bool dealstart = 0, dealend = 0 ;
+        ClockTreeNode *sameparent = this->_firstchildrennode;
+        switch( pathptr->getPathType() )
+        {
+                // Path type: input to FF
+            case PItoFF:
+                dealend = 1   ;
+                break;
+                // Path type: FF to output
+            case FFtoPO:
+                dealstart = 1 ;
+                break;
+                // Path type: FF to FF
+            case FFtoFF:
+                if( pathptr->isEndPointSameAsStartPoint() )
+                {
+                    pathcount++  ;
+                    continue     ;
+                }
+                sameparent = pathptr->findLastSameParentNode();
+                dealstart = 1 ;
+                dealend   = 1 ;
+                break            ;
+            default:
+                continue;
+        }
+        pathcount++;
+        // Deal with the clock path of the startpoint
+        if( dealstart )
+        {
+            vector< ClockTreeNode * > starttemp = pathptr->getStartPonitClkPath();//return by reference
+            starttemp.pop_back() ;
+            //front = root, back = FF
+            reverse( starttemp.begin(), starttemp.end() );
+            //front = FF, back = root
+            // Ignore the common nodes
+            while( 1 )
+            {
+                if( starttemp.back() != sameparent )
+                    starttemp.pop_back();
+                else if(starttemp.back() == sameparent)
+                {
+                    starttemp.pop_back();
+                    reverse(starttemp.begin(), starttemp.end());
+                    
+                    break;
+                }
+            }
+            long clkpathlen = (long)(starttemp.size() * this->_maskleng);
+            // Mask by length
+            for( long loop = 0;loop < clkpathlen;loop++ )//when loop=0, it mean same parent-1
+                starttemp.pop_back() ;
+            // Mask by level
+            for( auto const &nodeptr : starttemp )
+                if( nodeptr->getDepth() <= (this->_maxlevel - this->_masklevel) ){
+                    nodeptr->setifMasked(false);
+                }
+        }
+        // Deal with the clock path of the endpoint
+        if( dealend )
+        {
+            vector<ClockTreeNode *> endtemp = pathptr->getEndPonitClkPath();//return by reference
+            endtemp.pop_back();//delete FF?
+            //endtemp[0]=root, endtemp[tail]=FF+1
+            reverse(endtemp.begin(), endtemp.end());
+            //endtemp[0]=FF+1, endtemp[tail]=root
+            // Ignore the common nodes
+            while(1)
+            {
+                if( endtemp.back() != sameparent )
+                    endtemp.pop_back();
+                else if( endtemp.back() == sameparent )
+                {
+                    endtemp.pop_back();
+                    reverse(endtemp.begin(), endtemp.end());
+                    //endtemp[0]=sameparent-1, endtemp[tail]=FF+1
+                    break;
+                }
+            }
+            long clkpathlen = (long)(endtemp.size() * this->_maskleng);
+            // Mask by length
+            for( long loop = 0;loop < clkpathlen;loop++ )
+                endtemp.pop_back();
+            // Mask by level
+            for( auto const &nodeptr : endtemp )
+                if(nodeptr->getDepth() <= (this->_maxlevel - this->_masklevel))
+                    nodeptr->setifMasked(false);
+        }
+    }
 }
 /*---------------------------------------------------------------------------
  FuncName:
@@ -2449,7 +2556,7 @@ void ClockTree::updateAllPathTiming(void)
     if( this->_placedcc || this->ifdoVTA() )
     {
         //-- Read CNF (Minisat Output) -------------------------------------------------------
-        fstream cnffile;
+        fstream cnffile ;
         string  line = "" ;
         string  lastsatfile = "";
         lastsatfile = this->_outputdir + "cnfoutput_" + to_string(this->_besttc);
@@ -3422,7 +3529,6 @@ void ClockTree::printPath()
         }
         else
             printPath( mode );
-        
      }
 }
 void ClockTree::printPath( int pathid )
@@ -3436,6 +3542,12 @@ void ClockTree::printPath( int pathid )
     //-- Declaratio -----------------------------------------------------------
     system( "clear" );
     CriticalPath* path = this->_pathlist.at( pathid ) ;
+    if( path->getPathType() == 0 )
+    {
+        cerr << RED"[Error]" RESET" The path is not include in the scope that you specified\n";
+        cerr << RED"[Error]" RESET" Please check your input args '-path=only', '-path=all'... \n";
+        return ;
+    }
     
     printf("------------------ " CYAN"Print Path " RESET"--------------------------\n");
     printf("------ Following is the topology of the pipeline -------\n");
@@ -3443,8 +3555,6 @@ void ClockTree::printPath( int pathid )
     printf("==> CLK_Node_Name( NodeID, Duty Cycle, VthType, " GREEN"Buffer Delay" RESET" ) \n");
     printf("==> Duty Cycle: 0.2, 0.4, 0.5, 0.8 \n" );
     printf("==> Vth type  : -1(Nominal), 0(VTA) \n" );
-    
-    
     //-- Print (No Aging)----------------------------------------------------------------
     printPath( path, -1 );
     //-- Print (10-year Aging without DCC & VTA) ----------------------------------------
@@ -3600,16 +3710,17 @@ void ClockTree::printPath_givFile(CriticalPath *path, bool doDCCVTA )
         cerr << RED"[ERROR] Path id is out of range\n ";
         return ;
     }
+    InitClkTree();
     //-- Read Tc/DCC/Leader Info ----------------------------------------------
     ifstream        file  ;
     string          line  ;
-    file.open( "setting/path.txt", ios::in ) ;
-    if( !file ) return ;
-    
-    getline( file, line ) ;
-    string tc ;
-    istringstream   token( line )     ;
+    file.open( "setting/DccVTA.txt", ios::in ) ;
+    if( !file ) return              ;
+    getline( file, line )           ;
+    string          tc              ;
+    istringstream   token( line )   ;
     token >> tc >> this->_tc ;
+    
     while( getline( file, line ) )
     {
         long    BufID       = 0   ;
@@ -4057,7 +4168,7 @@ void ClockTree::printAssociatedCriticalPathAtEndPoint( CriticalPath* path )
     int ctr = 0 ;
     for( auto p: this->_pathlist )
     {
-        if( p == path || p->getPathType() == PItoFF ) continue ;
+        if( p == path || p->getPathType() == PItoFF || p->getPathType() == NONE) continue ;
         
         if( p->getStartPonitClkPath().back() == edClkPath.back() ){
             double slack = UpdatePathTiming( p, false ) ;
@@ -4079,7 +4190,7 @@ void ClockTree::printAssociatedCriticalPathAtStartPoint( CriticalPath* path )
     int ctr = 0 ;
     for( auto p: this->_pathlist )
     {
-        if( p == path || p->getPathType() == FFtoPO ) continue ;
+        if( p == path || p->getPathType() == FFtoPO || p->getPathType() == NONE ) continue ;
         
         if( p->getEndPonitClkPath().back() == stClkPath.back() ){
             double slack = UpdatePathTiming( p, false ) ;
@@ -4101,8 +4212,144 @@ void ClockTree::printClkNodeFeature( ClockTreeNode *clknode, bool doDCCVTA )
         printf("-" YELLOW"%d Leader" RESET"-",clknode->getVTAType()) ;
 }
 
+void ClockTree::InitClkTree()
+{
+    for( auto clknode: this->_buflist )
+    {
+        clknode.second->setIfPlaceDcc(false);
+        clknode.second->setIfPlaceHeader(false);
+        clknode.second->setDccType(0.5);
+        clknode.second->setVTAType(-1);
+    }
+}
+void ClockTree::dumpCNF()
+{
+    printf("----------------- " CYAN"Dump CNF File Name " RESET"--------------------\n");
+    printf(CYAN"[Info] " RESET"Please Type the Unsat CNF file name\n");
+    string  filename = "" ;
+    cin     >> filename   ;
+    string  line     = "" ;
+    fstream cnffile       ;
+    FILE    *fPtr         ;
+    string  satFile= "DccVTA.txt";
+    fPtr    = fopen( satFile.c_str(), "w" );
+    if( !fPtr ){
+        cerr << RED"[Error]" RESET "Cannot open the DCC VTA file\n" ;
+        return ;
+    }
+    cnffile.open( filename, ios::in );
+    if( !cnffile.is_open() ){
+        cerr << "\033[31m[Error]: Cannot open " << filename << "\033[0m\n";
+        cnffile.close();
+        return;
+    }
+    printf(CYAN"[Info] " RESET"Please Type the Tc of Unsat CNF file \n");
+    cin >> this->_tc  ;
+    
+    getline( cnffile, line ) ;//Read SAT/UNSAT
+    getline( cnffile, line ) ;//Read DCC/VTA
+    vector<string> strspl = stringSplit( line, " " );
+    //------ Clk Node Iteration ---------------------------------------------------
+    for( long loop = 0; ; loop += 3 /*2*/ )
+    {
+        //-- End of CNF -----------------------------------------------------------
+        if( strspl[loop] == ""  ){
+            printf("Break space\n");
+            break ;
+        }
+        if( stoi( strspl[loop] ) == 0 ){
+            printf("Break 0\n");
+            break ;
+        }
+        //-- No DCC/VTA Clknode ----------------------------------------------------
+        if( !( stoi(strspl.at(loop+2)) > 0 || stoi(strspl.at(loop)) > 0 || stoi(strspl.at(loop + 1)) > 0 ) ) continue ;
+        else
+        {
+            ClockTreeNode *findnode = this->searchClockTreeNode(abs(stoi(strspl.at(loop))));
+            if( !findnode ) cerr << RED"[Error] " RESET"Unrecognized Clknode ID in dumpUnsatCNF()\n";
+            fprintf( fPtr, "%ld ",  findnode->getNodeNumber() );
+            //-- Put Header ------------------------------------------------------------
+            if( stoi(strspl.at(loop+2)) > 0 )   fprintf( fPtr, "%d ", 0 );
+            
+            //-- Put DCC --------------------------------------------------------------
+            if( stoi(strspl.at(loop)) > 0 || stoi(strspl.at(loop + 1)) > 0  )
+            {
+                int bit1 = stoi(strspl.at(loop)), bit2 = stoi(strspl.at(loop + 1)) ;
+                if((bit1 > 0) && (bit2 > 0))
+                    fprintf( fPtr, "%f\n", 0.8 );
+                else if((bit1 > 0) && (bit2 < 0))
+                    fprintf( fPtr, "%f\n", 0.4 );
+                else if((bit1 < 0) && (bit2 > 0))
+                    fprintf( fPtr, "%f\n", 0.2 );
+                else if((bit1 < 0) && (bit2 < 0))
+                    fprintf( fPtr, "%f\n", 0.5 );
+                else
+                    fprintf( fPtr, "%f\n", 0.5 );
+            }
+        }
+    }//Clk node iteration
+    fclose(fPtr);
+    cnffile.close() ;
+    for( auto const& path: this->_pathlist )
+    {
+        if((path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF))   continue;
+        
+        double slack = this->UpdatePathTiming( path, false );
+        if( slack < 0 ) printf("%ld slack (%f) < 0 \n", path->getPathNum(), slack );
+    }
+}
 
-
+void ClockTree::CheckTiming_givFile()
+{
+    printf("----------------- " CYAN"Check Timing " RESET"--------------------\n");
+    //-- Read Tc/DCC/Leader Info ----------------------------------------------
+    ifstream        file  ;
+    string          line  ;
+    file.open( "setting/DccVTA.txt", ios::in ) ;
+    if( !file ) return              ;
+    getline( file, line )           ;
+    string          tc              ;
+    istringstream   token( line )   ;
+    token     >>  tc   >> this->_tc ;
+    
+    while( getline( file, line ) )
+    {
+        long    BufID       = 0   ;
+        int     BufVthLib   = -1  ;
+        double  BufDCC      = 0.5 ;
+        istringstream   token( line )     ;
+        token >> BufID >> BufVthLib >> BufDCC ;
+        ClockTreeNode *buffer = searchClockTreeNode( BufID ) ;
+        if( buffer == NULL )
+        {
+            printf( RED"[Error] " RESET"Can't find clock node with id = %ld\n", BufID ) ;
+            return ;
+        }
+        buffer->setDccType( BufDCC )    ;
+        buffer->setVTAType( BufVthLib ) ;
+        if( BufDCC != 0.5 && BufDCC != -1 && BufDCC != 0 )
+            buffer->setIfPlaceDcc(true);
+        if( BufVthLib != -1  )
+            buffer->setIfPlaceHeader(true);
+    }
+    bool fail = false ;
+    //check VTA Constraint
+    //Check DCC Constraint (Included Mask)
+    for( auto const& path: this->_pathlist )
+    {
+        if((path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF))   continue;
+        
+        double slack = this->UpdatePathTiming( path, false );
+        if( slack < 0 )
+        {
+            printf("%ld slack (%f) < 0 \n", path->getPathNum(), slack );
+            fail = true ;
+        }
+    }
+    if( !fail )
+        printf("All paths pass!\n");
+    
+}
 
 
 

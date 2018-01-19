@@ -39,7 +39,10 @@ int main(int argc, char **argv)
 			cout << "      -nondcc                Don't consider placing any DCC in clock tree. (default disable)\n";
 			cout << "      -nonaging              Don't consider any aging in clock tree. (default disable)\n";
             cout << "      -nonVTA                Don't do Vth assignment\n";
+            cout << "      -dump=UNSAT_CNF        Decode Unsat CNF file and dump its DCC/VTA Deployment\n";
             cout << "      -print=path            Print the pipeline\n";
+            cout << "      -checkCNF              Check the DCC deployment with given CNF output file\n";
+            cout << "      -checkFile             Check the DCC deployment with given DccVTA.txt \n";
 			cout << "      -mindcc                Minimize the number of DCCs placed in clock tree. (default disable)\n";
 			cout << "                               Enable when \'-nondcc\' option enable.\n";
 			cout << "      -tc_recheck            Check Tc again after binary search. (default disable)\n";
@@ -98,12 +101,20 @@ int main(int argc, char **argv)
 	cout << "\033[32m[Info]: Adjusting original Tc...\033[0m\n";
     
     //---- Tc Adjust --------------------------------------------------
-	//1. Adjust the primitive Tc in the timing report
-    //2. Init BS upper/lower Bound
 	circuit.adjustOriginTc();
 	endtime = chrono::steady_clock::now();
 	preprocesstime = chrono::duration_cast<chrono::duration<double>>(endtime - starttime);
     
+    //-------- Check Timing with given DccVTA.txt ---------------------
+    if( circuit.ifCheckFile() ){
+        circuit.CheckTiming_givFile() ;
+        return 0 ;
+    }
+    //-------- Dump Unsat CNF as DCC/VTA ------------------------------
+    if( circuit.ifDumpCNF() ){
+        circuit.dumpCNF() ;
+        return 0 ;
+    }
     //-------- print pipeline -----------------------------------------
     if( circuit.ifprintPath()){
         circuit.printPath();
@@ -143,9 +154,9 @@ int main(int argc, char **argv)
     //1.
 	circuit.dccPlacementByMasked();
 	//2.
-	circuit.dccConstraint();
-    //3.
     circuit.VTAConstraint();
+    //3.
+    circuit.dccConstraint();
     endtime = chrono::steady_clock::now();
     dccconstrainttime = chrono::duration_cast<chrono::duration<double>>(endtime - midtime);
 	//-------- Generate all kinds of DCC deployment ----------------------------------------
