@@ -274,7 +274,7 @@ ClockTreeNode *CriticalPath::findDccInClockPath(char who)
 		return nullptr;
 	for(auto const &nodeptr : clkpath)
 	{
-		if(nodeptr->ifPlacedDcc())
+		if( nodeptr->ifPlacedDcc() )
 		{
 			findnode = nodeptr;
 			break;

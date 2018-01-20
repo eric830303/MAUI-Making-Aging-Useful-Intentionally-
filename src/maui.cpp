@@ -43,6 +43,7 @@ int main(int argc, char **argv)
             cout << "      -print=path            Print the pipeline\n";
             cout << "      -checkCNF              Check the DCC deployment with given CNF output file\n";
             cout << "      -checkFile             Check the DCC deployment with given DccVTA.txt \n";
+            cout << "      -checkPath             Check the DCC deployment with given DccVTA.txt \n";
 			cout << "      -mindcc                Minimize the number of DCCs placed in clock tree. (default disable)\n";
 			cout << "                               Enable when \'-nondcc\' option enable.\n";
 			cout << "      -tc_recheck            Check Tc again after binary search. (default disable)\n";

@@ -266,11 +266,11 @@ public:
     void    printPath(void);
     void    printPath(int);
     void    printPath(CriticalPath*, int Mode );
-    void    printPath_givFile(CriticalPath*,bool doDCCVTA );
-    void    printFFtoFF_givFile(CriticalPath*,bool doDCCVTA );
-    void    printPItoFF_givFile(CriticalPath*,bool doDCCVTA );
-    void    printFFtoPO_givFile(CriticalPath*,bool doDCCVTA );
-    void    printPathSlackTiming(CriticalPath*,double ci, double cj );
+    void    printPath_givFile(   CriticalPath*, bool doDCCVTA, bool aging = true, bool givTc = true );
+    void    printFFtoFF_givFile( CriticalPath*, bool doDCCVTA, bool aging = true );
+    void    printPItoFF_givFile( CriticalPath*, bool doDCCVTA, bool aging = true );
+    void    printFFtoPO_givFile( CriticalPath*, bool doDCCVTA, bool aging = true );
+    void    printPathSlackTiming(CriticalPath*, double ci, double cj, bool aging = true );
     void    printAssociatedCriticalPathAtEndPoint( CriticalPath* path );
     void    printAssociatedCriticalPathAtStartPoint( CriticalPath* path );
     void    printClkNodeFeature( ClockTreeNode*,bool ) ;
