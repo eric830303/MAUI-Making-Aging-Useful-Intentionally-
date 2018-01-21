@@ -50,7 +50,7 @@ vector<string> stringSplit(string, const char *);
 vector<string> stringSplitByPattern(string, string);
 double genRandomNum(const char *, long, long, unsigned int precision = 0, bool updeateseed = 1);
 bool isRealNumber(string);
-void combination(long, int, int, vector<long>, vector<vector<long> > *);
+void combination(long, long int, int, vector<long>, vector<vector<long> > *);
 void updateCombinationList(vector<long> *, vector<vector<long> > *);
 
 #endif	// UTILITY_H

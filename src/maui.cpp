@@ -153,7 +153,7 @@ int main(int argc, char **argv)
     
 	//-------- Constraint -----------------------------------------------------------------
     //1.
-	circuit.dccPlacementByMasked();
+	circuit.dccPlacementByMasked(0);
 	//2.
     circuit.VTAConstraint();
     //3.

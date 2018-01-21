@@ -203,7 +203,7 @@ public:
    
     //---DCC Constraint ---------------------------------------------------------
 	void    dccConstraint(void);
-    void    dccPlacementByMasked(void);
+    void    dccPlacementByMasked(int);
     //---VTA Constraint ---------------------------------------------------------
     void    VTAConstraint(void);
     void    VTAConstraintFFtoFF( CriticalPath* );
