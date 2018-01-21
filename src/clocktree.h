@@ -278,6 +278,9 @@ public:
     double  calConvergentVth( double dc, double VthOffset ) ;
     double  calSv( double dc, double VthOffset, double VthFin ) ;
     //---Other ----------------------------------------------------------------------
+    bool    checkDCCVTAConstraint(void);
+    bool    checkDCCVTAConstraint_givPath(CriticalPath*);
+    void    readDCCVTAFile(void);
     void    MaskClkNode(void) ;
     void    CheckTiming_givCNF();
     void    CheckTiming_givFile();

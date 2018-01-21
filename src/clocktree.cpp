@@ -1304,6 +1304,7 @@ void ClockTree::dccPlacementByMasked(void)
 			for( auto const &nodeptr : starttemp )
                 if( nodeptr->getDepth() <= (this->_maxlevel - this->_masklevel) ){
 					nodeptr->setIfPlaceDcc(1);
+                     nodeptr->setifMasked(false);
                 }
 		}
 		// Deal with the clock path of the endpoint
@@ -1333,8 +1334,10 @@ void ClockTree::dccPlacementByMasked(void)
 				endtemp.pop_back();
 			// Mask by level
 			for( auto const &nodeptr : endtemp )
-				if(nodeptr->getDepth() <= (this->_maxlevel - this->_masklevel))
+                if(nodeptr->getDepth() <= (this->_maxlevel - this->_masklevel)){
 					nodeptr->setIfPlaceDcc(1);
+                    nodeptr->setifMasked(false);
+                }
 		}
 	}
 }
@@ -1810,22 +1813,18 @@ double ClockTree::UpdatePathTiming( CriticalPath * path, bool update )
     edDCCLoc = path->findDccInClockPath('e') ;
     if( stDCCLoc ){
         stDCCType = stDCCLoc->getDccType() ;
-        printf("stDCCLoc at %ld \n",stDCCLoc->getNodeNumber() );
     }
     if( edDCCLoc ){
         edDCCType = edDCCLoc->getDccType() ;
-        printf("edDCCLoc at %ld \n",edDCCLoc->getNodeNumber() );
     }
     //-- VTA Header Location ----------------------------------------------
     stHeader = path->findVTAInClockPath('s') ;
     edHeader = path->findVTAInClockPath('e') ;
     if( stHeader ){
         stLibIndex = stHeader->getVTAType() ;
-        printf("stHeader at %ld \n",stHeader->getNodeNumber() );
     }
     if( edHeader ){
         edLibIndex = edHeader->getVTAType() ;
-        printf("edHeader at %ld \n",edHeader->getNodeNumber() );
     }
     
     //-- Timing -----------------------------------------------------------
@@ -1838,7 +1837,6 @@ double ClockTree::UpdatePathTiming( CriticalPath * path, bool update )
     if( PathType == FFtoFF || PathType == PItoFF )
         cj = this->calClkLaten_givDcc_givVTA( path->getEndPonitClkPath(),   edDCCType, edDCCLoc, edLibIndex, edHeader );//Has consider aging
     //------- Require time -------------------------------------------------------------
-    printf("Ci = %f, Cj = %f\n", ci, cj );
     req_time = cj + (path->getTsu() * this->_agingtsu) + this->_tc;
     
     //------- Arrival time --------------------------------------------------------------
@@ -2350,8 +2348,7 @@ double ClockTree::calClkLaten_givDcc_givVTA(    vector<ClockTreeNode *> clkpath,
         agingrate = getAgingRate_givDC_givVth( DC, LibVthType )  ;
         
         laten += buftime*agingrate ;
-        printf("%f ",buftime*agingrate);
-        cout << "(Min=" << minbufdelay << ") ";
+        
         /*
         if( clkpath.at(i)->ifClockGating() )
         {
@@ -2362,9 +2359,7 @@ double ClockTree::calClkLaten_givDcc_givVTA(    vector<ClockTreeNode *> clkpath,
     }
     
     laten += clkpath.back()->getGateData()->getWireTime() * getAgingRate_givDC_givVth( DC, -1 ) ;
-    printf("%f ",clkpath.back()->getGateData()->getWireTime() * getAgingRate_givDC_givVth( DC, -1 ));
-    cout << "(Min=" << minbufdelay << ") ";
-    cout << endl ;
+    
     if( DCCLoc != NULL )
     {
         double agr_DCC =  getAgingRate_givDC_givVth( 0.5, LibVthTypeDCC ) ;//DCC use 0.5 DC?
@@ -3761,7 +3756,7 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
         req_time    += buftime ;
         
         printClkNodeFeature( clknode, doDCCVTA );
-        printf( "%s(%ld,%.1f,%d," GREEN"%f" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_right, LibIndex_right, buftime );
+        printf( "%s(%ld,%.1f,%d," GREEN"%.4f" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_right, LibIndex_right, buftime );
     }
     printf( "  => " YELLOW"End " RESET"Clk Path\n");
     //-- Common Part (Only Print) ---------------------------------------------
@@ -3772,7 +3767,7 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
         clknode  = edClkPath.at(i) ;
         gatePtr  = clknode->getGateData() ;
         printClkNodeFeature( clknode, doDCCVTA );
-        printf( "%s(%ld,%.1f,%d," GREEN"%f" RESET")---", gatePtr->getGateName().c_str() ,clknode->getNodeNumber(), clknode->getDC(), clknode->getVthType(),clknode->getBufTime() );
+        printf( "%s(%ld,%.1f,%d," GREEN"%.4f" RESET")---", gatePtr->getGateName().c_str() ,clknode->getNodeNumber(), clknode->getDC(), clknode->getVthType(),clknode->getBufTime() );
     }
     cout << endl ;
     this->printSpace(common);
@@ -3825,7 +3820,7 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
             
         if( clknode == stClkPath.back() ) LibIndex_left = -1 ;
         printClkNodeFeature( clknode, doDCCVTA );
-        printf( "%s(%ld,%.1f,%d," GREEN"%f" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_left, LibIndex_left, buftime );
+        printf( "%s(%ld,%.1f,%d," GREEN"%.4f" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_left, LibIndex_left, buftime );
     }
     printf( "  => " YELLOW"Start " RESET"Clk Path\n");
         
@@ -3927,7 +3922,7 @@ void ClockTree::printPItoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
         req_time   += buftime ;
         
         printClkNodeFeature( clknode, doDCCVTA );
-        printf( "%s(%ld,%.1f,%d," GREEN"%f" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_right, LibIndex_right, buftime );
+        printf( "%s(%ld,%.1f,%d," GREEN"%.4f" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_right, LibIndex_right, buftime );
     }
     printf( "=> " YELLOW"End " RESET"Clk Path\n");
         
@@ -4055,7 +4050,7 @@ void ClockTree::printPathSlackTiming(CriticalPath *path, double ci, double cj, b
 }
 void ClockTree::printSpace( long common)
 {
-    for( int i = 0 ; i <= common; i++ )  printf("                         " );
+    for( int i = 0 ; i <= common; i++ )  printf("                          " );
 }
 void ClockTree::dumpDccVTALeaderToFile()
 {
@@ -4247,7 +4242,82 @@ void ClockTree::dumpCNF()
 
 void ClockTree::CheckTiming_givFile()
 {
-    printf("----------------- " CYAN"Check Timing " RESET"--------------------\n");
+    printf("----------------- " CYAN"Check Constraint " RESET"--------------------\n");
+    //-- Read Tc/DCC/Leader Info ----------------------------------------------
+    readDCCVTAFile() ;
+    bool fail = false ;
+    
+    for( auto const& path: this->_pathlist )
+    {
+        if((path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF))   continue;
+        
+        double slack = this->UpdatePathTiming( path, false );
+        if( slack < 0 )
+        {
+            if( path->getPathType() == PItoPO )
+                printf( CYAN"[Timing Constraint] " RED"[Violated] " RESET"Path( %ld, PItoPO ) fail, slack = " RED"%f\n" RESET, path->getPathNum() ,slack );
+            else if( path->getPathType() == FFtoFF )
+                printf( CYAN"[Timing Constraint] " RED"[Violated] " RESET"Path( %ld, FFtoFF ) fail, slack = " RED"%f\n" RESET, path->getPathNum() ,slack );
+            else if( path->getPathType() == FFtoPO )
+                printf( CYAN"[Timing Constraint] " RED"[Violated] " RESET"Path( %ld, FFtoPO ) fail, slack = " RED"%f\n" RESET, path->getPathNum() ,slack );
+            else if( path->getPathType() == PItoFF )
+                printf( CYAN"[Timing Constraint] " RED"[Violated] " RESET"Path( %ld, PItoFF ) fail, slack = " RED"%f\n" RESET, path->getPathNum() ,slack );
+            fail = true ;
+        }
+    }
+    if( !fail )
+        printf( CYAN"[ Timing Constraint ] " RESET"All paths pass!\n");
+    if( this->checkDCCVTAConstraint() == true )
+        printf( CYAN"[ DCC/VTA Constraint] " RESET"All paths pass!\n");
+    
+    int pathid = 0 ;
+    while( true )
+    {
+        readDCCVTAFile();
+        printf("----------- " CYAN"Check Timing of specific path " RESET"-----------------\n");
+        printf("    number < 0 : Leave the program\n");
+        printf("    0 ~ %ld : Path ID\n", this->_pathlist.size() );
+        printf("    Your Input is: " );
+        cin >> pathid ;
+        if( pathid < 0 ) break;
+        else if( pathid >= _pathlist.size() ){
+            printf("    " RED"[Error]" RESET"Your input is out of range\n" );
+            continue;
+        }
+        
+        
+        for( auto const& path: this->_pathlist )
+        {
+            if((path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF))   continue;
+            if( path->getPathNum() != pathid ) continue ;
+            double slack = this->UpdatePathTiming( path, false );
+            
+            if( slack > 0 ){
+                if( path->getPathType() == PItoPO )
+                    printf( CYAN"[Timing Constraint] " GREEN"[ Passed ] " RESET"Path( %ld, PItoPO ) pass, slack = %f\n", path->getPathNum() ,slack );
+                else if( path->getPathType() == FFtoFF )
+                    printf( CYAN"[Timing Constraint] " GREEN"[ Passed ] " RESET"Path( %ld, FFtoFF ) pass, slack = %f\n", path->getPathNum() ,slack );
+                else if( path->getPathType() == FFtoPO )
+                    printf( CYAN"[Timing Constraint] " GREEN"[ Passed ] " RESET"Path( %ld, FFtoPO ) pass, slack = %f\n", path->getPathNum() ,slack );
+                else if( path->getPathType() == PItoFF )
+                    printf( CYAN"[Timing Constraint] " GREEN"[ Passed ] " RESET"Path( %ld, PItoFF ) pass, slack = %f\n", path->getPathNum() ,slack );
+            }
+            else{
+                if( path->getPathType() == PItoPO )
+                    printf( CYAN"[Timing Constraint] " RED"[Violated] " RESET"Path( %ld, PItoPO ) fail, slack = " RED"%f\n" RESET, path->getPathNum() ,slack );
+                else if( path->getPathType() == FFtoFF )
+                    printf( CYAN"[Timing Constraint] " RED"[Violated] " RESET"Path( %ld, FFtoFF ) fail, slack = " RED"%f\n" RESET, path->getPathNum() ,slack );
+                else if( path->getPathType() == FFtoPO )
+                    printf( CYAN"[Timing Constraint] " RED"[Violated] " RESET"Path( %ld, FFtoPO ) fail, slack = " RED"%f\n" RESET, path->getPathNum() ,slack );
+                else if( path->getPathType() == PItoFF )
+                    printf( CYAN"[Timing Constraint] " RED"[Violated] " RESET"Path( %ld, PItoFF ) fail, slack = " RED"%f\n" RESET, path->getPathNum() ,slack );
+            }
+            this->checkDCCVTAConstraint_givPath( path ) ;
+        }//for
+    }//while
+}
+void ClockTree::readDCCVTAFile()
+{
     //-- Read Tc/DCC/Leader Info ----------------------------------------------
     ifstream        file  ;
     string          line  ;
@@ -4280,40 +4350,87 @@ void ClockTree::CheckTiming_givFile()
             buffer->setVTAType( BufVthLib ) ;
         }
     }
-    bool fail = false ;
-    //check VTA Constraint
-    //Check DCC Constraint (Included Mask)
-    for( auto const& path: this->_pathlist )
-    {
-        if((path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF))   continue;
-        
-        double slack = this->UpdatePathTiming( path, false );
-        if( slack < 0 )
-        {
-            printf("%ld slack (%f) < 0 \n", path->getPathNum(), slack );
-            fail = true ;
-        }
-    }
-    if( !fail )
-        printf( CYAN"[Timing Constraint] " RESET"All paths pass!\n");
-    printf("----------- " CYAN"Check Timing of specific path " RESET"-----------------\n");
-    int pathid = 0 ;
-    while( true )
-    {
-        cin >> pathid ;
-        if( pathid < 0 ) break ;
-        
-        
-        for( auto const& path: this->_pathlist )
-        {
-            if((path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF))   continue;
-            if( path->getPathNum() != pathid ) continue ;
-            double slack = this->UpdatePathTiming( path, false );
-            
-            printf("%ld slack (%f)  \n", path->getPathNum(), slack );
-        }
-    }
 }
+
+bool ClockTree::checkDCCVTAConstraint()
+{
+    this->dccPlacementByMasked() ;//The func will set ifPlacedDCC(x) and ifMasked()
+    InitClkTree()                ;//Init ifPlacedDCC();
+    readDCCVTAFile()             ;//Set   DCC/VTA location
+    bool result = true           ;
+    for( auto path: this->_pathlist )
+    {
+        if( path->getPathType() == NONE || path->getPathType() == PItoPO ) continue ;
+        else
+            if( this->checkDCCVTAConstraint_givPath( path ) == false )
+            {
+                printf( CYAN"[ VTA/DCC Constraint  ] " RED"[Violated] " RESET"Path( %ld ), please check it\n", path->getPathNum() );
+                result = false ;
+            }
+    }
+    return result ;
+}
+
+
+bool ClockTree::checkDCCVTAConstraint_givPath( CriticalPath * path )
+{
+    bool correct = true ;
+    vector<ClockTreeNode*> stClkPath, edClkPath ;
+    if( path->getPathType() == FFtoFF || path->getPathType() == FFtoPO )
+        stClkPath = path->getStartPonitClkPath() ;
+    if( path->getPathType() == FFtoFF || path->getPathType() == PItoFF )
+        edClkPath = path->getEndPonitClkPath() ;
+    
+    //------ One Clk Path, One DCC/Leader ---------------------------
+    int DCC_Ctr_st = 0, VTA_Ctr_st = 0, DCC_Ctr_ed = 0, VTA_Ctr_ed = 0 ;
+    for( auto clknode: stClkPath ){
+        if( clknode->ifPlacedDcc() )      DCC_Ctr_st++ ;
+        if( clknode->getIfPlaceHeader() ) VTA_Ctr_st++ ;
+    }
+    for( auto clknode: edClkPath ){
+        if( clknode->ifPlacedDcc() )      DCC_Ctr_ed++ ;
+        if( clknode->getIfPlaceHeader() ) VTA_Ctr_ed++ ;
+    }
+    
+    if( DCC_Ctr_st >= 2 ){
+        correct = false ;
+        printf( CYAN"[ DCC Constraint  ] " RED"[Violated] " RESET"Path( %ld) has more than 2 DCCs along clk path of start side\n", path->getPathNum() );
+    }
+    if( DCC_Ctr_ed >= 2 ){
+        correct = false ;
+        printf( CYAN"[ DCC Constraint  ] " RED"[Violated] " RESET"Path( %ld) has more than 2 DCCs along clk path of end   side\n", path->getPathNum() );
+    }
+    if( VTA_Ctr_st >= 2 ){
+        correct = false ;
+        printf( CYAN"[ VTA Constraint  ] " RED"[Violated] " RESET"Path( %ld) has more than 2 VTA leaders along clk path of start side\n", path->getPathNum() );
+    }
+    if( VTA_Ctr_ed >= 2 ){
+        correct = false ;
+        printf( CYAN"[ VTA Constraint  ] " RED"[Violated] " RESET"Path( %ld) has more than 2 VTA leaders along clk path of end   side\n", path->getPathNum() );
+    }
+    //------ Do not put DCC ahead of Masked clk node/FF ---------------------------
+    for( auto clknode: this->_buflist )
+    {
+        ClockTreeNode*node = clknode.second ;
+        if( node->ifPlacedDcc() == true && node->ifMasked() == true )
+        {
+            correct = false ;
+            printf( CYAN"[ DCC Constraint  ] " RED"[Violated] " RESET"Clknode( %ld, %s) is masked, it should not be inserted DCC\n", node->getNodeNumber(), node->getGateData()->getGateName().c_str());
+        }
+    }
+    
+    
+    return correct ;
+}
+
+
+
+
+
+
+
+
+
 
 
 
