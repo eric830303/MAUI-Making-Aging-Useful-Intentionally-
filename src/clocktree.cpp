@@ -1754,27 +1754,20 @@ double ClockTree::timingConstraint_ndoDCC_ndoVTA( CriticalPath *path, bool updat
 			vector<ClockTreeNode *> clkpath = ((path->getPathType() == PItoFF) ? path->getEndPonitClkPath() : path->getStartPonitClkPath());
 			//- Generate Clause --------------------------------------------------------
 			for( auto const& nodeptr: clkpath )
-            {
-				if( nodeptr->ifPlacedDcc() )  this->genClauseByDccVTA( nodeptr, &clause, 0.5, -1 ) ;
-                else                          this->genClauseByDccVTA( nodeptr, &clause, -1/*Dont care*/, -1 ) ;
-            }
+                this->genClauseByDccVTA( nodeptr, &clause, 0.5, -1 ) ;
 		}
 		else if( path->getPathType() == FFtoFF )//-- FFtoFF -----------------------------
 		{
 			ClockTreeNode *sameparent = path->findLastSameParentNode();
 			//- Generate Clause/Left ----------------------------------------------------
 			long sameparentloc = path->nodeLocationInClockPath('s', sameparent);
+            
 			for( auto const& nodeptr: path->getStartPonitClkPath() )
-				if( nodeptr->ifPlacedDcc() )
 					this->genClauseByDccVTA( nodeptr, &clause, 0.5, -1 ) ;
-                else
-                    this->genClauseByDccVTA( nodeptr, &clause, -1/*Dont care*/, -1 ) ;
+        
 			//- Generate Clause/Right ---------------------------------------------------
 			for( long loop = (sameparentloc + 1);loop < path->getEndPonitClkPath().size(); loop++ )
-				if( path->getEndPonitClkPath().at(loop)->ifPlacedDcc() )
 					this->genClauseByDccVTA( path->getEndPonitClkPath().at(loop), &clause, 0.5, -1 );
-                else
-                    this->genClauseByDccVTA( path->getEndPonitClkPath().at(loop), &clause, -1/*Dont care*/, -1 ) ;
 		}
 		clause += "0";
 		if( this->_timingconstraintlist.size() < (this->_timingconstraintlist.max_size()-1) )
@@ -1782,6 +1775,8 @@ double ClockTree::timingConstraint_ndoDCC_ndoVTA( CriticalPath *path, bool updat
 		else
 			cerr << "\033[32m[Info]: Timing Constraint List Full!\033[0m\n";
 	}
+    if( path->getPathNum() == 19 && this->_tc == 0.9081 )
+        printf("Path( %ld ) Slack = %f \n", path->getPathNum(),newslack );
     return newslack ;
 }
 /*------------------------------------------------------------------------------------
@@ -1792,7 +1787,7 @@ double ClockTree::timingConstraint_ndoDCC_ndoVTA( CriticalPath *path, bool updat
  Pata:
     if update is false => The func is used to calculate the slack of pipeline
  -------------------------------------------------------------------------------------*/
-double ClockTree::UpdatePathTiming( CriticalPath * path, bool update )
+double ClockTree::UpdatePathTiming( CriticalPath * path, bool update, bool DCCVTA, bool aging )
 {
     //-- (Inserted) DCC Info -----------------------------------------------
     ClockTreeNode *stDCCLoc = NULL ;
@@ -1823,21 +1818,33 @@ double ClockTree::UpdatePathTiming( CriticalPath * path, bool update )
     if( edHeader ){
         edLibIndex = edHeader->getVTAType() ;
     }
-    
+    if( !DCCVTA ){
+        stDCCLoc = edDCCLoc = edHeader = stHeader = NULL ;
+        stDCCType = edDCCType = 0 ;
+        stLibIndex= edLibIndex = -1 ;
+    }
     //-- Timing -----------------------------------------------------------
     double ci = 0 ;
     double cj = 0 ;
     double newslack = 0, req_time = 0, avl_time = 0;
+
+    bool original_aging_setting = this->_aging ;
+    this->_aging = aging ;
+    
     int PathType = path->getPathType() ;
     if( PathType == FFtoFF || PathType == FFtoPO )
         ci = this->calClkLaten_givDcc_givVTA( path->getStartPonitClkPath(), stDCCType, stDCCLoc, stLibIndex, stHeader );//Has consider aging
     if( PathType == FFtoFF || PathType == PItoFF )
         cj = this->calClkLaten_givDcc_givVTA( path->getEndPonitClkPath(),   edDCCType, edDCCLoc, edLibIndex, edHeader );//Has consider aging
-    //------- Require time -------------------------------------------------------------
-    req_time = cj + (path->getTsu() * this->_agingtsu) + this->_tc;
+   
+    this->_aging = original_aging_setting ;
+    //------- Avl/Require time -------------------------------------------------------------
+    double Tsu = (aging)? (path->getTsu() * this->_agingtsu) : (path->getTsu()) ;
+    double Tcq = (aging)? (path->getTcq() * this->_agingtcq) : (path->getTcq()) ;
+    double Dij = (aging)? (path->getDij() * this->_agingdij) : (path->getDij()) ;
+    req_time = cj + Tsu + this->_tc;
+    avl_time = ci + path->getTinDelay() + Tcq + Dij ;
     
-    //------- Arrival time --------------------------------------------------------------
-    avl_time = ci + path->getTinDelay() + (path->getTcq() * this->_agingtcq) + (path->getDij() * this->_agingdij);
     newslack = req_time - avl_time  ;
     
     
@@ -2161,9 +2168,9 @@ double ClockTree::timingConstraint_givDCC_givVTA(   CriticalPath *path,
             {
                 if( clknode == path->getStartPonitClkPath().back() ) continue ;
                 //-- DCC Formulation -----------------------------------------------------
-                if( clknode->ifPlacedDcc() && clknode != stDCCLoc )
+                if( clknode != stDCCLoc )
                     this->writeClause_givDCC( clause, clknode, 0.5 );
-                else if( clknode->ifPlacedDcc() && clknode == stDCCLoc )
+                else if( clknode == stDCCLoc )
                     this->writeClause_givDCC( clause, clknode, stDCCType );
                 
                 //-- VTA Formulation ------------------------------------------------------
@@ -2180,9 +2187,9 @@ double ClockTree::timingConstraint_givDCC_givVTA(   CriticalPath *path,
             {
                 if( clknode == path->getEndPonitClkPath().back() ) continue ;
                 //-- DCC Formulation -----------------------------------------------------
-                if( clknode->ifPlacedDcc() && clknode != edDCCLoc )
+                if( clknode != edDCCLoc )
                     this->writeClause_givDCC( clause, clknode, 0.5 );
-                else if( clknode->ifPlacedDcc() && clknode == edDCCLoc )
+                else
                     this->writeClause_givDCC( clause, clknode, edDCCType );
                 
                 //-- VTA Formulation ------------------------------------------------------
@@ -2202,9 +2209,9 @@ double ClockTree::timingConstraint_givDCC_givVTA(   CriticalPath *path,
             {
                 if( clknode == path->getStartPonitClkPath().back() ) continue ;
                 //-- DCC Formulation -----------------------------------------------------
-                if( clknode->ifPlacedDcc() && clknode != stDCCLoc )
+                if(  clknode != stDCCLoc )
                     this->writeClause_givDCC( clause, clknode, 0.5 );
-                else if( clknode->ifPlacedDcc() && clknode == stDCCLoc )
+                else
                     this->writeClause_givDCC( clause, clknode, stDCCType );
                 
                 //-- VTA Formulation ------------------------------------------------------
@@ -2218,9 +2225,9 @@ double ClockTree::timingConstraint_givDCC_givVTA(   CriticalPath *path,
                 ClockTreeNode* clknode = path->getEndPonitClkPath().at(k) ;
                 if( clknode == path->getEndPonitClkPath().back() ) continue ;
                 //-- DCC Formulation -----------------------------------------------------
-                if( clknode->ifPlacedDcc() && clknode != edDCCLoc )
+                if(  clknode != edDCCLoc )
                     this->writeClause_givDCC( clause, clknode, 0.5 );
-                else if( clknode->ifPlacedDcc() && clknode == edDCCLoc )
+                else
                     this->writeClause_givDCC( clause, clknode, edDCCType );
                 
                 //-- VTA Formulation ------------------------------------------------------
@@ -2343,7 +2350,7 @@ double ClockTree::calClkLaten_givDcc_givVTA(    vector<ClockTreeNode *> clkpath,
             meetHeader = true ;
         }
         
-        agingrate = getAgingRate_givDC_givVth( DC, LibVthType )  ;
+        agingrate = (this->_aging)? getAgingRate_givDC_givVth( DC, LibVthType ) : (1)  ;
         
         laten += buftime*agingrate ;
         //printf("Buf = %f, ", buftime*agingrate );
@@ -2355,12 +2362,12 @@ double ClockTree::calClkLaten_givDcc_givVTA(    vector<ClockTreeNode *> clkpath,
         }
          */
     }
-    
-    laten += clkpath.back()->getGateData()->getWireTime() * getAgingRate_givDC_givVth( DC, -1 ) ;
+    agingrate = (this->_aging)? getAgingRate_givDC_givVth( DC, -1 ) : (1)  ;
+    laten += clkpath.back()->getGateData()->getWireTime() * agingrate ;
     //printf("Wire = %f \n", clkpath.back()->getGateData()->getWireTime() * getAgingRate_givDC_givVth( DC, -1 ) );
     if( DCCLoc != NULL )
     {
-        double agr_DCC =  getAgingRate_givDC_givVth( 0.5, LibVthTypeDCC ) ;//DCC use 0.5 DC?
+        double agr_DCC =  (this->_aging)? (getAgingRate_givDC_givVth( 0.5, LibVthTypeDCC )) : (1) ;//DCC use 0.5 DC?
         double DCC_Delay = 0 ;
         if( DCCType == 0.2 )
             DCC_Delay = minbufdelay*agr_DCC*DCCDELAY20PA ;
@@ -2523,7 +2530,7 @@ void ClockTree::tcBinarySearch( )
             if((path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF))
                 continue;
             // Update timing information
-            double slack = this->UpdatePathTiming( path, false );
+            double slack = this->UpdatePathTiming( path, false, true, true );
             
             if( slack < minslack )
             {
@@ -2651,7 +2658,7 @@ void ClockTree::updateAllPathTiming(void)
                 if((path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF))
                     continue;
                 // Update timing information
-                double slack = this->UpdatePathTiming( path, true );
+                double slack = this->UpdatePathTiming( path, true, true, true );
                 
                 if( slack < minslack )
                 {
@@ -3585,8 +3592,8 @@ void ClockTree::printPath_givFile(CriticalPath *path, bool doDCCVTA, bool aging,
     //-- Cal & Print ClockTree -------------------------------------------------
     printf("--------------------------------------------------------\n");
     printf(CYAN"[Topology]\n" RESET);
-    printAssociatedCriticalPathAtStartPoint( path ) ;
-    printAssociatedCriticalPathAtEndPoint( path ) ;
+    printAssociatedCriticalPathAtStartPoint( path, doDCCVTA, aging ) ;
+    printAssociatedCriticalPathAtEndPoint( path, doDCCVTA, aging ) ;
     if( aging ) printf( "Aging   : " YELLOW"10 years" RESET" \n"  );
     else        printf( "Aging   : " YELLOW"Fresh   " RESET" \n"  );
     if( doDCCVTA )
@@ -4041,7 +4048,7 @@ void ClockTree::dumpDccVTALeaderToFile()
     fclose(fPtr);
     
 }
-void ClockTree::printAssociatedCriticalPathAtEndPoint( CriticalPath* path )
+void ClockTree::printAssociatedCriticalPathAtEndPoint( CriticalPath* path, bool doDCCVTA, bool aging )
 {
     if( path->getPathType() == NONE   ){
         printf( RED"[Error] " RESET"The path is not included in the scope that you specified\n");
@@ -4064,9 +4071,9 @@ void ClockTree::printAssociatedCriticalPathAtEndPoint( CriticalPath* path )
         if( p == path || p->getPathType() == PItoFF || p->getPathType() == NONE || p->getPathType() == PItoPO) continue ;
         
         if( p->getStartPonitClkPath().back() == edClkPath.back() ){
-            double slack = UpdatePathTiming( p, false ) ;
+            double slack = UpdatePathTiming( p, false, doDCCVTA, aging ) ;
             if( slack > 0 ) printf( "%ld (slack = %f ), ", p->getPathNum(), slack );
-            if( slack < 0 ) printf( "%ld (slack = " RED"%f ), ", p->getPathNum(), slack );
+            if( slack < 0 ) printf( "%ld (slack = " RED"%f" RESET" ), ", p->getPathNum(), slack );
             ctr++ ;
             if( ctr % 6 == 0 )
                 printf("\n               ");
@@ -4074,7 +4081,7 @@ void ClockTree::printAssociatedCriticalPathAtEndPoint( CriticalPath* path )
     }
     cout << endl ;
 }
-void ClockTree::printAssociatedCriticalPathAtStartPoint( CriticalPath* path )
+void ClockTree::printAssociatedCriticalPathAtStartPoint( CriticalPath* path, bool doDCCVTA, bool aging )
 {
     if( path->getPathType() == NONE   ){
         printf( RED"[Error] " RESET"The path is not included in the scope that you specified\n");
@@ -4097,9 +4104,9 @@ void ClockTree::printAssociatedCriticalPathAtStartPoint( CriticalPath* path )
         if( p == path || p->getPathType() == FFtoPO || p->getPathType() == NONE || p->getPathType() == PItoPO ) continue ;
         
         if( p->getEndPonitClkPath().back() == stClkPath.back() ){
-            double slack = UpdatePathTiming( p, false ) ;
+            double slack = UpdatePathTiming( p, false, doDCCVTA, aging ) ;
             if( slack > 0 ) printf( "%ld (slack = %f ), ", p->getPathNum(), slack );
-            if( slack < 0 ) printf( "%ld (slack = " RED"%f ), ", p->getPathNum(), slack );
+            if( slack < 0 ) printf( "%ld (slack = " RED"%f" RESET" ), ", p->getPathNum(), slack );
             ctr++ ;
             if( ctr % 6 == 0 )
                 printf("\n               ");

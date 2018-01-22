@@ -251,7 +251,7 @@ public:
     void    dumpCNF(void)                  ;
     void    dumpToFile(void)               ;
     void    dumpDccVTALeaderToFile(void)   ;
-    double  UpdatePathTiming(CriticalPath*,bool update = true );
+    double  UpdatePathTiming(CriticalPath*,bool update = true, bool DCCVTA = true, bool aging = true );
 	//---Printer --------------------------------------------------------------------
 	void    printClockTree(void);
 	void    printSingleCriticalPath(long, bool verbose = 1);
@@ -271,8 +271,8 @@ public:
     void    printPItoFF_givFile( CriticalPath*, bool doDCCVTA, bool aging = true );
     void    printFFtoPO_givFile( CriticalPath*, bool doDCCVTA, bool aging = true );
     void    printPathSlackTiming(CriticalPath*, double ci, double cj, bool aging = true );
-    void    printAssociatedCriticalPathAtEndPoint( CriticalPath* path );
-    void    printAssociatedCriticalPathAtStartPoint( CriticalPath* path );
+    void    printAssociatedCriticalPathAtEndPoint( CriticalPath* path  , bool doDCCVTA = true, bool aging = true );
+    void    printAssociatedCriticalPathAtStartPoint( CriticalPath* path, bool doDCCVTA = true, bool aging = true  );
     void    printClkNodeFeature( ClockTreeNode*,bool ) ;
     //---Vth Lib --------------------------------------------------------------------
     double  calConvergentVth( double dc, double VthOffset ) ;
