@@ -1470,6 +1470,13 @@ void ClockTree::VTAConstraint(void)
         }
     }
 
+    //-- Don't Put Header at FF ---------------------------------------------------
+    for( auto FF: this->_ffsink )
+    {
+        clause = to_string( (FF.second->getNodeNumber() + 2 ) * -1 ) + " 0" ;
+        this->_VTAconstraintlist.insert( clause );
+    }
+    
     if( this->ifdoVTA() == true )
     for( auto path : this->_pathlist )
     {
@@ -1489,12 +1496,7 @@ void ClockTree::VTAConstraintFFtoFF( CriticalPath *path )
     int     idCommonParent = 0 ;
     string  clause = "" ;
     
-    //-- Don't Put Header at FF ---------------------------------------------------
-    for( auto FF: this->_ffsink )
-    {
-        clause = to_string( (FF.second->getNodeNumber() + 2 ) * -1 ) + " 0" ;
-        this->_VTAconstraintlist.insert( clause );
-    }
+
     
     //-- Do VTA --------------------------------------------------------------------
     if( this->ifdoVTA() )
@@ -1539,10 +1541,6 @@ void ClockTree::VTAConstraintPItoFF( CriticalPath *path )
     const vector<ClockTreeNode *> edClkPath = path->getEndPonitClkPath()   ;
     string clause = "" ;
     
-    //Part Z. Don't Put Header at FF
-    clause = to_string( (edClkPath.back()->getNodeNumber()+2) * -1 ) + " 0" ;
-    this->_VTAconstraintlist.insert( clause );
-    
     //-- Do VTA --------------------------------------------------------------------
     if( this->ifdoVTA() )
     {
@@ -1562,8 +1560,6 @@ void ClockTree::VTAConstraintFFtoPO( CriticalPath *path )
     const vector<ClockTreeNode *> stClkPath = path->getStartPonitClkPath() ;
     string clause = "" ;
     
-    clause = to_string( (stClkPath.back()->getNodeNumber()+2) * -1 ) + " 0" ;
-    this->_VTAconstraintlist.insert( clause );
     //-- Do VTA --------------------------------------------------------------------
     if( this->ifdoVTA() )
     {
