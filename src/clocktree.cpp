@@ -1473,7 +1473,7 @@ void ClockTree::VTAConstraint(void)
     //-- Don't Put Header at FF ---------------------------------------------------
     for( auto FF: this->_ffsink )
     {
-        clause = to_string( (FF.second->getNodeNumber() + 2 ) * -1 ) + " 0" ;
+        string clause = to_string( (FF.second->getNodeNumber() + 2 ) * -1 ) + " 0" ;
         this->_VTAconstraintlist.insert( clause );
     }
     
