@@ -207,6 +207,7 @@ void ClockTree::genDccConstraintClause( vector<vector<long> > *comblist )
 				this->_dccconstraintlist.insert(clause2);
 				this->_dccconstraintlist.insert(clause3);
 				this->_dccconstraintlist.insert(clause4);
+                if( _printClause ) fprintf( fptr,"DCC (%ld with %ld): %s, %s, %s, %s \n", nodenum1, nodenum2, clause1.c_str(), clause2.c_str(), clause3.c_str(), clause4.c_str() );
 			}
 			else
 			{
@@ -531,6 +532,8 @@ int ClockTree::checkParameter(int argc, char **argv, string *message)
             this->_checkCNF  = 1;
         else if(strcmp(argv[loop], "-checkFile") == 0)
             this->_checkfile  = 1;
+        else if(strcmp(argv[loop], "-print=Clause") == 0)
+            this->_printClause  = 1;
 		else if(strcmp(argv[loop], "-mask_leng") == 0)
 		{
 			if(!isRealNumber(string(argv[loop+1])) || (stod(string(argv[loop+1])) < 0) || (stod(string(argv[loop+1])) > 1))
@@ -1456,13 +1459,20 @@ void ClockTree::MaskClkNode( void )
 ----------------------------------------------------------------------------*/
 void ClockTree::VTAConstraint(void)
 {
+    this->clauseFileName = this->_outputdir + "clause_" +  "VTA_Constraint.txt";
+    if( !isDirectoryExist(this->_outputdir) )
+        mkdir(this->_outputdir.c_str(), 0775);
+    this->fptr = fopen( this->clauseFileName.c_str(), "w" );
+    if( !fptr )
+        cerr << RED"[Error]" RESET" Cannot open " << this->clauseFileName << endl ;
+    
     if( this->ifdoVTA() == false )
     {
         for( auto const& node: this->_buflist )//_buflist = map< string, clknode * >
         {
             string clause ;
             clause = to_string((node.second->getNodeNumber()+2) * -1) + " 0";
-            
+            fprintf( fptr, "NodoVTA: %s(%ld) %s\n", node.second->getGateData()->getGateName().c_str(),  node.second->getNodeNumber(), clause.c_str() );
             if( this->_VTAconstraintlist.size() < (this->_VTAconstraintlist.max_size()-2) )
                 this->_dccconstraintlist.insert(clause);
             else
@@ -1475,6 +1485,7 @@ void ClockTree::VTAConstraint(void)
     {
         string clause = to_string( (FF.second->getNodeNumber() + 2 ) * -1 ) + " 0" ;
         this->_VTAconstraintlist.insert( clause );
+        if( _printClause ) fprintf( fptr, "FF: %s(%ld) %s\n", FF.second->getGateData()->getGateName().c_str(), FF.second->getNodeNumber(), clause.c_str() );
     }
     
     if( this->ifdoVTA() == true )
@@ -1486,6 +1497,7 @@ void ClockTree::VTAConstraint(void)
         else if( path->getPathType() == PItoPO )    continue    ;
         else if( path->getPathType() == NONE   )    continue    ;
     }
+    fclose(fptr);
 }
 void ClockTree::VTAConstraintFFtoFF( CriticalPath *path )
 {
@@ -1508,6 +1520,7 @@ void ClockTree::VTAConstraintFFtoFF( CriticalPath *path )
             {
                 clause = to_string( (stClkPath.at(L1)->getNodeNumber()+2) * -1 ) + " " + to_string( (stClkPath.at(L2)->getNodeNumber()+2) * -1 )+ " 0" ;
                 this->_VTAconstraintlist.insert( clause );
+                if( _printClause ) fprintf( this->fptr, "%ld with %ld: %s \n",stClkPath.at(L1)->getNodeNumber(), stClkPath.at(L2)->getNodeNumber(), clause.c_str() );
             }
             
             if( stClkPath.at(L1) == commonParent ) idCommonParent = L1 ;
@@ -1521,6 +1534,7 @@ void ClockTree::VTAConstraintFFtoFF( CriticalPath *path )
             {
                 clause = to_string( (edClkPath.at(L1)->getNodeNumber()+2) * -1 ) + " " + to_string( (edClkPath.at(L2)->getNodeNumber()+2) * -1 )+ " 0" ;
                 this->_VTAconstraintlist.insert( clause );
+                if( _printClause ) fprintf( this->fptr, "%ld with %ld: %s \n",edClkPath.at(L1)->getNodeNumber(), edClkPath.at(L2)->getNodeNumber(), clause.c_str() );
             }
         }
         //Each pairs of nodes in edClkPath
@@ -1530,6 +1544,7 @@ void ClockTree::VTAConstraintFFtoFF( CriticalPath *path )
             {
                 clause = to_string( (edClkPath.at(L1)->getNodeNumber()+2) * -1 ) + " " + to_string( (edClkPath.at(L2)->getNodeNumber()+2) * -1 )+ " 0" ;
                 this->_VTAconstraintlist.insert( clause );
+                if( _printClause ) fprintf( this->fptr, "%ld with %ld: %s \n",edClkPath.at(L1)->getNodeNumber(), edClkPath.at(L2)->getNodeNumber(), clause.c_str() );
             }
         }
     }
@@ -1550,6 +1565,7 @@ void ClockTree::VTAConstraintPItoFF( CriticalPath *path )
             {
                 clause = to_string( (edClkPath.at(L1)->getNodeNumber()+2) * -1 ) + " " + to_string( (edClkPath.at(L2)->getNodeNumber()+2) * -1 )+ " 0" ;
                 this->_VTAconstraintlist.insert( clause );
+                if( _printClause ) fprintf( this->fptr, "%ld with %ld: %s \n",edClkPath.at(L1)->getNodeNumber(), edClkPath.at(L2)->getNodeNumber(), clause.c_str() );
             }
         }
     }
@@ -1569,6 +1585,7 @@ void ClockTree::VTAConstraintFFtoPO( CriticalPath *path )
             {
                 clause = to_string( (stClkPath.at(L1)->getNodeNumber()+2) * -1 ) + " " + to_string( (stClkPath.at(L2)->getNodeNumber()+2) * -1 )+ " 0" ;
                 this->_VTAconstraintlist.insert( clause );
+                if( _printClause ) fprintf( this->fptr, "%ld with %ld: %s \n",stClkPath.at(L1)->getNodeNumber(), stClkPath.at(L2)->getNodeNumber(), clause.c_str() );
             }
         }
     }
@@ -1592,6 +1609,15 @@ void ClockTree::dccConstraint(void)
 		this->_nonplacedccbufnum = this->_buflist.size();
 		return;
 	}
+    
+    this->clauseFileName = this->_outputdir + "clause_" +  "DCC_Constraint.txt";
+    if( !isDirectoryExist(this->_outputdir) )
+        mkdir(this->_outputdir.c_str(), 0775);
+    this->fptr = fopen( this->clauseFileName.c_str(), "w" );
+    
+    if( !fptr )
+        cerr << RED"[Error]" RESET" Cannot open " << this->clauseFileName << endl ;
+    
 	// Generate two clauses for the clock tree root (clock source)
 	if( this->_dccconstraintlist.size() < (this->_dccconstraintlist.max_size()-2) )
 	{
@@ -1599,6 +1625,7 @@ void ClockTree::dccConstraint(void)
 		string clause2 = to_string((this->_clktreeroot->getNodeNumber() + 1) * -1) + " 0";
 		this->_dccconstraintlist.insert(clause1);
 		this->_dccconstraintlist.insert(clause2);
+        if( _printClause ) fprintf( fptr,"Root: %s, %s \n", clause1.c_str(), clause2.c_str() );
 	}
 	else
 	{
@@ -1617,6 +1644,7 @@ void ClockTree::dccConstraint(void)
 			{
 				this->_dccconstraintlist.insert(clause1);
 				this->_dccconstraintlist.insert(clause2);
+                if( _printClause ) fprintf( fptr,"Masked node(%ld): %s, %s \n", node.second->getNodeNumber(), clause1.c_str(), clause2.c_str() );
 			}
 			else
 			{
@@ -1627,7 +1655,7 @@ void ClockTree::dccConstraint(void)
 	}
 	this->_nonplacedccbufnum = (this->_dccconstraintlist.size() / 2) - 1;
 	// Generate clauses based on DCC constraint in each clock path
-	for( auto const& node: this->_ffsink )
+	for( auto const& node: this->_ffsink  )
 	{
         //-- Don't Put DCC ahead of FF
 		string clause1, clause2;
@@ -1637,6 +1665,7 @@ void ClockTree::dccConstraint(void)
 		{
 			this->_dccconstraintlist.insert(clause1);
 			this->_dccconstraintlist.insert(clause2);
+            if( _printClause ) fprintf( fptr,"Masked FF(%ld): %s, %s \n", node.second->getNodeNumber(), clause1.c_str(), clause2.c_str() );
 		}
 		else
 		{
@@ -1662,6 +1691,7 @@ void ClockTree::dccConstraint(void)
 		// Generate clauses
 		this->genDccConstraintClause(&comblist);
 	}
+    fclose(fptr);
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -1692,7 +1722,10 @@ double ClockTree::timingConstraint(void)
     if( this->_placedcc == false && this->ifdoVTA() == false ) return -1 ;
     int id = 0 ;
 	this->_timingconstraintlist.clear();
-   
+    this->clauseFileName = this->_outputdir + "clause_" + to_string(this->_tc) + ".txt";
+    if( !isDirectoryExist(this->_outputdir) )
+        mkdir(this->_outputdir.c_str(), 0775);
+    this->fptr = fopen( this->clauseFileName.c_str(), "w" );
 	for( auto const& path: this->_pathlist )
 	{
 		if( (path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF) ) continue;
@@ -1711,6 +1744,7 @@ double ClockTree::timingConstraint(void)
         //printf("%d th path is done...\n",id);
         id++ ;
 	}
+    fclose(this->fptr);
     return -1 ;//tentative
 }
 /*------------------------------------------------------------------------------------
@@ -1735,8 +1769,8 @@ double ClockTree::timingConstraint_ndoDCC_ndoVTA( CriticalPath *path, bool updat
     double datareqtime = 0 ;
 	
     //------- Ci & Cj ------------------------------------------------------------------
-	dataarrtime =  this->calClkLaten_givDcc_givVTA( path->getStartPonitClkPath(), 0, NULL, 0, NULL  );
-    datareqtime =  this->calClkLaten_givDcc_givVTA( path->getEndPonitClkPath()  , 0, NULL, 0, NULL  );
+	dataarrtime =  this->calClkLaten_givDcc_givVTA( path->getStartPonitClkPath(), 0, NULL, -1, NULL  );
+    datareqtime =  this->calClkLaten_givDcc_givVTA( path->getEndPonitClkPath()  , 0, NULL, -1, NULL  );
 
 	//------- Require/Arrival time ------------------------------------------------------
 	datareqtime += (path->getTsu() * this->_agingtsu) + this->_tc;
@@ -1774,9 +1808,14 @@ double ClockTree::timingConstraint_ndoDCC_ndoVTA( CriticalPath *path, bool updat
 			this->_timingconstraintlist.insert(clause) ;
 		else
 			cerr << "\033[32m[Info]: Timing Constraint List Full!\033[0m\n";
+        
+        if( _printClause )
+            fprintf( this->fptr, "Path(%ld), stDCC(%.1f), edDCC(%.1f), stVTA(%d), edVTA(%d), slack = %f, %s \n", path->getPathNum(), -1.0, -1.0, -1, -1, newslack, clause.c_str() );
 	}
+    /*
     if( path->getPathNum() == 19 && this->_tc == 0.9081 )
         printf("Path( %ld ) Slack = %f \n", path->getPathNum(),newslack );
+     */
     return newslack ;
 }
 /*------------------------------------------------------------------------------------
@@ -2149,10 +2188,13 @@ double ClockTree::timingConstraint_givDCC_givVTA(   CriticalPath *path,
     if( PathType == FFtoFF || PathType == PItoFF )
         cj = this->calClkLaten_givDcc_givVTA( path->getEndPonitClkPath(),   edDCCType, edDCCLoc, edLibIndex, edHeader );//Has consider aging
     //------- Require time -------------------------------------------------------------
-    req_time = cj + (path->getTsu() * this->_agingtsu) + this->_tc;
+    double Tsu = (this->_aging)? (path->getTsu() * this->_agingtsu) : (path->getTsu()) ;
+    double Tcq = (this->_aging)? (path->getTcq() * this->_agingtcq) : (path->getTcq()) ;
+    double Dij = (this->_aging)? (path->getDij() * this->_agingdij) : (path->getDij()) ;
+    req_time = cj + Tsu + this->_tc;
     
     //------- Arrival time --------------------------------------------------------------
-    avl_time = ci + path->getTinDelay() + (path->getTcq() * this->_agingtcq) + (path->getDij() * this->_agingdij);
+    avl_time = ci + path->getTinDelay() + Tcq + Dij ;
     newslack = req_time - avl_time  ;
     
     
@@ -2243,6 +2285,18 @@ double ClockTree::timingConstraint_givDCC_givVTA(   CriticalPath *path,
             this->_timingconstraintlist.insert(clause) ;
         else
             cerr << "\033[32m[Info]: Timing Constraint List Full!\033[0m\n";
+        
+        if( _printClause )
+        {
+            fprintf( this->fptr,"Path(%ld), ", path->getPathNum() );
+            if( stDCCLoc )  fprintf( this->fptr,"stDCC (%ld, %f ), ", stDCCLoc->getNodeNumber(), stDCCType  );
+            if( edDCCLoc )  fprintf( this->fptr,"edDCC (%ld, %f ), ", edDCCLoc->getNodeNumber(), edDCCType  );
+            if( stHeader )  fprintf( this->fptr,"stVTA (%ld, %d ), ", stHeader->getNodeNumber(), stLibIndex );
+            if( edHeader )  fprintf( this->fptr,"stVTA (%ld, %d ), ", edHeader->getNodeNumber(), edLibIndex );
+            
+            
+            fprintf( this->fptr,"slk = %f, %s \n", newslack, clause.c_str() );
+        }
     }//if( newslack < 0 )
     return newslack ;
 }

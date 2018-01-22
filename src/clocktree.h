@@ -58,7 +58,7 @@ class ClockTree
 {
 private:
 	int     _pathselect, _bufinsert, _gpupbound, _gplowbound, _minisatexecnum;
-	bool    _placedcc, _aging, _mindccplace, _tcrecheck, _clkgating, _dumpdcc, _dumpcg, _dumpbufins, _doVTA, _printpath, _dumpCNF, _checkCNF, _checkfile ;
+	bool    _placedcc, _aging, _mindccplace, _tcrecheck, _clkgating, _dumpdcc, _dumpcg, _dumpbufins, _doVTA, _printpath, _dumpCNF, _checkCNF, _checkfile, _printClause ;
 	long    _pathusednum, _pitoffnum, _fftoffnum, _fftoponum, _nonplacedccbufnum;
 	long    _totalnodenum, _ffusednum, _bufferusednum, _dccatlastbufnum;
 	long    _masklevel, _maxlevel, _insertbufnum;
@@ -101,6 +101,8 @@ private:
 	void dumpBufferInsertionToFile(void)    ;
 	
 public:
+    FILE *fptr ;
+    string clauseFileName ;
     //-Constructor-----------------------------------------------------------------
 	ClockTree(void)
 			 : _pathselect(0), _bufinsert(0), _placedcc(1), _doVTA(1), _VTH_LIB_cnt(0), _FIN_CONV_Year(100) ,_aging(1), _mindccplace(0), _tcrecheck(0), _clkgating(0),
@@ -111,7 +113,7 @@ public:
 			   _origintc(0), _besttc(0), _tc(0), _tcupbound(0), _tclowbound(0),
 			   _clktreeroot(nullptr), _firstchildrennode(nullptr), _mostcriticalpath(nullptr),
 			   _timingreport(""), _timingreportfilename(""), _timingreportloc(""), _timingreportdesign(""),_dumpCNF(false), _checkCNF(false), _checkfile(false),
-			   _cgfilename(""), _outputdir(""), _tcAfterAdjust(0) {}
+			   _cgfilename(""), _outputdir(""), _tcAfterAdjust(0), _printClause(false) {}
 	//-Destructor------------------------------------------------------------------
     ~ClockTree(void);
 	

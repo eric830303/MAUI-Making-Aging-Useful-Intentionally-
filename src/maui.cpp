@@ -150,7 +150,8 @@ int main(int argc, char **argv)
 	cout << "\033[32m[Info]: Analyzing DCC Constraint...\033[0m\n";
 	midtime = chrono::steady_clock::now();
     
-    
+    //-------- Remove CNF file --------------------------------------------------------------
+    circuit.removeCNFFile() ;
 	//-------- Constraint -----------------------------------------------------------------
     //1.
 	circuit.dccPlacementByMasked(0);
@@ -163,8 +164,6 @@ int main(int argc, char **argv)
 	//-------- Generate all kinds of DCC deployment ----------------------------------------
 	circuit.genDccPlacementCandidate();
 	
-    //-------- Remove CNF file --------------------------------------------------------------
-    circuit.removeCNFFile() ;
     
     
     
@@ -175,6 +174,7 @@ int main(int argc, char **argv)
 	while( 1 )
 	{
 		cout << CYAN"Tc " << RESET "= " << circuit.getTc() << "\033[0m\n";
+    
 		midtime = chrono::steady_clock::now();
 		//---- Timing constraint method (Clauses)--------
 		circuit.timingConstraint();
