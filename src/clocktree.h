@@ -76,7 +76,7 @@ private:
 	CriticalPath    *_mostcriticalpath;
 	vector<CriticalPath *> _pathlist;
 	map<string, ClockTreeNode *> _ffsink, _buflist, _cglist, _dcclist, _VTAlist ;
-    
+    set< pair<ClockTreeNode*,ClockTreeNode*> > _setVTALeader ;
     //Constraint-related attribute
 	set<string> _VTAconstraintlist, _dccconstraintlist, _timingconstraintlist;
 	
@@ -171,6 +171,7 @@ public:
 	CriticalPath    *getMostCriticalPath(void)      { return _mostcriticalpath  ; }
 	vector<CriticalPath *>& getPathList(void)       { return _pathlist          ; }
     vector<VTH_TECH*>&      getLibList(void)        { return _VthTechList       ; }
+    set< pair<ClockTreeNode*,ClockTreeNode*> >& getVTASet(void) { return _setVTALeader ; }
 	//-- Bool Attr Access -------------------------------------------------------
     bool ifCheckFile(void)                          { return _checkfile         ; }
     bool ifCheckCNF(void)                           { return _checkCNF          ; }

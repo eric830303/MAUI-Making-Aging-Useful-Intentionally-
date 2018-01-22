@@ -1518,9 +1518,14 @@ void ClockTree::VTAConstraintFFtoFF( CriticalPath *path )
         {
             for( int L2 = L1 + 1 ; L2 < stClkPath.size()-1; L2++ )
             {
-                clause = to_string( (stClkPath.at(L1)->getNodeNumber()+2) * -1 ) + " " + to_string( (stClkPath.at(L2)->getNodeNumber()+2) * -1 )+ " 0" ;
-                this->_VTAconstraintlist.insert( clause );
-                if( _printClause ) fprintf( this->fptr, "%ld with %ld: %s \n",stClkPath.at(L1)->getNodeNumber(), stClkPath.at(L2)->getNodeNumber(), clause.c_str() );
+                auto findpair = this->getVTASet().find( pair<ClockTreeNode*,ClockTreeNode*>(stClkPath.at(L1),stClkPath.at(L2)));
+                if( findpair == this->getVTASet().end() )//Not repeated
+                {
+                    clause = to_string( (stClkPath.at(L1)->getNodeNumber()+2) * -1 ) + " " + to_string( (stClkPath.at(L2)->getNodeNumber()+2) * -1 )+ " 0" ;
+                    this->_VTAconstraintlist.insert( clause );
+                    if( _printClause ) fprintf( this->fptr, "%ld with %ld: %s \n",stClkPath.at(L1)->getNodeNumber(), stClkPath.at(L2)->getNodeNumber(), clause.c_str() );
+                    this->getVTASet().insert( pair<ClockTreeNode*,ClockTreeNode*>(stClkPath.at(L1),stClkPath.at(L2)) );
+                }
             }
             
             if( stClkPath.at(L1) == commonParent ) idCommonParent = L1 ;
@@ -1532,9 +1537,14 @@ void ClockTree::VTAConstraintFFtoFF( CriticalPath *path )
         {
             for( int L2 = idCommonParent + 1 ; L2 < edClkPath.size()-1; L2++ )
             {
-                clause = to_string( (edClkPath.at(L1)->getNodeNumber()+2) * -1 ) + " " + to_string( (edClkPath.at(L2)->getNodeNumber()+2) * -1 )+ " 0" ;
-                this->_VTAconstraintlist.insert( clause );
-                if( _printClause ) fprintf( this->fptr, "%ld with %ld: %s \n",edClkPath.at(L1)->getNodeNumber(), edClkPath.at(L2)->getNodeNumber(), clause.c_str() );
+                auto findpair = this->getVTASet().find( pair<ClockTreeNode*,ClockTreeNode*>(edClkPath.at(L1),edClkPath.at(L2)));
+                if( findpair == this->getVTASet().end() )//Not repeated
+                {
+                    clause = to_string( (edClkPath.at(L1)->getNodeNumber()+2) * -1 ) + " " + to_string( (edClkPath.at(L2)->getNodeNumber()+2) * -1 )+ " 0" ;
+                    this->_VTAconstraintlist.insert( clause );
+                    if( _printClause ) fprintf( this->fptr, "%ld with %ld: %s \n",edClkPath.at(L1)->getNodeNumber(), edClkPath.at(L2)->getNodeNumber(), clause.c_str() );
+                    this->getVTASet().insert( pair<ClockTreeNode*,ClockTreeNode*>(edClkPath.at(L1),edClkPath.at(L2)) );
+                }
             }
         }
         //Each pairs of nodes in edClkPath
@@ -1542,9 +1552,14 @@ void ClockTree::VTAConstraintFFtoFF( CriticalPath *path )
         {
             for( int L2 = L1 + 1 ; L2 < edClkPath.size()-1; L2++ )
             {
-                clause = to_string( (edClkPath.at(L1)->getNodeNumber()+2) * -1 ) + " " + to_string( (edClkPath.at(L2)->getNodeNumber()+2) * -1 )+ " 0" ;
-                this->_VTAconstraintlist.insert( clause );
-                if( _printClause ) fprintf( this->fptr, "%ld with %ld: %s \n",edClkPath.at(L1)->getNodeNumber(), edClkPath.at(L2)->getNodeNumber(), clause.c_str() );
+                auto findpair = this->getVTASet().find( pair<ClockTreeNode*,ClockTreeNode*>(edClkPath.at(L1),edClkPath.at(L2)));
+                if( findpair == this->getVTASet().end() )//Not repeated
+                {
+                    clause = to_string( (edClkPath.at(L1)->getNodeNumber()+2) * -1 ) + " " + to_string( (edClkPath.at(L2)->getNodeNumber()+2) * -1 )+ " 0" ;
+                    this->_VTAconstraintlist.insert( clause );
+                    if( _printClause ) fprintf( this->fptr, "%ld with %ld: %s \n",edClkPath.at(L1)->getNodeNumber(), edClkPath.at(L2)->getNodeNumber(), clause.c_str() );
+                    this->getVTASet().insert( pair<ClockTreeNode*,ClockTreeNode*>(edClkPath.at(L1),edClkPath.at(L2)) );
+                }
             }
         }
     }
@@ -1563,9 +1578,14 @@ void ClockTree::VTAConstraintPItoFF( CriticalPath *path )
         {
             for( int L2 = L1 + 1 ; L2 < edClkPath.size()-1; L2++ )
             {
-                clause = to_string( (edClkPath.at(L1)->getNodeNumber()+2) * -1 ) + " " + to_string( (edClkPath.at(L2)->getNodeNumber()+2) * -1 )+ " 0" ;
-                this->_VTAconstraintlist.insert( clause );
-                if( _printClause ) fprintf( this->fptr, "%ld with %ld: %s \n",edClkPath.at(L1)->getNodeNumber(), edClkPath.at(L2)->getNodeNumber(), clause.c_str() );
+                auto findpair = this->getVTASet().find( pair<ClockTreeNode*,ClockTreeNode*>(edClkPath.at(L1),edClkPath.at(L2)));
+                if( findpair == this->getVTASet().end() )//Not repeated
+                {
+                    clause = to_string( (edClkPath.at(L1)->getNodeNumber()+2) * -1 ) + " " + to_string( (edClkPath.at(L2)->getNodeNumber()+2) * -1 )+ " 0" ;
+                    this->_VTAconstraintlist.insert( clause );
+                    if( _printClause ) fprintf( this->fptr, "%ld with %ld: %s \n",edClkPath.at(L1)->getNodeNumber(), edClkPath.at(L2)->getNodeNumber(), clause.c_str() );
+                    this->getVTASet().insert( pair<ClockTreeNode*,ClockTreeNode*>(edClkPath.at(L1),edClkPath.at(L2)) );
+                }
             }
         }
     }
@@ -1583,9 +1603,14 @@ void ClockTree::VTAConstraintFFtoPO( CriticalPath *path )
         {
             for( int L2 = L1 + 1 ; L2 < stClkPath.size()-1; L2++ )
             {
-                clause = to_string( (stClkPath.at(L1)->getNodeNumber()+2) * -1 ) + " " + to_string( (stClkPath.at(L2)->getNodeNumber()+2) * -1 )+ " 0" ;
-                this->_VTAconstraintlist.insert( clause );
-                if( _printClause ) fprintf( this->fptr, "%ld with %ld: %s \n",stClkPath.at(L1)->getNodeNumber(), stClkPath.at(L2)->getNodeNumber(), clause.c_str() );
+                auto findpair = this->getVTASet().find( pair<ClockTreeNode*,ClockTreeNode*>(stClkPath.at(L1),stClkPath.at(L2)));
+                if( findpair == this->getVTASet().end() )//Not repeated
+                {
+                    clause = to_string( (stClkPath.at(L1)->getNodeNumber()+2) * -1 ) + " " + to_string( (stClkPath.at(L2)->getNodeNumber()+2) * -1 )+ " 0" ;
+                    this->_VTAconstraintlist.insert( clause );
+                    if( _printClause ) fprintf( this->fptr, "%ld with %ld: %s \n",stClkPath.at(L1)->getNodeNumber(), stClkPath.at(L2)->getNodeNumber(), clause.c_str() );
+                    this->getVTASet().insert( pair<ClockTreeNode*,ClockTreeNode*>(stClkPath.at(L1),stClkPath.at(L2)) );
+                }
             }
         }
     }
@@ -2197,12 +2222,10 @@ double ClockTree::timingConstraint_givDCC_givVTA(   CriticalPath *path,
     avl_time = ci + path->getTinDelay() + Tcq + Dij ;
     newslack = req_time - avl_time  ;
     
-    
-    
+    //-- Formulation ---------------------------------------------------------------------
     string clause = "" ;
     if( newslack < 0 )
     {
-        
         //-- PItoFF ----------------------------------------------------------------------
         if( path->getPathType() == FFtoPO )
         {
