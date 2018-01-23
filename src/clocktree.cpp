@@ -2775,7 +2775,7 @@ void ClockTree::printDccList(void)
 		cout << "N/A\n";
 	else
 		for( auto const& node: this->_dcclist )
-			cout << node.first << "(" << node.second->getDccType() << ((node.second != this->_dcclist.rbegin()->second) ? "), " : ")\n");
+			cout << node.first << "(" << node.second->getNodeNumber() << ","<< node.second->getDccType() << ((node.second != this->_dcclist.rbegin()->second) ? "), " : ")\n");
 	
     cout << "\t*** DCCs Placed at Last Buffer     : ";
 	if(!this->_placedcc || (this->_dccatlastbufnum == 0))
@@ -2789,7 +2789,7 @@ void ClockTree::printDccList(void)
 			{
                 if( firstprint ) firstprint = false ;
                 else    cout << "), " ;
-				cout << node.first << "(" << node.second->getDccType();
+				cout << node.first << "(" << node.second->getNodeNumber() << ","<< node.second->getDccType();
 			}
 		}
 		cout << ")\n";
