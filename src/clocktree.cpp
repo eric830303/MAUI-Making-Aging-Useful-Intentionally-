@@ -1765,15 +1765,15 @@ void ClockTree::calculateClockLatencyWithoutDcc(CriticalPath *path, double *data
 		double dutycycle = 0.5;
 		vector<ClockTreeNode *> sclkpath = path->getStartPonitClkPath();
 		if(this->_aging)
-			agingrate = roundNPrecision(getAgingRateByDutyCycle(dutycycle), PRECISION);
+			agingrate = getAgingRateByDutyCycle(dutycycle);
 		for(long loop = 0;loop < (sclkpath.size() - 1);loop++)
 		{
 			*dataarrtime += (sclkpath.at(loop)->getGateData()->getWireTime() + sclkpath.at(loop)->getGateData()->getGateTime()) * agingrate;
 			// Meet the clock gating cells
 			if(sclkpath.at(loop)->ifClockGating() && this->_aging)
 			{
-				dutycycle = roundNPrecision(dutycycle * (1 - sclkpath.at(loop)->getGatingProbability()), PRECISION);
-				agingrate = roundNPrecision(getAgingRateByDutyCycle(dutycycle), PRECISION);
+				dutycycle = dutycycle * (1 - sclkpath.at(loop)->getGatingProbability());
+				agingrate = getAgingRateByDutyCycle(dutycycle);
 			}
 		}
 		*dataarrtime += sclkpath.back()->getGateData()->getWireTime() * agingrate;
@@ -1784,15 +1784,15 @@ void ClockTree::calculateClockLatencyWithoutDcc(CriticalPath *path, double *data
 		double dutycycle = 0.5;
 		vector<ClockTreeNode *> eclkpath = path->getEndPonitClkPath();
 		if(this->_aging)
-			agingrate = roundNPrecision(getAgingRateByDutyCycle(dutycycle), PRECISION);
+			agingrate = getAgingRateByDutyCycle(dutycycle);
 		for(long loop = 0;loop < (eclkpath.size() - 1);loop++)
 		{
 			*datareqtime += (eclkpath.at(loop)->getGateData()->getWireTime() + eclkpath.at(loop)->getGateData()->getGateTime()) * agingrate;
 			// Meet the clock gating cells
 			if(eclkpath.at(loop)->ifClockGating() && this->_aging)
 			{
-				dutycycle = roundNPrecision(dutycycle * (1 - eclkpath.at(loop)->getGatingProbability()), PRECISION);
-				agingrate = roundNPrecision(getAgingRateByDutyCycle(dutycycle), PRECISION);
+				dutycycle = dutycycle * (1 - eclkpath.at(loop)->getGatingProbability());
+				agingrate = getAgingRateByDutyCycle(dutycycle);
 			}
 		}
 		*datareqtime += eclkpath.back()->getGateData()->getWireTime() * agingrate;
@@ -1816,7 +1816,7 @@ vector<double> ClockTree::calculateClockLatencyWithDcc( vector<ClockTreeNode *> 
 	bool   isfront        = 1   ;
     double minbufdelay    = 999 ;
     double dutycycle20    = 0.5, dutycycle40 = 0.5, dutycycle80 = 0.5, dutycycleondcc = 0.5;
-	double agingrate20dcc = roundNPrecision(getAgingRateByDutyCycle(dutycycle20), PRECISION);
+	double agingrate20dcc = getAgingRateByDutyCycle(dutycycle20);
     double agingrate40dcc = agingrate20dcc ;
     double agingrate80dcc = agingrate20dcc ;
 	for( long loop = 0; loop < (clkpath.size() - 1); loop++ )
@@ -1831,15 +1831,15 @@ vector<double> ClockTree::calculateClockLatencyWithDcc( vector<ClockTreeNode *> 
 		if( isfront )
 		{
 			if((node != candinode) && (node->ifClockGating()))
-				dutycycleondcc = roundNPrecision(dutycycleondcc * (1 - node->getGatingProbability()), PRECISION);
+				dutycycleondcc = dutycycleondcc * (1 - node->getGatingProbability());
 			// Meet the DCC
 			else if(node == candinode)
 			{
 				isfront = 0;
                 dutycycle20 = 0.2 ; dutycycle40 = 0.4 ; dutycycle80 = 0.8 ;
-				agingrate20dcc = roundNPrecision(getAgingRateByDutyCycle(dutycycle20), PRECISION);
-				agingrate40dcc = roundNPrecision(getAgingRateByDutyCycle(dutycycle40), PRECISION);
-				agingrate80dcc = roundNPrecision(getAgingRateByDutyCycle(dutycycle80), PRECISION);
+				agingrate20dcc = getAgingRateByDutyCycle(dutycycle20);
+				agingrate40dcc = getAgingRateByDutyCycle(dutycycle40);
+				agingrate80dcc = getAgingRateByDutyCycle(dutycycle80);
 				
 			}
 		}
@@ -1849,12 +1849,12 @@ vector<double> ClockTree::calculateClockLatencyWithDcc( vector<ClockTreeNode *> 
 		// Meet the clock gating cells
 		if(node->ifClockGating())
 		{
-			dutycycle20 = roundNPrecision(dutycycle20 * (1 - node->getGatingProbability()), PRECISION);
-			dutycycle40 = roundNPrecision(dutycycle40 * (1 - node->getGatingProbability()), PRECISION);
-			dutycycle80 = roundNPrecision(dutycycle80 * (1 - node->getGatingProbability()), PRECISION);
-			agingrate20dcc = roundNPrecision(getAgingRateByDutyCycle(dutycycle20), PRECISION);
-			agingrate40dcc = roundNPrecision(getAgingRateByDutyCycle(dutycycle40), PRECISION);
-			agingrate80dcc = roundNPrecision(getAgingRateByDutyCycle(dutycycle80), PRECISION);
+			dutycycle20 = dutycycle20 * (1 - node->getGatingProbability());
+			dutycycle40 = dutycycle40 * (1 - node->getGatingProbability());
+			dutycycle80 = dutycycle80 * (1 - node->getGatingProbability());
+			agingrate20dcc = getAgingRateByDutyCycle(dutycycle20);
+			agingrate40dcc = getAgingRateByDutyCycle(dutycycle40);
+			agingrate80dcc = getAgingRateByDutyCycle(dutycycle80);
 		}
 	}
 	clklatency.at(0) += clkpath.back()->getGateData()->getWireTime() * agingrate20dcc;
@@ -1862,7 +1862,7 @@ vector<double> ClockTree::calculateClockLatencyWithDcc( vector<ClockTreeNode *> 
 	clklatency.at(2) += clkpath.back()->getGateData()->getWireTime() * agingrate80dcc;
 	if( candinode != nullptr )
 	{
-		double dccagingrate = roundNPrecision(getAgingRateByDutyCycle(dutycycleondcc), PRECISION);
+		double dccagingrate = getAgingRateByDutyCycle(dutycycleondcc);
 		clklatency.at(0) += minbufdelay * dccagingrate * DCCDELAY20PA;
 		clklatency.at(1) += minbufdelay * dccagingrate * DCCDELAY40PA;
 		clklatency.at(2) += minbufdelay * dccagingrate * DCCDELAY80PA;
@@ -2773,9 +2773,14 @@ void ClockTree::printDccList(void)
 	cout << "\t*** Inserted DCCs List             : " ;
 	if( !this->_placedcc || this->_dcclist.empty() )
 		cout << "N/A\n";
-	else
+    else{
 		for( auto const& node: this->_dcclist )
 			cout << node.first << "(" << node.second->getNodeNumber() << ","<< node.second->getDccType() << ((node.second != this->_dcclist.rbegin()->second) ? "), " : ")\n");
+        
+        cout << endl ;
+        for( auto const& node: this->_dcclist )
+            printf("%ld -1 %f\n", (node.second->getNodeNumber()-1)/2*3+1, (double)node.second->getDccType()/100 );
+    }
 	
     cout << "\t*** DCCs Placed at Last Buffer     : ";
 	if(!this->_placedcc || (this->_dccatlastbufnum == 0))
