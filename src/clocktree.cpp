@@ -3610,6 +3610,8 @@ double ClockTree::getAgingRate_givDC_givVth( double DC, int Libindex )
     //---- Sv -------------------------------------------------------
     double Sv = 0 ;
     if( DC == -1 || DC == 0 ) DC = 0.5 ;
+    if( this->ifdoVTA() == false && this->_placedcc )
+        return (1 + (((-0.117083333333337) * (DC) * (DC)) + (0.248750000000004 * (DC)) + 0.0400333333333325));
     
     if( Libindex != -1 )
     {
