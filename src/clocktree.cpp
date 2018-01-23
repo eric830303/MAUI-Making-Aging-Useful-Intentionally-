@@ -436,16 +436,17 @@ ClockTree::~ClockTree(void)
  Creator:
     Tien-Hung Tseng
  ----------------------------------------------------------------------------*/
-double ClockTree::calConvergentVth( double dc, double VthOffset )
+double ClockTree::calConvergentVth( double dc, double exp )
 {
-    return 0.0039/2*( pow( dc*(this->getFinYear())*(31536000), 0.2)) ;
+    return 0.0039/2*( pow( dc*(this->getFinYear())*(31536000), exp )) ;
 }
 double ClockTree::calSv( double dc, double VthOffset, double VthFin  )
 {
+    if( VthOffset == 0 ) return 0 ;
     //The func refers to "hi_n_low_buffer.py"
     double Right   = VthFin - VthOffset                     ;
     double Time    = dc*( this->getFinYear() )*( 31536000 ) ;
-    double C       = 0.0039/2*( pow( Time, 0.2 ) )          ;
+    double C       = 0.0039/2*( pow( Time, this->getExp() ) )      ;
     return -( Right/(C) - 1 )/(VthOffset)                ;
 }
 void ClockTree::readParameter()
@@ -457,11 +458,15 @@ void ClockTree::readParameter()
     {
         if( line.find("#")                      != string::npos ) continue ;//Comment->Ignore
         if( line.find("FIN_CONVERGENT_YEAR")    != string::npos ) this->setFinYear( atoi(line.c_str() + 19 ))    ;
+        if( line.find("BASE_VTH")               != string::npos ) this->setBaseVthOffset( atof(line.c_str() + 8 ))    ;
+        if( line.find("EXP")               != string::npos )
+        {
+            this->setExp( atof(line.c_str() + 3 ))    ;
+        }
         if( line.find("LIB_VTH_COUNT")          != string::npos )
         {
             this->setLibCount( atoi(line.c_str()+ 13 ))    ;
-            if( this->getLibCount() == 0 )
-            {
+            if( this->getLibCount() == 0 ){
                 this->setIfVTA( false ) ;
                 continue ;
             }
@@ -473,27 +478,61 @@ void ClockTree::readParameter()
 
                     struct VTH_TECH * ptrTech = new VTH_TECH() ;
                     ptrTech->_VTH_OFFSET     = atof(line.c_str() + 19 ) ;
-                    ptrTech->_VTH_CONVGNT[0] = this->calConvergentVth( 0.2, ptrTech->_VTH_OFFSET ) ;//20% DCC
-                    ptrTech->_VTH_CONVGNT[1] = this->calConvergentVth( 0.4, ptrTech->_VTH_OFFSET ) ;//40% DCC
-                    ptrTech->_VTH_CONVGNT[2] = this->calConvergentVth( 0.5, ptrTech->_VTH_OFFSET ) ;//No  DCC
-                    ptrTech->_VTH_CONVGNT[3] = this->calConvergentVth( 0.8, ptrTech->_VTH_OFFSET ) ;//80% DCC
-                    ptrTech->_Sv[0]          = this->calSv( 0.2, ptrTech->_VTH_OFFSET, ptrTech->_VTH_CONVGNT[0] ) ;//20% DCC
-                    ptrTech->_Sv[1]          = this->calSv( 0.4, ptrTech->_VTH_OFFSET, ptrTech->_VTH_CONVGNT[1] ) ;//40% DCC
-                    ptrTech->_Sv[2]          = this->calSv( 0.5, ptrTech->_VTH_OFFSET, ptrTech->_VTH_CONVGNT[2] ) ;//No  DCC
-                    ptrTech->_Sv[3]          = this->calSv( 0.8, ptrTech->_VTH_OFFSET, ptrTech->_VTH_CONVGNT[3] ) ;//80% DCC
+                    ptrTech->_VTH_CONVGNT[0] = this->calConvergentVth( 0.2, this->getExp() ) ;//20% DCC
+                    ptrTech->_VTH_CONVGNT[1] = this->calConvergentVth( 0.4, this->getExp() ) ;//40% DCC
+                    ptrTech->_VTH_CONVGNT[2] = this->calConvergentVth( 0.5, this->getExp() ) ;//No  DCC
+                    ptrTech->_VTH_CONVGNT[3] = this->calConvergentVth( 0.8, this->getExp() ) ;//80% DCC
+            
+                    ptrTech->_Sv[0]          = this->calSv( 0.2, this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[0] ) ;//20% DCC
+                    ptrTech->_Sv[1]          = this->calSv( 0.4, this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[1] ) ;//40% DCC
+                    ptrTech->_Sv[2]          = this->calSv( 0.5, this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[2] ) ;//No  DCC
+                    ptrTech->_Sv[3]          = this->calSv( 0.8, this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[3] ) ;//80% DCC
+                    ptrTech->_Sv[4]          = this->calSv( 0.2, ptrTech->_VTH_OFFSET + this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[0] ) ;//20% DCC
+                    ptrTech->_Sv[5]          = this->calSv( 0.4, ptrTech->_VTH_OFFSET + this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[1] ) ;//40% DCC
+                    ptrTech->_Sv[6]          = this->calSv( 0.5, ptrTech->_VTH_OFFSET + this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[2] ) ;//No  DCC
+                    ptrTech->_Sv[7]          = this->calSv( 0.8, ptrTech->_VTH_OFFSET + this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[3] ) ;//80% DCC
                     this->getLibList().push_back( ptrTech ) ;
                     
-                    printf( GREEN"[Info] Aging Rates\n" );
-                    printf( CYAN"\tFin Year "   RESET"= %d\n", this->getFinYear() );
-                    printf( CYAN"\tVth Offset " RESET"= %f\n", ptrTech->_VTH_OFFSET );
-                    printf( CYAN"\tDelay gain  (20,nominal) " RESET"= %f\n",  getAgingRate_givDC_givVth( 0.2, -1 ) );
-                    printf( CYAN"\tDelay gain  (40,nominal) " RESET"= %f\n",  getAgingRate_givDC_givVth( 0.4, -1 ) );
-                    printf( CYAN"\tDelay gain  (50,nominal) " RESET"= %f\n",  getAgingRate_givDC_givVth( 0.5, -1 ) );
-                    printf( CYAN"\tDelay gain  (80,nominal) " RESET"= %f\n",  getAgingRate_givDC_givVth( 0.8, -1 ) );
-                    printf( CYAN"\tDelay gain  (20,VTA Buf) " RESET"= %f\n",  getAgingRate_givDC_givVth( 0.2, 0 )  );
-                    printf( CYAN"\tDelay gain  (40,VTA Buf) " RESET"= %f\n",  getAgingRate_givDC_givVth( 0.4, 0 )  );
-                    printf( CYAN"\tDelay gain  (50,VTA Buf) " RESET"= %f\n",  getAgingRate_givDC_givVth( 0.5, 0 )  );
-                    printf( CYAN"\tDelay gain  (80,VTA Buf) " RESET"= %f\n",  getAgingRate_givDC_givVth( 0.8, 0 )  );
+                    double bof = this->getBaseVthOffset() ;
+                    double tof = ptrTech->_VTH_OFFSET     ;
+                    printf( GREEN"[Info] Reading ./setting/Parameter.txt..\n" );
+                    printf( CYAN"\t[Setting] " RESET"Fin convergent Year    = %4d years \n", this->getFinYear() );
+                    printf( CYAN"\t[Setting] " RESET"Vth offset (VTA)       = %.2f (V)\n"  , ptrTech->_VTH_OFFSET );
+                    printf( CYAN"\t[Setting] " RESET"Vth offset (Baseline)  = " RED"%.2f (V)\n" RESET  , this->getBaseVthOffset() );
+                    printf( CYAN"\t[Setting] " RESET"Exponential term       = %.2f \n"     , this->getExp() );
+                     printf( CYAN"\t---------------------------------------------------------------------------------\n" );
+                    printf( CYAN"\t[Note] " RESET"Following is the timing information of clock buffers\n" );
+                    printf( CYAN"\t[Note] " RESET"Delay gain includes aging rate\n" );
+                    printf( CYAN"\t[Note] " RESET"Delay gain = aging rate + " RED"intrinsic delay" RESET" due to adjusted Vth\n" );
+                    printf( CYAN"\t[Note] " RESET"N-Vth denotes clock buffer with 'nominal  Vth'\n" );
+                    printf( CYAN"\t[Note] " RESET"S-Vth denotes clock buffer with 'specific Vth'\n" );
+                    printf( CYAN"\t50 %%, N-Vth: Delay gain " RESET"= " RED"%4.1f " RESET"%%" YELLOW" [Fresh]\n", bof*200 );
+                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%" YELLOW" [Fresh]\n",  0.0 );
+                    
+                    printf( CYAN"\t20 %%, N-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( 0.2, -1 )               - 1 )*100 );
+                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.2, -1 ) - 2*bof       - 1 )*100 );
+                    
+                    printf( CYAN"\t40 %%, N-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( 0.4, -1 )               - 1 )*100 );
+                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.4, -1 ) - 2*bof       - 1 )*100 );
+                    
+                    printf( CYAN"\t50 %%, N-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( 0.5, -1 )               - 1 )*100 );
+                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.5, -1 ) - 2*bof       - 1 )*100 );
+                    
+                    printf( CYAN"\t80 %%, N-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( 0.8, -1 )               - 1 )*100 );
+                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.8, -1 ) - 2*bof       - 1 )*100 );
+                    
+                    printf( CYAN"\t20 %%, S-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( 0.2,  0 )               - 1 )*100 );
+                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.2,  0 ) - 2*(bof+tof) - 1 )*100 );
+                    
+                    printf( CYAN"\t40 %%, S-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( 0.4,  0 )               - 1 )*100 );
+                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.4,  0 ) - 2*(bof+tof) - 1 )*100 );
+                    
+                    printf( CYAN"\t50 %%, S-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( 0.5,  0 )               - 1 )*100 );
+                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.5,  0 ) - 2*(bof+tof) - 1 )*100 );
+                    
+                    printf( CYAN"\t80 %%, S-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( 0.8,  0 )               - 1 )*100 );
+                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.8,  0 ) - 2*(bof+tof) - 1 )*100 );
+                    
                 }
             }
         }
@@ -3570,33 +3609,49 @@ double ClockTree::getAgingRate_givDC_givVth( double DC, int Libindex )
 {
     //---- Sv -------------------------------------------------------
     double Sv = 0 ;
+    if( DC == -1 || DC == 0 ) DC = 0.5 ;
     
     if( Libindex != -1 )
     {
         if( DC == 0.2 )
-            Sv = this->getLibList().at(Libindex)->_Sv[0] ;
+            Sv = this->getLibList().at(Libindex)->_Sv[4] ;
         else if( DC == 0.4 )
-            Sv = this->getLibList().at(Libindex)->_Sv[1] ;
+            Sv = this->getLibList().at(Libindex)->_Sv[5] ;
         else if( DC == 0.5 || DC == -1 || DC == 0 )
-            Sv = this->getLibList().at(Libindex)->_Sv[2] ;
+            Sv = this->getLibList().at(Libindex)->_Sv[6] ;
         else if( DC == 0.8 )
-            Sv = this->getLibList().at(Libindex)->_Sv[3] ;
+            Sv = this->getLibList().at(Libindex)->_Sv[7] ;
         else
         {
             cerr << "[Error] Irrecognized duty cycle in func \"getAgingRate_givDC_givVth (double DC, int LibIndex )\"    \n" ;
             return -1 ;
         }
     }
-    else Sv = 0 ;
+    else
+    {
+        if( DC == 0.2 )
+            Sv = this->getLibList().at(0)->_Sv[0] ;
+        else if( DC == 0.4 )
+            Sv = this->getLibList().at(0)->_Sv[1] ;
+        else if( DC == 0.5 || DC == -1 || DC == 0 )
+            Sv = this->getLibList().at(0)->_Sv[2] ;
+        else if( DC == 0.8 )
+            Sv = this->getLibList().at(0)->_Sv[3] ;
+        else
+        {
+            cerr << "[Error] Irrecognized duty cycle in func \"getAgingRate_givDC_givVth (double DC, int LibIndex )\"    \n" ;
+            return -1 ;
+        }
+    }
     
-    if( DC == -1 || DC == 0 ) DC = 0.5 ;
     //---- Vth offset -----------------------------------------------
     double Vth_offset = 0 ;
     if( Libindex != -1 )
-        Vth_offset = this->getLibList().at(Libindex)->_VTH_OFFSET ;
-    
+        Vth_offset = this->getLibList().at(Libindex)->_VTH_OFFSET + this->getBaseVthOffset() ;
+    else
+        Vth_offset = this->getBaseVthOffset() ;
     //---- Aging rate -----------------------------------------------
-    double Vth_nbti = ( 1 - Sv*Vth_offset )*( 0.0039/2 )*( pow( DC*( 315360000 ), 0.2) );
+    double Vth_nbti = ( 1 - Sv*Vth_offset )*( 0.0039/2 )*( pow( DC*( 315360000 ), this->getExp() ) );
     return (1 + Vth_nbti*2 + Vth_offset* 2 ) ;
     
 }

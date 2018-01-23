@@ -41,7 +41,7 @@ struct VTH_TECH
 {
     double _VTH_OFFSET     ;//Vth offset due to technology
     double _VTH_CONVGNT[4] ;//Convergent Vth value over a long period
-    double _Sv[4]          ;//Sv value of 20/40/50/80
+    double _Sv[8]          ;//Sv value of 20/40/50/80
     VTH_TECH()
     {
         _VTH_OFFSET = _Sv[0] = _Sv[1] = _Sv[2] = _Sv[3] = 0.0 ;
@@ -65,7 +65,7 @@ private:
 	double  _maskleng, _cgpercent;
     double _tcAfterAdjust ;
     //Timing-related attribute
-	double _origintc, _besttc, _tc, _tcupbound, _tclowbound, _agingtcq, _agingdij, _agingtsu;
+    double _origintc, _besttc, _tc, _tcupbound, _tclowbound, _agingtcq, _agingdij, _agingtsu;
 
     //filename-related attribute
 	string _timingreport, _timingreportfilename, _timingreportloc, _timingreportdesign;
@@ -84,8 +84,9 @@ private:
     //VTA-related attribute
     int     _VTH_LIB_cnt    ;
     int     _FIN_CONV_Year  ;
+    double  _baseVthOffset  ;
     vector< VTH_TECH* > _VthTechList ;
-    
+    double  _exp            ;
     
 	bool ifSkipLine(string)                 ;
     bool AnotherSolution(void)              ;
@@ -114,12 +115,13 @@ public:
 			   _origintc(0), _besttc(0), _tc(0), _tcupbound(0), _tclowbound(0),
 			   _clktreeroot(nullptr), _firstchildrennode(nullptr), _mostcriticalpath(nullptr),
 			   _timingreport(""), _timingreportfilename(""), _timingreportloc(""), _timingreportdesign(""),_dumpCNF(false), _checkCNF(false), _checkfile(false),
-			   _cgfilename(""), _outputdir(""), _tcAfterAdjust(0), _printClause(false) {}
+			   _cgfilename(""), _outputdir(""), _tcAfterAdjust(0), _printClause(false), _baseVthOffset(0), _exp(0.2) {}
 	//-Destructor------------------------------------------------------------------
     ~ClockTree(void);
 	
 	//-Setter methods---------------------------------------------------------------
     void setTc_adjust( double t )               { this->_tcAfterAdjust  = t     ; }
+    void setExp( double t )                     { this->_exp            = t     ; }
     void setLibCount( int c )                   { this->_VTH_LIB_cnt    = c     ; }
     void setFinYear( int y )                    { this->_FIN_CONV_Year  = y     ; }
 	void setTc( double tc )                     { this->_tc             = tc    ; }
@@ -127,8 +129,10 @@ public:
 	void setTcLowerBound( double tc )           { this->_tclowbound     = tc    ; }
 	void setOutputDirectoryPath( string path )  { this->_outputdir      = path  ; }
     void setIfVTA( bool b )                     { this->_doVTA          = b     ; }
+    void setBaseVthOffset( double b )           { this->_baseVthOffset  = b     ; }
 	//-Getter methods--------------------------------------------------------------
-    double  getTc_adjust( double t )                { return _tcAfterAdjust     ; }
+    double  getExp(void)                            { return _exp               ; }
+    double  getTc_adjust(void)                      { return _tcAfterAdjust     ; }
     int     getLibCount(void)                       { return _VTH_LIB_cnt       ; }
     int     getFinYear(void)                        { return _FIN_CONV_Year     ; }
 	int     getPathSelection(void)                  { return _pathselect        ; }
@@ -163,6 +167,7 @@ public:
 	double  getTc(void)                             { return _tc                ; }
 	double  getTcUpperBound(void)                   { return _tcupbound         ; }
 	double  getTcLowerBound(void)                   { return _tclowbound        ; }
+    double  getBaseVthOffset(void)                  { return _baseVthOffset     ; }
 	string  getTimingReportFileName(void)           { return _timingreportfilename; }
 	string  getTimingReportLocation(void)           { return _timingreportloc   ; }
 	string  getTimingReportDesign(void)             { return _timingreportdesign; }
@@ -280,7 +285,7 @@ public:
     void    printAssociatedCriticalPathAtStartPoint( CriticalPath* path, bool doDCCVTA = true, bool aging = true  );
     void    printClkNodeFeature( ClockTreeNode*,bool ) ;
     //---Vth Lib --------------------------------------------------------------------
-    double  calConvergentVth( double dc, double VthOffset ) ;
+    double  calConvergentVth( double dc , double Exp = 0.2 ) ;
     double  calSv( double dc, double VthOffset, double VthFin ) ;
     //---Other ----------------------------------------------------------------------
     bool    checkDCCVTAConstraint(void);
