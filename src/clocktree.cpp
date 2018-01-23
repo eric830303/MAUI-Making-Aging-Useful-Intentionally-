@@ -197,6 +197,7 @@ void ClockTree::genDccConstraintClause( vector<vector<long> > *comblist )
 			// Generate 4 clauses based on two clock nodes
 			string clause1, clause2, clause3, clause4;
 			long nodenum1 = comblist->at(loop1).at(0), nodenum2 = comblist->at(loop1).at(1);
+            
 			clause1 = to_string((nodenum1 * -1)) + " " + to_string((nodenum2 * -1)) + " 0";
 			clause2 = to_string((nodenum1 * -1)) + " " + to_string(((nodenum2 + 1) * -1)) + " 0";
 			clause3 = to_string(((nodenum1 + 1) * -1)) + " " + to_string((nodenum2 * -1)) + " 0";
@@ -207,7 +208,15 @@ void ClockTree::genDccConstraintClause( vector<vector<long> > *comblist )
 				this->_dccconstraintlist.insert(clause2);
 				this->_dccconstraintlist.insert(clause3);
 				this->_dccconstraintlist.insert(clause4);
-                if( _printClause ) fprintf( fptr,"DCC (%ld with %ld): %s, %s, %s, %s \n", nodenum1, nodenum2, clause1.c_str(), clause2.c_str(), clause3.c_str(), clause4.c_str() );
+                
+                if( _printClause )
+                {
+                    auto find = this->getDCCSet().find( pair<int,int>(comblist->at(loop1).at(0),comblist->at(loop1).at(1)) );
+                    if( find == this->getDCCSet().end() ){
+                        fprintf( fptr,"DCC (%ld with %ld): %s, %s, %s, %s \n", nodenum1, nodenum2, clause1.c_str(), clause2.c_str(), clause3.c_str(), clause4.c_str() );
+                        this->getDCCSet().insert(pair<int,int>(comblist->at(loop1).at(0),comblist->at(loop1).at(1)) );
+                    }
+                }
 			}
 			else
 			{
@@ -2312,10 +2321,10 @@ double ClockTree::timingConstraint_givDCC_givVTA(   CriticalPath *path,
         if( _printClause )
         {
             fprintf( this->fptr,"Path(%ld), ", path->getPathNum() );
-            if( stDCCLoc )  fprintf( this->fptr,"stDCC (%ld, %f ), ", stDCCLoc->getNodeNumber(), stDCCType  );
-            if( edDCCLoc )  fprintf( this->fptr,"edDCC (%ld, %f ), ", edDCCLoc->getNodeNumber(), edDCCType  );
-            if( stHeader )  fprintf( this->fptr,"stVTA (%ld, %d ), ", stHeader->getNodeNumber(), stLibIndex );
-            if( edHeader )  fprintf( this->fptr,"stVTA (%ld, %d ), ", edHeader->getNodeNumber(), edLibIndex );
+            if( stDCCLoc )  fprintf( this->fptr,"stDCC (%ld, %.1f ), ", stDCCLoc->getNodeNumber(), stDCCType  );
+            if( edDCCLoc )  fprintf( this->fptr,"edDCC (%ld, %.1f ), ", edDCCLoc->getNodeNumber(), edDCCType  );
+            if( stHeader )  fprintf( this->fptr,"stVTA (%ld, %2d ), ", stHeader->getNodeNumber(), stLibIndex );
+            if( edHeader )  fprintf( this->fptr,"edVTA (%ld, %2d ), ", edHeader->getNodeNumber(), edLibIndex );
             
             
             fprintf( this->fptr,"slk = %f, %s \n", newslack, clause.c_str() );
@@ -3762,8 +3771,7 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
         clknode->setVthType(LibIndex_Com);
     }
     
-    //-- Right Branch -------------------------------------------------------
-    this->printSpace(common);
+    //-- Right Branch (only cal)-------------------------------------------------------
     bool    MeetDCC_right  = MeetDCC_Com ;
     bool    MeetVTA_right  = MeetVTA_Com ;
     double  DC_right       = DC_Com      ;
@@ -3806,26 +3814,50 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
         agr          =  (aging)? ( getAgingRate_givDC_givVth( DC_right, LibIndex_right ) ):( 1 )  ;
         buftime     *= agr     ;
         req_time    += buftime ;
-        
+        //---- Set --------------------------------------------------------
+        clknode->setBufTime(buftime);
+        clknode->setDC(DC_right);
+        clknode->setVthType(LibIndex_right);
+    }
+
+    //-- Right Part (Only Print) ---------------------------------------------
+    if( MeetDCC_Com ) printf( "        "   );
+    if( MeetVTA_Com ) printf( "          " );
+    printSpace(common);
+    for( long i = common +1; i < edClkPath.size(); i++ )
+    {
+        clknode  = edClkPath.at(i) ;
+        gatePtr  = clknode->getGateData() ;
         printClkNodeFeature( clknode, doDCCVTA );
-        printf( "%s(%ld,%.1f,%d," GREEN"%f" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_right, LibIndex_right, buftime );
+        printf( "%s(%3ld,%.1f,%2d," GREEN"%.4f" RESET")---", gatePtr->getGateName().c_str() ,clknode->getNodeNumber(), clknode->getDC(), clknode->getVthType(),clknode->getBufTime() );
     }
     printf( "  => " YELLOW"End " RESET"Clk Path\n");
+    
     //-- Common Part (Only Print) ---------------------------------------------
-    this->printSpace(common);
+    if( MeetDCC_Com ) printf( "        "   );
+    if( MeetVTA_Com ) printf( "          " );
+    printSpace(common);
     cout << "|\n" ;
     for( long i = 0; i <= common; i++ )
     {
         clknode  = edClkPath.at(i) ;
         gatePtr  = clknode->getGateData() ;
         printClkNodeFeature( clknode, doDCCVTA );
-        printf( "%s(%ld,%.1f,%d," GREEN"%f" RESET")---", gatePtr->getGateName().c_str() ,clknode->getNodeNumber(), clknode->getDC(), clknode->getVthType(),clknode->getBufTime() );
+        printf( "%s(%3ld,%.1f,%2d," GREEN"%.4f" RESET")---", gatePtr->getGateName().c_str() ,clknode->getNodeNumber(), clknode->getDC(), clknode->getVthType(),clknode->getBufTime() );
     }
     cout << endl ;
-    this->printSpace(common);
+    
+    
+    
+    //-- Left Branch (Cal & print)------------------------------------------------
+    if( MeetDCC_Com ) printf( "        "   );
+    if( MeetVTA_Com ) printf( "          " );
+    printSpace(common);
     cout << "|\n" ;
-    this->printSpace(common);
-    //-- Left Branch ---------------------------------------------------------
+    if( MeetDCC_Com ) printf( "        "   );
+    if( MeetVTA_Com ) printf( "          " );
+    printSpace(common);
+
     bool    MeetDCC_left  = MeetDCC_Com ;
     bool    MeetVTA_left  = MeetVTA_Com ;
     double  DC_left       = DC_Com      ;
@@ -3872,7 +3904,7 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
             
         if( clknode == stClkPath.back() ) LibIndex_left = -1 ;
         printClkNodeFeature( clknode, doDCCVTA );
-        printf( "%s(%ld,%.1f,%d," GREEN"%f" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_left, LibIndex_left, buftime );
+        printf( "%s(%3ld,%.1f,%2d," GREEN"%.4f" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_left, LibIndex_left, buftime );
     }
     printf( "  => " YELLOW"Start " RESET"Clk Path\n");
         
@@ -3976,7 +4008,7 @@ void ClockTree::printPItoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
         req_time   += buftime ;
         
         printClkNodeFeature( clknode, doDCCVTA );
-        printf( "%s(%ld,%.1f,%d," GREEN"%f" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_right, LibIndex_right, buftime );
+        printf( "%s(%3ld,%.1f,%d," GREEN"%.4f" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_right, LibIndex_right, buftime );
     }
     printf( "=> " YELLOW"End " RESET"Clk Path\n");
         
@@ -4060,7 +4092,7 @@ void ClockTree::printFFtoPO_givFile( CriticalPath *path, bool doDCCVTA, bool agi
         avl_time   += buftime ;
         
         printClkNodeFeature( clknode, doDCCVTA );
-        printf( "%s(%ld,%.1f,%d," GREEN"%.f" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_left, LibIndex_left, buftime );
+        printf( "%s(%3ld,%.1f,%d," GREEN"%.4f" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_left, LibIndex_left, buftime );
     }
     printf( "=> " YELLOW"Start " RESET"Clk Path\n");
     //-- A DCC Exist along left clk path -----------------------------------------------------
@@ -4104,7 +4136,7 @@ void ClockTree::printPathSlackTiming(CriticalPath *path, double ci, double cj, b
 }
 void ClockTree::printSpace( long common)
 {
-    for( int i = 0 ; i <= common; i++ )  printf("                            " );
+    for( int i = 0 ; i <= common; i++ )  printf("                             " );
 }
 void ClockTree::dumpDccVTALeaderToFile()
 {
@@ -4141,7 +4173,7 @@ void ClockTree::printAssociatedCriticalPathAtEndPoint( CriticalPath* path, bool 
     }
     
     vector<ClockTreeNode*> edClkPath = path->getEndPonitClkPath() ;
-    printf("Next pipeline: ");
+    printf( "Next pipeline: " );
     int ctr = 0 ;
     for( auto p: this->_pathlist )
     {
@@ -4149,11 +4181,10 @@ void ClockTree::printAssociatedCriticalPathAtEndPoint( CriticalPath* path, bool 
         
         if( p->getStartPonitClkPath().back() == edClkPath.back() ){
             double slack = UpdatePathTiming( p, false, doDCCVTA, aging ) ;
-            if( slack > 0 ) printf( "%ld (slack = %f ), ", p->getPathNum(), slack );
-            if( slack < 0 ) printf( "%ld (slack = " RED"%f" RESET" ), ", p->getPathNum(), slack );
+            if( slack > 0 )     printf( "%ld (slack = %f ), ", p->getPathNum(), slack );
+            if( slack < 0 )     printf( "%ld (slack = " RED"%f" RESET" ), ", p->getPathNum(), slack );
             ctr++ ;
-            if( ctr % 6 == 0 )
-                printf("\n               ");
+            if( ctr % 6 == 0 )  printf( "\n               " );
         }
     }
     cout << endl ;
@@ -4166,15 +4197,15 @@ void ClockTree::printAssociatedCriticalPathAtStartPoint( CriticalPath* path, boo
         return ;
     }
     else if( path->getPathType() == PItoPO ){
-        printf("The path is " YELLOW"PItoPO" RESET", No Last/Next Pipeline exists\n" );
+        printf( "The path is " YELLOW"PItoPO" RESET", No Last/Next Pipeline exists\n" );
         return ;
     }else if( path->getPathType() == PItoFF ){
-        printf("Last pipeline: N/A\n");
+        printf( "Last pipeline: N/A\n" );
         return ;
     }
     
     vector<ClockTreeNode*> stClkPath = path->getStartPonitClkPath() ;
-    printf("Last pipeline: ");
+    printf( "Last pipeline: " );
     int ctr = 0 ;
     for( auto p: this->_pathlist )
     {
@@ -4182,11 +4213,10 @@ void ClockTree::printAssociatedCriticalPathAtStartPoint( CriticalPath* path, boo
         
         if( p->getEndPonitClkPath().back() == stClkPath.back() ){
             double slack = UpdatePathTiming( p, false, doDCCVTA, aging ) ;
-            if( slack > 0 ) printf( "%ld (slack = %f ), ", p->getPathNum(), slack );
-            if( slack < 0 ) printf( "%ld (slack = " RED"%f" RESET" ), ", p->getPathNum(), slack );
+            if( slack > 0 )     printf( "%ld (slack = %f ), ", p->getPathNum(), slack );
+            if( slack < 0 )     printf( "%ld (slack = " RED"%f" RESET" ), ", p->getPathNum(), slack );
             ctr++ ;
-            if( ctr % 6 == 0 )
-                printf("\n               ");
+            if( ctr % 6 == 0 )  printf( "\n               " );
         }
     }
     cout << endl ;
@@ -4204,21 +4234,21 @@ void ClockTree::InitClkTree()
 {
     for( auto clknode: this->_buflist )
     {
-        clknode.second->setIfPlaceDcc(false);
-        clknode.second->setIfPlaceHeader(false);
-        clknode.second->setDccType(0.5);
-        clknode.second->setVTAType(-1);
-        clknode.second->setifMasked(true);
+        clknode.second->setIfPlaceDcc(false)    ;
+        clknode.second->setIfPlaceHeader(false) ;
+        clknode.second->setDccType(0.5)         ;
+        clknode.second->setVTAType(-1)          ;
+        clknode.second->setifMasked(true)       ;
     }
     for( auto FF: this->_ffsink )
     {
-        FF.second->setIfPlaceDcc(false);
-        FF.second->setIfPlaceHeader(false);
-        FF.second->setDccType(0.5);
-        FF.second->setVTAType(-1);
-        FF.second->setifMasked(true);
+        FF.second->setIfPlaceDcc(false)         ;
+        FF.second->setIfPlaceHeader(false)      ;
+        FF.second->setDccType(0.5)              ;
+        FF.second->setVTAType(-1)               ;
+        FF.second->setifMasked(true)            ;
     }
-    this->dccPlacementByMasked(1) ;
+    this->dccPlacementByMasked(1)               ;
 }
 void ClockTree::dumpCNF()
 {
