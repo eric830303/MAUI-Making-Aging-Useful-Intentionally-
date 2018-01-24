@@ -255,28 +255,49 @@ void ClockTree::genDccConstraintClause( vector<vector<long> > *comblist )
 /////////////////////////////////////////////////////////////////////
 void ClockTree::genClauseByDccVTA( ClockTreeNode *node, string *clause, double dcctype, int LibIndex )
 {
-	if((node == nullptr) || (clause == nullptr) || !node->ifPlacedDcc())
+	if((node == nullptr) || (clause == nullptr) )
 		return ;
     
 	long nodenum = node->getNodeNumber();
-	if( dcctype == 0.5 || dcctype == -1 || dcctype == 0 )
-		*clause += to_string(nodenum) + " " + to_string(nodenum + 1) + " ";
-    else if( dcctype == 0.2 )
-        *clause += to_string(nodenum) + " " + to_string((nodenum + 1) * -1) + " ";
-	else if( dcctype == 0.4 )
-        *clause += to_string(nodenum * -1) + " " + to_string(nodenum + 1) + " ";
-    else if( dcctype == 0.8 )
-        *clause += to_string(nodenum * -1) + " " + to_string((nodenum + 1) * -1) + " ";
-    else//Don't care
-        return ;
-    //-- Put Header ------
-    if( LibIndex == 0 )
-        *clause += to_string( ( nodenum + 2 )*(-1) ) + " " ;
-    //-- No Put Header ----
-    else if( LibIndex == -1 )
-        *clause += to_string( nodenum + 2  ) + " " ;
-    else
-        return ;
+    
+    if( !node->ifPlacedDcc() )
+    {
+        *clause += to_string(nodenum) + " " + to_string(nodenum + 1) + " ";
+        //-- Put Header ------
+        if( ifdoVTA() )
+        {
+            if( LibIndex == 0 )
+                *clause += to_string( ( nodenum + 2 )*(-1) ) + " " ;
+            //-- No Put Header ----
+            else if( LibIndex == -1 )
+                *clause += to_string( nodenum + 2  ) + " " ;
+
+            return ;
+        }
+    }else
+    {
+        if( dcctype == 0.5 || dcctype == -1 || dcctype == 0 )
+            *clause += to_string(nodenum) + " " + to_string(nodenum + 1) + " ";
+        else if( dcctype == 0.2 )
+            *clause += to_string(nodenum) + " " + to_string((nodenum + 1) * -1) + " ";
+        else if( dcctype == 0.4 )
+            *clause += to_string(nodenum * -1) + " " + to_string(nodenum + 1) + " ";
+        else if( dcctype == 0.8 )
+            *clause += to_string(nodenum * -1) + " " + to_string((nodenum + 1) * -1) + " ";
+        else//Don't care
+            return ;
+        if( ifdoVTA() )
+        {
+            if( LibIndex == 0 )
+                *clause += to_string( ( nodenum + 2 )*(-1) ) + " " ;
+            //-- No Put Header ----
+            else if( LibIndex == -1 )
+                *clause += to_string( nodenum + 2  ) + " " ;
+            
+            return ;
+        }
+    }
+	
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -509,29 +530,23 @@ void ClockTree::readParameter()
                     printf( CYAN"\t50 %%, N-Vth: Delay gain " RESET"= " RED"%4.1f " RESET"%%" YELLOW" [Fresh]\n", bof*200 );
                     printf( CYAN"\t             Aging rate " RESET"= %4.1f %%" YELLOW" [Fresh]\n",  0.0 );
                     
-                    printf( CYAN"\t20 %%, N-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( 0.2, -1 )               - 1 )*100 );
-                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.2, -1 ) - 2*bof       - 1 )*100 );
                     
-                    printf( CYAN"\t40 %%, N-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( 0.4, -1 )               - 1 )*100 );
-                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.4, -1 ) - 2*bof       - 1 )*100 );
-                    
-                    printf( CYAN"\t50 %%, N-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( 0.5, -1 )               - 1 )*100 );
-                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.5, -1 ) - 2*bof       - 1 )*100 );
-                    
-                    printf( CYAN"\t80 %%, N-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( 0.8, -1 )               - 1 )*100 );
-                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.8, -1 ) - 2*bof       - 1 )*100 );
+                    printf( CYAN"\t20 %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.2, -1 )        - 1 )*100 );
+                    printf( CYAN"\t40 %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.4, -1 )        - 1 )*100 );
+                    printf( CYAN"\t50 %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.5, -1 )        - 1 )*100 );
+                    printf( CYAN"\t80 %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.8, -1 )        - 1 )*100 );
                     
                     printf( CYAN"\t20 %%, S-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( 0.2,  0 )               - 1 )*100 );
-                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.2,  0 ) - 2*(bof+tof) - 1 )*100 );
+                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.2,  0 ) - 2*(tof) - 1 )*100 );
                     
                     printf( CYAN"\t40 %%, S-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( 0.4,  0 )               - 1 )*100 );
-                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.4,  0 ) - 2*(bof+tof) - 1 )*100 );
+                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.4,  0 ) - 2*(tof) - 1 )*100 );
                     
                     printf( CYAN"\t50 %%, S-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( 0.5,  0 )               - 1 )*100 );
-                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.5,  0 ) - 2*(bof+tof) - 1 )*100 );
+                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.5,  0 ) - 2*(tof) - 1 )*100 );
                     
                     printf( CYAN"\t80 %%, S-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( 0.8,  0 )               - 1 )*100 );
-                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.8,  0 ) - 2*(bof+tof) - 1 )*100 );
+                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.8,  0 ) - 2*(tof) - 1 )*100 );
                     
                 }
             }
@@ -2359,12 +2374,15 @@ double ClockTree::timingConstraint_givDCC_givVTA(   CriticalPath *path,
         
         if( _printClause )
         {
-            fprintf( this->fptr,"Path(%ld), ", path->getPathNum() );
-            if( stDCCLoc )  fprintf( this->fptr,"stDCC (%ld, %.1f ), ", stDCCLoc->getNodeNumber(), stDCCType  );
-            if( edDCCLoc )  fprintf( this->fptr,"edDCC (%ld, %.1f ), ", edDCCLoc->getNodeNumber(), edDCCType  );
-            if( stHeader )  fprintf( this->fptr,"stVTA (%ld, %2d ), ", stHeader->getNodeNumber(), stLibIndex );
-            if( edHeader )  fprintf( this->fptr,"edVTA (%ld, %2d ), ", edHeader->getNodeNumber(), edLibIndex );
-            
+            fprintf( this->fptr,"Path(%4ld), ", path->getPathNum() );
+            if( stDCCLoc )  fprintf( this->fptr,"stDCC (%4ld, %.1f ), ", stDCCLoc->getNodeNumber(), stDCCType  );
+            else            fprintf( this->fptr,"stDCC (%4d, %.1f ), ",                          0, -1.0       );
+            if( edDCCLoc )  fprintf( this->fptr,"edDCC (%4ld, %.1f ), ", edDCCLoc->getNodeNumber(), edDCCType  );
+            else            fprintf( this->fptr,"edDCC (%4d, %.1f ), ",                          0, -1.0       );
+            if( stHeader )  fprintf( this->fptr,"stVTA (%4ld, %2d ), ", stHeader->getNodeNumber(), stLibIndex );
+            else            fprintf( this->fptr,"stVTA (%4d, %2d ), ",                           0, -1         );
+            if( edHeader )  fprintf( this->fptr,"edVTA (%4ld, %2d ), ", edHeader->getNodeNumber(), edLibIndex  );
+            else            fprintf( this->fptr,"edVTA (%4d, %2d ), ",                           0, -1         );
             
             fprintf( this->fptr,"slk = %f, %s \n", newslack, clause.c_str() );
         }
@@ -2391,7 +2409,7 @@ void ClockTree::writeClause_givDCC( string &clause, ClockTreeNode *node, double 
     if( node == NULL ) return ;
     long nodenum = node->getNodeNumber() ;
     
-    if( DCCType == 0.5 || DCCType == -1 )
+    if( DCCType == 0.5 || DCCType == -1 || DCCType == 0 )
             clause += to_string(nodenum) + " " + to_string(nodenum + 1) + " ";
     else if( DCCType == 0.2 )
             clause += to_string(nodenum) + " " + to_string((nodenum + 1 ) * -1) + " ";
@@ -3610,7 +3628,7 @@ double ClockTree::getAgingRate_givDC_givVth( double DC, int Libindex )
     //---- Sv -------------------------------------------------------
     double Sv = 0 ;
     if( DC == -1 || DC == 0 ) DC = 0.5 ;
-    if( this->ifdoVTA() == false && this->_placedcc )
+    if( this->ifdoVTA() == false  )
         return (1 + (((-0.117083333333337) * (DC) * (DC)) + (0.248750000000004 * (DC)) + 0.0400333333333325));
     
     if( Libindex != -1 )
@@ -3654,7 +3672,11 @@ double ClockTree::getAgingRate_givDC_givVth( double DC, int Libindex )
         Vth_offset = this->getBaseVthOffset() ;
     //---- Aging rate -----------------------------------------------
     double Vth_nbti = ( 1 - Sv*Vth_offset )*( 0.0039/2 )*( pow( DC*( 315360000 ), this->getExp() ) );
-    return (1 + Vth_nbti*2 + Vth_offset* 2 ) ;
+    
+    if( Libindex == -1 )
+        return (1 + Vth_nbti*2 + 0 ) ;
+    else
+        return (1 + Vth_nbti*2 + 2*this->getLibList().at(Libindex)->_VTH_OFFSET ) ;
     
 }
 /*-------------------------------------------------------------
@@ -4507,7 +4529,7 @@ bool ClockTree::checkDCCVTAConstraint()
         else
             if( this->checkDCCVTAConstraint_givPath( path ) == false )
             {
-                printf( CYAN"[ VTA/DCC Constraint  ] " RED"[Violated] " RESET"Path( %ld ), please check it\n", path->getPathNum() );
+                //printf( CYAN"[VTA/DCC Constraint] " RED"[Violated] " RESET"Path( %ld ), please check it\n", path->getPathNum() );
                 result = false ;
             }
     }
