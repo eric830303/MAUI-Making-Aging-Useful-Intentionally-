@@ -87,7 +87,7 @@ private:
 	// _dccconstraintlist   : All clauses of DCC constraints
 	// _timingconstraintlist: All clauses of timing constraints
 	int _pathselect, _bufinsert, _gpupbound, _gplowbound, _minisatexecnum;
-	bool _placedcc, _aging, _mindccplace, _tcrecheck, _clkgating, _dumpdcc, _dumpcg, _dumpbufins;
+	bool _placedcc, _aging, _mindccplace, _tcrecheck, _clkgating, _dumpdcc, _dumpcg, _dumpbufins, _printClause;
 	long _pathusednum, _pitoffnum, _fftoffnum, _fftoponum, _nonplacedccbufnum;
 	long _totalnodenum, _ffusednum, _bufferusednum, _dccatlastbufnum;
 	long _masklevel, _maxlevel, _insertbufnum;

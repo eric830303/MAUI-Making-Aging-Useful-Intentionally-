@@ -508,6 +508,8 @@ int ClockTree::checkParameter(int argc, char **argv, string *message)
 			this->_mindccplace = 1;								// Minimize DCC deployment
 		else if(strcmp(argv[loop], "-tc_recheck") == 0)
 			this->_tcrecheck = 1;								// Recheck Tc
+        else if(strcmp(argv[loop], "-print=Clause") == 0)
+            this->_printClause = 1;                                // Recheck Tc
 		else if(strcmp(argv[loop], "-mask_leng") == 0)
 		{
 			if(!isRealNumber(string(argv[loop+1])) || (stod(string(argv[loop+1])) < 0) || (stod(string(argv[loop+1])) > 1))
