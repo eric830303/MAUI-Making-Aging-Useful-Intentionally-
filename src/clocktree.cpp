@@ -1538,7 +1538,7 @@ void ClockTree::VTAConstraint(void)
             string clause ;
             clause = to_string((node.second->getNodeNumber()+2) * -1) + " 0";
             if( this->_VTAconstraintlist.size() < (this->_VTAconstraintlist.max_size()-2) )
-                this->_dccconstraintlist.insert(clause);
+                this->_VTAconstraintlist.insert(clause);
             else
                 cerr << "\033[32m[Info]: DCC Constraint List Full!\033[0m\n";
             
