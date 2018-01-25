@@ -514,28 +514,26 @@ void ClockTree::readParameter()
                     ptrTech->_Sv[7]          = this->calSv( 0.8, ptrTech->_VTH_OFFSET + this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[3] ) ;//80% DCC
                     this->getLibList().push_back( ptrTech ) ;
                     
-                    double bof = this->getBaseVthOffset() ;
+                    //double bof = this->getBaseVthOffset() ;
                     double tof = ptrTech->_VTH_OFFSET     ;
                     printf( GREEN"[Info] Reading ./setting/Parameter.txt..\n" );
                     printf( CYAN"\t[Setting] " RESET"Fin convergent Year    = %4d years \n", this->getFinYear() );
-                    printf( CYAN"\t[Setting] " RESET"Vth offset (VTA)       = %.2f (V)\n"  , ptrTech->_VTH_OFFSET );
-                    printf( CYAN"\t[Setting] " RESET"Vth offset (Baseline)  = " RED"%.2f (V)\n" RESET  , this->getBaseVthOffset() );
+                    printf( CYAN"\t[Setting] " RESET"Vth offset (VTA)       = " RED"%.2f (V)\n"  , ptrTech->_VTH_OFFSET );
+                    printf( CYAN"\t[Setting] " RESET"Vth offset (Baseline)  = %.2f (V)\n" RESET  , this->getBaseVthOffset() );
                     printf( CYAN"\t[Setting] " RESET"Exponential term       = %.2f \n"     , this->getExp() );
-                     printf( CYAN"\t---------------------------------------------------------------------------------\n" );
+                    printf( CYAN"\t---------------------------------------------------------------------------------\n" );
                     printf( CYAN"\t[Note] " RESET"Following is the timing information of clock buffers\n" );
                     printf( CYAN"\t[Note] " RESET"Delay gain includes aging rate\n" );
                     printf( CYAN"\t[Note] " RESET"Delay gain = aging rate + " RED"intrinsic delay" RESET" due to adjusted Vth\n" );
                     printf( CYAN"\t[Note] " RESET"N-Vth denotes clock buffer with 'nominal  Vth'\n" );
                     printf( CYAN"\t[Note] " RESET"S-Vth denotes clock buffer with 'specific Vth'\n" );
-                    printf( CYAN"\t50 %%, N-Vth: Delay gain " RESET"= " RED"%4.1f " RESET"%%" YELLOW" [Fresh]\n", bof*200 );
-                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%" YELLOW" [Fresh]\n",  0.0 );
-                    
+                    printf( CYAN"\t------------------------- Nominal Clk buffer -----------------------------------\n" );
                     
                     printf( CYAN"\t20 %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.2, -1 )        - 1 )*100 );
                     printf( CYAN"\t40 %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.4, -1 )        - 1 )*100 );
                     printf( CYAN"\t50 %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.5, -1 )        - 1 )*100 );
                     printf( CYAN"\t80 %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.8, -1 )        - 1 )*100 );
-                    
+                    printf( CYAN"\t------------------------- Specific Clk buffer -----------------------------------\n" );
                     printf( CYAN"\t20 %%, S-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( 0.2,  0 )               - 1 )*100 );
                     printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.2,  0 ) - 2*(tof) - 1 )*100 );
                     
@@ -597,6 +595,8 @@ int ClockTree::checkParameter(int argc, char **argv, string *message)
             this->_checkfile  = 1;
         else if(strcmp(argv[loop], "-print=Clause") == 0)
             this->_printClause  = 1;
+        else if(strcmp(argv[loop], "-aging=Senior") == 0)
+            this->_usingSeniorAging = 1;
 		else if(strcmp(argv[loop], "-mask_leng") == 0)
 		{
 			if(!isRealNumber(string(argv[loop+1])) || (stod(string(argv[loop+1])) < 0) || (stod(string(argv[loop+1])) > 1))
@@ -1522,12 +1522,14 @@ void ClockTree::MaskClkNode( void )
 ----------------------------------------------------------------------------*/
 void ClockTree::VTAConstraint(void)
 {
-    this->clauseFileName = this->_outputdir + "clause_" +  "VTA_Constraint.txt";
-    if( !isDirectoryExist(this->_outputdir) )
-        mkdir(this->_outputdir.c_str(), 0775);
-    this->fptr = fopen( this->clauseFileName.c_str(), "w" );
-    if( !fptr )
-        cerr << RED"[Error]" RESET" Cannot open " << this->clauseFileName << endl ;
+    if( _printClause ){
+        this->clauseFileName = this->_outputdir + "clause_" +  "VTA_Constraint.txt";
+        if( !isDirectoryExist(this->_outputdir) )
+            mkdir(this->_outputdir.c_str(), 0775);
+        this->fptr = fopen( this->clauseFileName.c_str(), "w" );
+        if( !fptr )
+            cerr << RED"[Error]" RESET" Cannot open " << this->clauseFileName << endl ;
+    }
     
     if( this->ifdoVTA() == false )
     {
@@ -1535,11 +1537,12 @@ void ClockTree::VTAConstraint(void)
         {
             string clause ;
             clause = to_string((node.second->getNodeNumber()+2) * -1) + " 0";
-            fprintf( fptr, "NodoVTA: %s(%ld) %s\n", node.second->getGateData()->getGateName().c_str(),  node.second->getNodeNumber(), clause.c_str() );
             if( this->_VTAconstraintlist.size() < (this->_VTAconstraintlist.max_size()-2) )
                 this->_dccconstraintlist.insert(clause);
             else
-                    cerr << "\033[32m[Info]: DCC Constraint List Full!\033[0m\n";
+                cerr << "\033[32m[Info]: DCC Constraint List Full!\033[0m\n";
+            
+            if( _printClause )  fprintf( fptr, "NodoVTA: %s(%ld) %s\n", node.second->getGateData()->getGateName().c_str(),  node.second->getNodeNumber(), clause.c_str() );
         }
     }
 
@@ -1560,7 +1563,7 @@ void ClockTree::VTAConstraint(void)
         else if( path->getPathType() == PItoPO )    continue    ;
         else if( path->getPathType() == NONE   )    continue    ;
     }
-    fclose(fptr);
+    if( _printClause ) fclose( fptr );
 }
 void ClockTree::VTAConstraintFFtoFF( CriticalPath *path )
 {
@@ -1698,13 +1701,15 @@ void ClockTree::dccConstraint(void)
 		return;
 	}
     
-    this->clauseFileName = this->_outputdir + "clause_" +  "DCC_Constraint.txt";
-    if( !isDirectoryExist(this->_outputdir) )
-        mkdir(this->_outputdir.c_str(), 0775);
-    this->fptr = fopen( this->clauseFileName.c_str(), "w" );
+    if( _printClause )
+    {
+        this->clauseFileName = this->_outputdir + "clause_" +  "DCC_Constraint.txt";
+        if( !isDirectoryExist(this->_outputdir) )
+            mkdir(this->_outputdir.c_str(), 0775);
+        this->fptr = fopen( this->clauseFileName.c_str(), "w" );
     
-    if( !fptr )
-        cerr << RED"[Error]" RESET" Cannot open " << this->clauseFileName << endl ;
+        if( !fptr ) cerr << RED"[Error]" RESET" Cannot open " << this->clauseFileName << endl ;
+    }
     
 	// Generate two clauses for the clock tree root (clock source)
 	if( this->_dccconstraintlist.size() < (this->_dccconstraintlist.max_size()-2) )
@@ -1779,7 +1784,7 @@ void ClockTree::dccConstraint(void)
 		// Generate clauses
 		this->genDccConstraintClause(&comblist);
 	}
-    fclose(fptr);
+    if( _printClause ) fclose(fptr);
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -1808,12 +1813,17 @@ void ClockTree::genDccPlacementCandidate(void)
 double ClockTree::timingConstraint(void)
 {
     if( this->_placedcc == false && this->ifdoVTA() == false ) return -1 ;
-    int id = 0 ;
-	this->_timingconstraintlist.clear();
-    this->clauseFileName = this->_outputdir + "clause_" + to_string(this->_tc) + ".txt";
-    if( !isDirectoryExist(this->_outputdir) )
-        mkdir(this->_outputdir.c_str(), 0775);
-    this->fptr = fopen( this->clauseFileName.c_str(), "w" );
+    
+    this->_timingconstraintlist.clear();
+    //-- Dump Clause log --------------------------------------------------------
+    if( _printClause ){
+        this->clauseFileName = this->_outputdir + "clause_" + to_string(this->_tc) + ".txt";
+        if( !isDirectoryExist(this->_outputdir) )
+            mkdir(this->_outputdir.c_str(), 0775);
+        this->fptr = fopen( this->clauseFileName.c_str(), "w" );
+    }
+    
+    //-- Path iteration ----------------------------------------------------------
 	for( auto const& path: this->_pathlist )
 	{
 		if( (path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF) ) continue;
@@ -1829,10 +1839,8 @@ double ClockTree::timingConstraint(void)
                 this->timingConstraint_doDCC_doVTA(path);
         }
         
-        //printf("%d th path is done...\n",id);
-        id++ ;
 	}
-    fclose(this->fptr);
+     if( _printClause ) fclose( this->fptr );
     return -1 ;//tentative
 }
 /*------------------------------------------------------------------------------------
@@ -1865,11 +1873,10 @@ double ClockTree::timingConstraint_ndoDCC_ndoVTA( CriticalPath *path, bool updat
     dataarrtime += path->getTinDelay() + (path->getTcq() * this->_agingtcq) + (path->getDij() * this->_agingdij);
 	newslack = datareqtime - dataarrtime  ;
     
-		
+    string clause  = "" ;
 	//-------- Timing Violation ---------------------------------------------------------
 	if( newslack < 0 )
 	{
-		string clause;
 		//---- PItoFF or FFtoPO --------------------------------------------------------
 		if((path->getPathType() == PItoFF) || (path->getPathType() == FFtoPO))
 		{
@@ -1897,13 +1904,13 @@ double ClockTree::timingConstraint_ndoDCC_ndoVTA( CriticalPath *path, bool updat
 		else
 			cerr << "\033[32m[Info]: Timing Constraint List Full!\033[0m\n";
         
-        if( _printClause )
-            fprintf( this->fptr, "Path(%ld), stDCC(%.1f), edDCC(%.1f), stVTA(%d), edVTA(%d), slack = %f, %s \n", path->getPathNum(), -1.0, -1.0, -1, -1, newslack, clause.c_str() );
 	}
-    /*
-    if( path->getPathNum() == 19 && this->_tc == 0.9081 )
-        printf("Path( %ld ) Slack = %f \n", path->getPathNum(),newslack );
-     */
+    if( _printClause ){
+        if( newslack < 0 ) fprintf( this->fptr, "Path(%ld), stDCC(%.1f), edDCC(%.1f), stVTA(%d), edVTA(%d), slack = %f, %s \n", path->getPathNum(), -1.0, -1.0, -1, -1, newslack, clause.c_str() );
+        else
+            fprintf( this->fptr, "Path(%ld), stDCC(%.1f), edDCC(%.1f), stVTA(%d), edVTA(%d), slack = %f \n", path->getPathNum(), -1.0, -1.0, -1, -1, newslack  );
+    }
+    
     return newslack ;
 }
 /*------------------------------------------------------------------------------------
@@ -2264,7 +2271,7 @@ double ClockTree::timingConstraint_givDCC_givVTA(   CriticalPath *path,
     if( path == NULL ) return -1 ;
     
     //------ Declare ------------------------------------------------------------------
-    double  newslack    = 0 ;
+    double  slack       = 0 ;
     double  ci          = 0 ;
     double  cj          = 0 ;
     double  avl_time    = 0 ;//arrival time
@@ -2283,11 +2290,11 @@ double ClockTree::timingConstraint_givDCC_givVTA(   CriticalPath *path,
     
     //------- Arrival time --------------------------------------------------------------
     avl_time = ci + path->getTinDelay() + Tcq + Dij ;
-    newslack = req_time - avl_time  ;
+    slack    = req_time - avl_time  ;
     
     //-- Formulation ---------------------------------------------------------------------
     string clause = "" ;
-    if( newslack < 0 )
+    if( slack < 0 )
     {
         //-- PItoFF ----------------------------------------------------------------------
         if( path->getPathType() == FFtoPO )
@@ -2371,23 +2378,24 @@ double ClockTree::timingConstraint_givDCC_givVTA(   CriticalPath *path,
             this->_timingconstraintlist.insert(clause) ;
         else
             cerr << "\033[32m[Info]: Timing Constraint List Full!\033[0m\n";
-        
-        if( _printClause )
-        {
-            fprintf( this->fptr,"Path(%4ld), ", path->getPathNum() );
-            if( stDCCLoc )  fprintf( this->fptr,"stDCC (%4ld, %.1f ), ", stDCCLoc->getNodeNumber(), stDCCType  );
-            else            fprintf( this->fptr,"stDCC (%4d, %.1f ), ",                          0, -1.0       );
-            if( edDCCLoc )  fprintf( this->fptr,"edDCC (%4ld, %.1f ), ", edDCCLoc->getNodeNumber(), edDCCType  );
-            else            fprintf( this->fptr,"edDCC (%4d, %.1f ), ",                          0, -1.0       );
-            if( stHeader )  fprintf( this->fptr,"stVTA (%4ld, %2d ), ", stHeader->getNodeNumber(), stLibIndex );
-            else            fprintf( this->fptr,"stVTA (%4d, %2d ), ",                           0, -1         );
-            if( edHeader )  fprintf( this->fptr,"edVTA (%4ld, %2d ), ", edHeader->getNodeNumber(), edLibIndex  );
-            else            fprintf( this->fptr,"edVTA (%4d, %2d ), ",                           0, -1         );
-            
-            fprintf( this->fptr,"slk = %f, %s \n", newslack, clause.c_str() );
-        }
     }//if( newslack < 0 )
-    return newslack ;
+    
+    if( _printClause )
+    {
+        fprintf( this->fptr,"Path(%4ld), ", path->getPathNum() );
+        if( stDCCLoc )  fprintf( this->fptr,"stDCC (%4ld, %.1f ), ", stDCCLoc->getNodeNumber(), stDCCType  );
+        else            fprintf( this->fptr,"stDCC (%4d, %.1f ), ",                          0, -1.0       );
+        if( edDCCLoc )  fprintf( this->fptr,"edDCC (%4ld, %.1f ), ", edDCCLoc->getNodeNumber(), edDCCType  );
+        else            fprintf( this->fptr,"edDCC (%4d, %.1f ), ",                          0, -1.0       );
+        if( stHeader )  fprintf( this->fptr,"stVTA (%4ld, %2d ), ", stHeader->getNodeNumber(), stLibIndex );
+        else            fprintf( this->fptr,"stVTA (%4d, %2d ), ",                           0, -1         );
+        if( edHeader )  fprintf( this->fptr,"edVTA (%4ld, %2d ), ", edHeader->getNodeNumber(), edLibIndex  );
+        else            fprintf( this->fptr,"edVTA (%4d, %2d ), ",                           0, -1         );
+        
+        if( slack < 0 ) fprintf( this->fptr,"slk = %f, %s \n", slack, clause.c_str() );
+        else            fprintf( this->fptr,"slk = %f, %s \n", slack, " " );
+    }
+    return slack ;
 }
 
 /*------------------------------------------------------------------------------------
@@ -3628,7 +3636,7 @@ double ClockTree::getAgingRate_givDC_givVth( double DC, int Libindex )
     //---- Sv -------------------------------------------------------
     double Sv = 0 ;
     if( DC == -1 || DC == 0 ) DC = 0.5 ;
-    if( this->ifdoVTA() == false  )
+    if( this->_usingSeniorAging == true  )
         return (1 + (((-0.117083333333337) * (DC) * (DC)) + (0.248750000000004 * (DC)) + 0.0400333333333325));
     
     if( Libindex != -1 )

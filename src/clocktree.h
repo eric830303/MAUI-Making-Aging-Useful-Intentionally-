@@ -59,6 +59,7 @@ class ClockTree
 private:
 	int     _pathselect, _bufinsert, _gpupbound, _gplowbound, _minisatexecnum;
 	bool    _placedcc, _aging, _mindccplace, _tcrecheck, _clkgating, _dumpdcc, _dumpcg, _dumpbufins, _doVTA, _printpath, _dumpCNF, _checkCNF, _checkfile, _printClause ;
+    bool    _usingSeniorAging ;
 	long    _pathusednum, _pitoffnum, _fftoffnum, _fftoponum, _nonplacedccbufnum;
 	long    _totalnodenum, _ffusednum, _bufferusednum, _dccatlastbufnum;
 	long    _masklevel, _maxlevel, _insertbufnum;
@@ -66,7 +67,7 @@ private:
     double _tcAfterAdjust ;
     //Timing-related attribute
     double _origintc, _besttc, _tc, _tcupbound, _tclowbound, _agingtcq, _agingdij, _agingtsu;
-
+    
     //filename-related attribute
 	string _timingreport, _timingreportfilename, _timingreportloc, _timingreportdesign;
 	string _cgfilename, _outputdir;
@@ -115,7 +116,7 @@ public:
 			   _origintc(0), _besttc(0), _tc(0), _tcupbound(0), _tclowbound(0),
 			   _clktreeroot(nullptr), _firstchildrennode(nullptr), _mostcriticalpath(nullptr),
 			   _timingreport(""), _timingreportfilename(""), _timingreportloc(""), _timingreportdesign(""),_dumpCNF(false), _checkCNF(false), _checkfile(false),
-			   _cgfilename(""), _outputdir(""), _tcAfterAdjust(0), _printClause(false), _baseVthOffset(0), _exp(0.2) {}
+			   _cgfilename(""), _outputdir(""), _tcAfterAdjust(0), _printClause(false), _baseVthOffset(0), _exp(0.2),  _usingSeniorAging(false) {}
 	//-Destructor------------------------------------------------------------------
     ~ClockTree(void);
 	
