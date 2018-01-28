@@ -214,7 +214,7 @@ public:
    
     //---DCC Constraint ---------------------------------------------------------
 	void    dccConstraint(void);
-    void    dccPlacementByMasked(int);
+    void    dccPlacementByMasked(void);
     //---VTA Constraint ---------------------------------------------------------
     void    VTAConstraint(void);
     void    VTAConstraintFFtoFF( CriticalPath* );
@@ -292,7 +292,6 @@ public:
     bool    checkDCCVTAConstraint(void);
     bool    checkDCCVTAConstraint_givPath(CriticalPath*);
     void    readDCCVTAFile(void);
-    void    MaskClkNode(void) ;
     void    CheckTiming_givCNF();
     void    CheckTiming_givFile();
     void    removeCNFFile(void);

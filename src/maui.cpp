@@ -107,6 +107,8 @@ int main(int argc, char **argv)
 	endtime = chrono::steady_clock::now();
 	preprocesstime = chrono::duration_cast<chrono::duration<double>>(endtime - starttime);
     
+    //---- Mask -------------------------------------------------------
+    circuit.dccPlacementByMasked();
     //-------- Check Timing with given DccVTA.txt ---------------------
     if( circuit.ifCheckFile() ){
         circuit.CheckTiming_givFile() ;
@@ -154,11 +156,9 @@ int main(int argc, char **argv)
     //-------- Remove CNF file --------------------------------------------------------------
     circuit.removeCNFFile() ;
 	//-------- Constraint -----------------------------------------------------------------
-    //1.
-	circuit.dccPlacementByMasked(0);
-	//2.
+	//1.
     circuit.VTAConstraint();
-    //3.
+    //2.
     circuit.dccConstraint();
     endtime = chrono::steady_clock::now();
     dccconstrainttime = chrono::duration_cast<chrono::duration<double>>(endtime - midtime);

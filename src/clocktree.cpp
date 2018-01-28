@@ -1305,7 +1305,7 @@ void ClockTree::adjustOriginTc(void)
 // Prohibit DCCs inserting below the mask
 //
 /////////////////////////////////////////////////////////////////////
-void ClockTree::dccPlacementByMasked(int mode)
+void ClockTree::dccPlacementByMasked( )
 {
 	if( !this->_placedcc )//-nondcc
 		return ;
@@ -1369,8 +1369,8 @@ void ClockTree::dccPlacementByMasked(int mode)
 			// Mask by level
 			for( auto const &nodeptr : starttemp )
                 if( nodeptr->getDepth() <= (this->_maxlevel - this->_masklevel) ){
-					if( mode == 0 )  nodeptr->setIfPlaceDcc(1);
-                    else             nodeptr->setifMasked(false);
+					nodeptr->setIfPlaceDcc(1);
+                    nodeptr->setifMasked(false);
                 }
 		}
 		// Deal with the clock path of the endpoint
@@ -1401,112 +1401,14 @@ void ClockTree::dccPlacementByMasked(int mode)
 			// Mask by level
 			for( auto const &nodeptr : endtemp )
                 if(nodeptr->getDepth() <= (this->_maxlevel - this->_masklevel)){
-					if( mode == 0 ) nodeptr->setIfPlaceDcc(1)   ;
-                    else            nodeptr->setifMasked(false) ;
+					nodeptr->setIfPlaceDcc(1)   ;
+                    nodeptr->setifMasked(false) ;
                 }
 		}
 	}
 }
 
-void ClockTree::MaskClkNode( void )
-{
-    if( !this->_placedcc )//-nondcc
-        return ;
-    long pathcount = 0;
-    for( auto const &pathptr : this->_pathlist )
-    {
-        //if(pathcount > (long)(this->_pathusednum * PATHMASKPERCENT))
-        //    break;
-        bool dealstart = 0, dealend = 0 ;
-        ClockTreeNode *sameparent = this->_firstchildrennode;
-        switch( pathptr->getPathType() )
-        {
-                // Path type: input to FF
-            case PItoFF:
-                dealend = 1   ;
-                break;
-                // Path type: FF to output
-            case FFtoPO:
-                dealstart = 1 ;
-                break;
-                // Path type: FF to FF
-            case FFtoFF:
-                if( pathptr->isEndPointSameAsStartPoint() )
-                {
-                    pathcount++  ;
-                    continue     ;
-                }
-                sameparent = pathptr->findLastSameParentNode();
-                dealstart = 1 ;
-                dealend   = 1 ;
-                break            ;
-            default:
-                continue;
-        }
-        pathcount++;
-        // Deal with the clock path of the startpoint
-        if( dealstart )
-        {
-            vector< ClockTreeNode * > starttemp = pathptr->getStartPonitClkPath();//return by reference
-            starttemp.pop_back() ;
-            //front = root, back = FF
-            reverse( starttemp.begin(), starttemp.end() );
-            //front = FF, back = root
-            // Ignore the common nodes
-            while( 1 )
-            {
-                if( starttemp.back() != sameparent )
-                    starttemp.pop_back();
-                else if(starttemp.back() == sameparent)
-                {
-                    starttemp.pop_back();
-                    reverse(starttemp.begin(), starttemp.end());
-                    
-                    break;
-                }
-            }
-            long clkpathlen = (long)(starttemp.size() * this->_maskleng);
-            // Mask by length
-            for( long loop = 0;loop < clkpathlen;loop++ )//when loop=0, it mean same parent-1
-                starttemp.pop_back() ;
-            // Mask by level
-            for( auto const &nodeptr : starttemp )
-                if( nodeptr->getDepth() <= (this->_maxlevel - this->_masklevel) ){
-                    nodeptr->setifMasked(false);
-                }
-        }
-        // Deal with the clock path of the endpoint
-        if( dealend )
-        {
-            vector<ClockTreeNode *> endtemp = pathptr->getEndPonitClkPath();//return by reference
-            endtemp.pop_back();//delete FF?
-            //endtemp[0]=root, endtemp[tail]=FF+1
-            reverse(endtemp.begin(), endtemp.end());
-            //endtemp[0]=FF+1, endtemp[tail]=root
-            // Ignore the common nodes
-            while(1)
-            {
-                if( endtemp.back() != sameparent )
-                    endtemp.pop_back();
-                else if( endtemp.back() == sameparent )
-                {
-                    endtemp.pop_back();
-                    reverse(endtemp.begin(), endtemp.end());
-                    //endtemp[0]=sameparent-1, endtemp[tail]=FF+1
-                    break;
-                }
-            }
-            long clkpathlen = (long)(endtemp.size() * this->_maskleng);
-            // Mask by length
-            for( long loop = 0;loop < clkpathlen;loop++ )
-                endtemp.pop_back();
-            // Mask by level
-            for( auto const &nodeptr : endtemp )
-                if(nodeptr->getDepth() <= (this->_maxlevel - this->_masklevel))
-                    nodeptr->setifMasked(false);
-        }
-    }
-}
+
 /*---------------------------------------------------------------------------
  FuncName:
     VTAConstraint(),       VTAConstraintFFtoFF(),
@@ -1728,7 +1630,8 @@ void ClockTree::dccConstraint(void)
 	// Generate two clauses for each buffer can not insert DCC
 	for( auto const& node: this->_buflist )//_buflist = map< string, clknode * >
 	{
-		if( !node.second->ifPlacedDcc() )
+		//if( !node.second->ifPlacedDcc() )
+        if( node.second->ifMasked() )
 		{
 			string clause1, clause2;
 			clause1 = to_string(node.second->getNodeNumber() * -1) + " 0";
@@ -4325,7 +4228,7 @@ void ClockTree::InitClkTree()
         clknode.second->setIfPlaceHeader(false) ;
         clknode.second->setDccType(0.5)         ;
         clknode.second->setVTAType(-1)          ;
-        clknode.second->setifMasked(true)       ;
+        //clknode.second->setifMasked(true)       ;
     }
     for( auto FF: this->_ffsink )
     {
@@ -4333,9 +4236,9 @@ void ClockTree::InitClkTree()
         FF.second->setIfPlaceHeader(false)      ;
         FF.second->setDccType(0.5)              ;
         FF.second->setVTAType(-1)               ;
-        FF.second->setifMasked(true)            ;
+        //FF.second->setifMasked(true)            ;
     }
-    this->dccPlacementByMasked(1)               ;
+    //this->dccPlacementByMasked(1)               ;
 }
 void ClockTree::dumpCNF()
 {

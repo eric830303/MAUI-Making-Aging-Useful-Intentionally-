@@ -130,13 +130,13 @@ void CriticalPath::setDccPlacementCandidate(void)
 		// Path type: input to FF
 		case PItoFF:
 			for( auto const &nodeptr : this->_endpclkpath )
-				if( nodeptr->ifPlacedDcc() )
+				if( nodeptr->ifMasked() == false )
 					addDccPlacementCandidate(nodeptr, 1);
 			break;
 		// Path type: FF to output
 		case FFtoPO:
 			for( auto const &nodeptr : this->_startpclkpath )
-				if(nodeptr->ifPlacedDcc())
+				if( nodeptr->ifMasked() == false  )
 					addDccPlacementCandidate(nodeptr, 1);
 			break;
 		// Path type: FF to FF
@@ -150,19 +150,19 @@ void CriticalPath::setDccPlacementCandidate(void)
 				count++;
 				if( nodeptr == sameparent )
 					diffparentloc = count;
-				if( nodeptr->ifPlacedDcc() )
+				if( nodeptr->ifMasked() == false  )
 					addDccPlacementCandidate(nodeptr, 1);
 			}
 			// Deal the remain part of clock path
 			// Store every combination of DCC placement
 			for(long loop1 = diffparentloc;loop1 < this->_startpclkpath.size()-1;loop1++)
 			{
-				if(this->_startpclkpath.at(loop1)->ifPlacedDcc())
+				if(this->_startpclkpath.at(loop1)->ifMasked() == false )
 				{
 					addDccPlacementCandidate(this->_startpclkpath.at(loop1), 1);
 					for(long loop2 = diffparentloc;loop2 < this->_endpclkpath.size()-1;loop2++)
 					{
-						if(this->_endpclkpath.at(loop2)->ifPlacedDcc())
+						if(this->_endpclkpath.at(loop2)->ifMasked() == false )
 						{
 							addDccPlacementCandidate(this->_startpclkpath.at(loop1), 1);
 							addDccPlacementCandidate(this->_endpclkpath.at(loop2), 0)  ;
