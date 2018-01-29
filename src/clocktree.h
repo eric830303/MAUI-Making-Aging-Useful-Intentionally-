@@ -88,7 +88,7 @@ private:
 	// _timingconstraintlist: All clauses of timing constraints
 	int _pathselect, _bufinsert, _gpupbound, _gplowbound, _minisatexecnum;
 	bool _placedcc, _aging, _mindccplace, _tcrecheck, _clkgating, _dumpdcc, _dumpcg, _dumpbufins, _printClause;
-	long _pathusednum, _pitoffnum, _fftoffnum, _fftoponum, _nonplacedccbufnum;
+	long _pathusednum, _pitoffnum, _fftoffnum, _fftoponum, _nonplacedccbufnum, _printClkNode;
 	long _totalnodenum, _ffusednum, _bufferusednum, _dccatlastbufnum;
 	long _masklevel, _maxlevel, _insertbufnum;
 	double _maskleng, _cgpercent, _agingtcq, _agingdij, _agingtsu;
@@ -178,7 +178,7 @@ public:
 			   _origintc(0), _besttc(0), _tc(0), _tcupbound(0), _tclowbound(0),
 			   _clktreeroot(nullptr), _firstchildrennode(nullptr), _mostcriticalpath(nullptr),
 			   _timingreport(""), _timingreportfilename(""), _timingreportloc(""), _timingreportdesign(""),
-			   _cgfilename(""), _outputdir("") {}
+			   _cgfilename(""), _outputdir(""), _printClkNode(false) {}
 	~ClockTree(void);
 	
 	// Setter methods
@@ -238,6 +238,7 @@ public:
 	//set<string *>& getTimingConstraintList(void) { return _timingconstraintlist; }
 
 	// Other methods
+    bool ifprintNode(void)                          { return _printClkNode      ; }
 	bool ifPlaceDcc(void) { return _placedcc; }
 	bool ifAging(void) { return _aging; }
 	bool ifMinDccNumber(void) { return _mindccplace; }
@@ -284,6 +285,10 @@ public:
 	void printDccList(void);
 	void printClockGatingList(void);
 	void printBufferInsertedList(void);
+    
+    void    printNodeLayerSpace(int);
+    void    printClockNode(void);
+    void    printClockNode(ClockTreeNode*, int layer = 0 );
 };
 
 /////////////////////////////////////////////////////////////////////

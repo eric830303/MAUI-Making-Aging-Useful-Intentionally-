@@ -128,6 +128,12 @@ int main(int argc, char **argv)
 	//-------- DCC Constraint -----------------------
     //1.
 	circuit.dccPlacementByMasked();//100% understand
+    
+    //-------- print Node-----------------------------------------
+    if( circuit.ifprintNode()){
+        circuit.printClockNode();
+        return 0;
+    }
 	//2.
 	circuit.dccConstraint();//100% understand
     
