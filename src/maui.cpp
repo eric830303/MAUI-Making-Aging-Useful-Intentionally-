@@ -124,6 +124,11 @@ int main(int argc, char **argv)
         circuit.printPath();
         return 0;
     }
+    //-------- print Node-----------------------------------------
+    if( circuit.ifprintNode()){
+        circuit.printClockNode();
+        return 0;
+    }
 	cout << "---------------------------------------------------------------------------\n";
 
 	chrono::system_clock::time_point nowtime = chrono::system_clock::now();

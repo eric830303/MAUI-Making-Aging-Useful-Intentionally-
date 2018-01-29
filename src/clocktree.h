@@ -59,7 +59,7 @@ class ClockTree
 private:
 	int     _pathselect, _bufinsert, _gpupbound, _gplowbound, _minisatexecnum;
 	bool    _placedcc, _aging, _mindccplace, _tcrecheck, _clkgating, _dumpdcc, _dumpcg, _dumpbufins, _doVTA, _printpath, _dumpCNF, _checkCNF, _checkfile, _printClause ;
-    bool    _usingSeniorAging ;
+    bool    _usingSeniorAging, _printClkNode ;
 	long    _pathusednum, _pitoffnum, _fftoffnum, _fftoponum, _nonplacedccbufnum;
 	long    _totalnodenum, _ffusednum, _bufferusednum, _dccatlastbufnum;
 	long    _masklevel, _maxlevel, _insertbufnum;
@@ -116,7 +116,8 @@ public:
 			   _origintc(0), _besttc(0), _tc(0), _tcupbound(0), _tclowbound(0),
 			   _clktreeroot(nullptr), _firstchildrennode(nullptr), _mostcriticalpath(nullptr),
 			   _timingreport(""), _timingreportfilename(""), _timingreportloc(""), _timingreportdesign(""),_dumpCNF(false), _checkCNF(false), _checkfile(false),
-			   _cgfilename(""), _outputdir(""), _tcAfterAdjust(0), _printClause(false), _baseVthOffset(0), _exp(0.2),  _usingSeniorAging(false) {}
+			   _cgfilename(""), _outputdir(""), _tcAfterAdjust(0), _printClause(false), _baseVthOffset(0), _exp(0.2),  _usingSeniorAging(false),
+               _printClkNode(false) {}
 	//-Destructor------------------------------------------------------------------
     ~ClockTree(void);
 	
@@ -181,6 +182,7 @@ public:
     set< pair<ClockTreeNode*,ClockTreeNode*> >& getVTASet(void) { return _setVTALeader ; }
     set< pair<int,int> >& getDCCSet(void) { return _setDCC ; }
 	//-- Bool Attr Access -------------------------------------------------------
+    bool ifprintNode(void)                          { return _printClkNode      ; }
     bool ifCheckFile(void)                          { return _checkfile         ; }
     bool ifCheckCNF(void)                           { return _checkCNF          ; }
     bool ifDumpCNF(void)                            { return _dumpCNF           ; }
@@ -297,6 +299,9 @@ public:
     void    removeCNFFile(void);
     void    execMinisat(void);
     void    tcBinarySearch(void);
+    void    printNodeLayerSpace(int);
+    void    printClockNode(void);
+    void    printClockNode(ClockTreeNode*, int layer = 0 );
     ClockTreeNode *searchClockTreeNode(string);
     ClockTreeNode *searchClockTreeNode(long);
     vector<CriticalPath *> searchCriticalPath(char, string);

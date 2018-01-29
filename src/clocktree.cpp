@@ -595,6 +595,8 @@ int ClockTree::checkParameter(int argc, char **argv, string *message)
             this->_checkfile  = 1;
         else if(strcmp(argv[loop], "-print=Clause") == 0)
             this->_printClause  = 1;
+        else if(strcmp(argv[loop], "-print=Node") == 0)
+            this->_printClkNode  = 1;
         else if(strcmp(argv[loop], "-aging=Senior") == 0)
             this->_usingSeniorAging = 1;
 		else if(strcmp(argv[loop], "-mask_leng") == 0)
@@ -4509,10 +4511,58 @@ bool ClockTree::checkDCCVTAConstraint_givPath( CriticalPath * path )
 }
 
 
+void ClockTree::printClockNode()
+{
+    //---- Iteration ----------------------------------------------------------------
+    int nodeID = 0 ;
+    ClockTreeNode *node = NULL ;
+    while( true )
+    {
+        printf( "---------------------- " CYAN"Print Topology " RESET"----------------------------\n" );
+        printf(" Clk_Name( nodeID, parentID, " GREEN"O" RESET"/" RED"X" RESET" )\n");
+        printf( GREEN" O" RESET": those clk nodes that are Not masked\n");
+        printf( RED  " X" RESET": those clk nodes that are     masked\n");
+        printf(" number <= 0 : leave the loop\n");
+        printf(" number > 0 : The ID of clock node\n");
+        printf(" Please type the clknode ID:");
+        
+        cin >> nodeID ;
+        
+        if( nodeID < 0 ) break ;
+        else
+        {
+            node =  searchClockTreeNode( nodeID ) ;
+            if( node == NULL )
+                cerr << RED"[ERROR]" RESET<< "The node ID " << nodeID << " is not identified\n" ;
+            else
+                printClockNode( node, 0 ) ;
+        }
+    }
+}
+void ClockTree::printClockNode( ClockTreeNode*node, int layer )
+{
+    if( node == NULL ) return ;
+    else
+    {
+        if( node->ifMasked())
+            printf( "%s( %4ld, %4ld, " RED  "X" RESET" ) ", node->getGateData()->getGateName().c_str(), node->getNodeNumber(), node->getParent()->getNodeNumber());
+        else
+            printf( "%s( %4ld, %4ld, " GREEN"O" RESET" ) ", node->getGateData()->getGateName().c_str(), node->getNodeNumber(), node->getParent()->getNodeNumber());
+        
+        for( int j = 0 ; j < node->getChildren().size(); j++ )
+        {
+            if( j != 0 ) printNodeLayerSpace( layer + 1 ) ;
+            printClockNode( node->getChildren().at(j), layer+1 ) ;
+        }
+        cout << endl ;
+    }
+    
+}
 
-
-
-
+void ClockTree::printNodeLayerSpace( int layer )
+{
+    for( int i = 0 ; i < layer ; i++ )  printf( "                          " );
+}
 
 
 
