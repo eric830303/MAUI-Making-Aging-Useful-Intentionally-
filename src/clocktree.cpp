@@ -19,6 +19,7 @@
 
 #define RED     "\x1b[31m"
 #define GREEN   "\x1b[32m"
+#define GRN     "\x1b[32m"
 #define YELLOW  "\x1b[33m"
 #define BLUE    "\x1b[34m"
 #define MAGENTA "\x1b[35m"
@@ -3822,7 +3823,10 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
         clknode  = edClkPath.at(i) ;
         gatePtr  = clknode->getGateData() ;
         printClkNodeFeature( clknode, doDCCVTA );
-        printf( "%s(%3ld,%.1f,%2d," GREEN"%f" RESET")---", gatePtr->getGateName().c_str() ,clknode->getNodeNumber(), clknode->getDC(), clknode->getVthType(),clknode->getBufTime() );
+        if( clknode->ifMasked() )
+            printf( "%s(%3ld,%.1f,%2d," GREEN"%f" RESET"," RED"X" RESET")---", gatePtr->getGateName().c_str() ,clknode->getNodeNumber(), clknode->getDC(), clknode->getVthType(),clknode->getBufTime() );
+        else
+            printf( "%s(%3ld,%.1f,%2d," GREEN"%f" RESET"," GRN"O" RESET")---", gatePtr->getGateName().c_str() ,clknode->getNodeNumber(), clknode->getDC(), clknode->getVthType(),clknode->getBufTime() );
     }
     printf( "  => " YELLOW"End " RESET"Clk Path\n");
     
@@ -3836,7 +3840,11 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
         clknode  = edClkPath.at(i) ;
         gatePtr  = clknode->getGateData() ;
         printClkNodeFeature( clknode, doDCCVTA );
-        printf( "%s(%3ld,%.1f,%2d," GREEN"%f" RESET")---", gatePtr->getGateName().c_str() ,clknode->getNodeNumber(), clknode->getDC(), clknode->getVthType(),clknode->getBufTime() );
+        
+        if( clknode->ifMasked() )
+            printf( "%s(%3ld,%.1f,%2d," GREEN"%f" RESET"," RED"X" RESET")---", gatePtr->getGateName().c_str() ,clknode->getNodeNumber(), clknode->getDC(), clknode->getVthType(),clknode->getBufTime() );
+        else
+            printf( "%s(%3ld,%.1f,%2d," GREEN"%f" RESET"," GRN"O" RESET")---", gatePtr->getGateName().c_str() ,clknode->getNodeNumber(), clknode->getDC(), clknode->getVthType(),clknode->getBufTime() );
     }
     cout << endl ;
     
@@ -3897,7 +3905,11 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
             
         if( clknode == stClkPath.back() ) LibIndex_left = -1 ;
         printClkNodeFeature( clknode, doDCCVTA );
-        printf( "%s(%3ld,%.1f,%2d," GREEN"%f" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_left, LibIndex_left, buftime );
+        
+        if( clknode->ifMasked() )
+            printf( "%s(%3ld,%.1f,%d," GREEN"%.4f" RESET", " RED  "X" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_left, LibIndex_left, buftime );
+        else
+            printf( "%s(%3ld,%.1f,%d," GREEN"%.4f" RESET", " GREEN"O" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_left, LibIndex_left, buftime );
     }
     printf( "  => " YELLOW"Start " RESET"Clk Path\n");
         
@@ -4001,7 +4013,10 @@ void ClockTree::printPItoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
         req_time   += buftime ;
         
         printClkNodeFeature( clknode, doDCCVTA );
-        printf( "%s(%3ld,%.1f,%d," GREEN"%f" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_right, LibIndex_right, buftime );
+        if( clknode->ifMasked() )
+            printf( "%s(%3ld,%.1f,%d," GREEN"%.4f" RESET"," RED"X" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_right, LibIndex_right, buftime );
+        else
+            printf( "%s(%3ld,%.1f,%d," GREEN"%.4f" RESET"," GRN"O" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_right, LibIndex_right, buftime );
     }
     printf( "=> " YELLOW"End " RESET"Clk Path\n");
         
@@ -4085,7 +4100,10 @@ void ClockTree::printFFtoPO_givFile( CriticalPath *path, bool doDCCVTA, bool agi
         avl_time   += buftime ;
         
         printClkNodeFeature( clknode, doDCCVTA );
-        printf( "%s(%3ld,%.1f,%d," GREEN"%.4f" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_left, LibIndex_left, buftime );
+        if( clknode->ifMasked() )
+            printf( "%s(%3ld,%.1f,%d," GREEN"%.4f" RESET"," RED"X" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_left, LibIndex_left, buftime );
+        else
+            printf( "%s(%3ld,%.1f,%d," GREEN"%.4f" RESET"," GRN"O" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_left, LibIndex_left, buftime );
     }
     printf( "=> " YELLOW"Start " RESET"Clk Path\n");
     //-- A DCC Exist along left clk path -----------------------------------------------------
