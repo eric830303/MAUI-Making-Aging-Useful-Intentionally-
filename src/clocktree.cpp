@@ -260,7 +260,7 @@ void ClockTree::genClauseByDccVTA( ClockTreeNode *node, string *clause, double d
     
 	long nodenum = node->getNodeNumber();
     
-    if( !node->ifPlacedDcc() )
+    if( !node->ifPlacedDcc() || node->ifMasked() )
     {
         *clause += to_string(nodenum) + " " + to_string(nodenum + 1) + " ";
         //-- Put Header ------
@@ -1371,7 +1371,7 @@ void ClockTree::dccPlacementByMasked( )
 			// Mask by level
 			for( auto const &nodeptr : starttemp )
                 if( nodeptr->getDepth() <= (this->_maxlevel - this->_masklevel) ){
-					nodeptr->setIfPlaceDcc(1);
+					//nodeptr->setIfPlaceDcc(1);
                     nodeptr->setifMasked(false);
                 }
 		}
@@ -1403,7 +1403,7 @@ void ClockTree::dccPlacementByMasked( )
 			// Mask by level
 			for( auto const &nodeptr : endtemp )
                 if(nodeptr->getDepth() <= (this->_maxlevel - this->_masklevel)){
-					nodeptr->setIfPlaceDcc(1)   ;
+					//nodeptr->setIfPlaceDcc(1)   ;
                     nodeptr->setifMasked(false) ;
                 }
 		}
@@ -1675,7 +1675,8 @@ void ClockTree::dccConstraint(void)
 		vector<vector<long> > comblist;
 		while( nodeptr != this->_firstchildrennode )
 		{
-			if( nodeptr->ifPlacedDcc() )
+			//if( nodeptr->ifPlacedDcc() )
+            if( nodeptr->ifMasked() == false )
 				path.push_back( nodeptr->getNodeNumber() );
 			nodeptr = nodeptr->getParent();
 		}
