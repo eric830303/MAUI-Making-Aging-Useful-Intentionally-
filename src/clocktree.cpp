@@ -4579,10 +4579,16 @@ void ClockTree::printClockNode( ClockTreeNode*node, int layer )
     if( node == NULL ) return ;
     else
     {
+        int targetStrLen = 12;           // Target output length
+        const char *padding="------------------------------";
+        
+        long int padLen = targetStrLen - strlen(node->getGateData()->getGateName().c_str()); // Calc Padding length
+        if(padLen < 0) padLen = 0;    // Avoid negative length
+        
         if( node->ifMasked())
-            printf( "--%12s( %4ld, %4ld, " RED"X" RESET" )", node->getGateData()->getGateName().c_str(), node->getNodeNumber(), node->getParent()->getNodeNumber());
+            printf( "--%*.*s%s( %4ld, %4ld, " RED"X" RESET" )", (int)padLen, (int)padLen, padding,node->getGateData()->getGateName().c_str(), node->getNodeNumber(), node->getParent()->getNodeNumber());
         else
-            printf( "--%12s( %4ld, %4ld, " GRN"O" RESET" )", node->getGateData()->getGateName().c_str(), node->getNodeNumber(), node->getParent()->getNodeNumber());
+            printf( "--%*.*s%s( %4ld, %4ld, " GRN"O" RESET" )", (int)padLen, (int)padLen, padding, node->getGateData()->getGateName().c_str(), node->getNodeNumber(), node->getParent()->getNodeNumber());
         
         //--- Node is FF -----------------------------------------------------------
         if( _ffsink.find(node->getGateData()->getGateName()) !=  _ffsink.end() )
