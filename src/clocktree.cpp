@@ -4580,9 +4580,9 @@ void ClockTree::printClockNode( ClockTreeNode*node, int layer )
     else
     {
         if( node->ifMasked())
-            printf( "%12s( %4ld, %4ld, " RED"X" RESET" ) ", node->getGateData()->getGateName().c_str(), node->getNodeNumber(), node->getParent()->getNodeNumber());
+            printf( "--%12s( %4ld, %4ld, " RED"X" RESET" )", node->getGateData()->getGateName().c_str(), node->getNodeNumber(), node->getParent()->getNodeNumber());
         else
-            printf( "%12s( %4ld, %4ld, " GRN"O" RESET" ) ", node->getGateData()->getGateName().c_str(), node->getNodeNumber(), node->getParent()->getNodeNumber());
+            printf( "--%12s( %4ld, %4ld, " GRN"O" RESET" )", node->getGateData()->getGateName().c_str(), node->getNodeNumber(), node->getParent()->getNodeNumber());
         
         //--- Node is FF -----------------------------------------------------------
         if( _ffsink.find(node->getGateData()->getGateName()) !=  _ffsink.end() )
@@ -4594,40 +4594,55 @@ void ClockTree::printClockNode( ClockTreeNode*node, int layer )
                 if( path->getPathType() == FFtoFF || path->getPathType() == FFtoPO )
                 if( path->getStartPonitClkPath().back() == node )
                 {
-                    printf( "%4ld(St.) ", path->getPathNum() );
+                    printf( YELLOW"%4ld(St.) " RESET, path->getPathNum() );
                     ctr++ ;
                     if( ctr%5 == 0 ){
                         cout << endl ;
-                        printNodeLayerSpace( layer + 1 ) ;
+                        printNodeLayerSpacel( layer  ) ;
+                        printNodeLayerSpace( 1 ) ;
                     }
                 }
                 if( path->getPathType() == FFtoFF || path->getPathType() == PItoFF )
                 if( path->getEndPonitClkPath().back() == node )
                 {
-                    printf( "%4ld(Ed.) ", path->getPathNum() );
+                    printf( YELLOW"%4ld(Ed.) " RESET, path->getPathNum() );
                     ctr++ ;
                     if( ctr%5 == 0 ){
                         cout << endl ;
-                        printNodeLayerSpace( layer + 1 ) ;
+                        printNodeLayerSpacel( layer  ) ;
+                        printNodeLayerSpace( 1 ) ;
                     }
                 }
             }
-            printf( RESET );
+            printf( RESET"\n" );
         }
         //--- Iteration of node's children -------------------------------------------
         for( int j = 0 ; j < node->getChildren().size(); j++ )
         {
-            if( j != 0 ) printNodeLayerSpace( layer + 1 ) ;
+            if( j != 0 ) printNodeLayerSpacel( layer + 1 ) ;
             printClockNode( node->getChildren().at(j), layer+1 ) ;
         }
-        cout << endl ;
+       
+        if( node->getChildren().size() != 0 )
+        {
+            printNodeLayerSpacel( layer  ) ; //printNodeLayerSpace( 1 ) ;
+            printf( RESET"\n" );
+            printNodeLayerSpacel( layer  ) ; //printNodeLayerSpace( 1 ) ;
+            printf( RESET"\n" );
+        }
+            
+        
     }
     
 }
 
+void ClockTree::printNodeLayerSpacel( int layer )
+{
+    for( int i = 0 ; i < layer ; i++ )  printf( "                              |" );
+}
 void ClockTree::printNodeLayerSpace( int layer )
 {
-    for( int i = 0 ; i < layer ; i++ )  printf( "                              " );
+    for( int i = 0 ; i < layer ; i++ )  printf( "                               " );
 }
 
 

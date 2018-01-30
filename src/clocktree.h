@@ -299,6 +299,7 @@ public:
     void    removeCNFFile(void);
     void    execMinisat(void);
     void    tcBinarySearch(void);
+    void    printNodeLayerSpacel(int);
     void    printNodeLayerSpace(int);
     void    printClockNode(void);
     void    printClockNode(ClockTreeNode*, int layer = 0 );
