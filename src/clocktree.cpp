@@ -4159,7 +4159,7 @@ void ClockTree::printPathSlackTiming(CriticalPath *path, double ci, double cj, b
 }
 void ClockTree::printSpace( long common)
 {
-    for( int i = 0 ; i <= common; i++ )  printf("                             " );
+    for( int i = 0 ; i <= common; i++ )  printf("                                 " );
 }
 void ClockTree::dumpDccVTALeaderToFile()
 {
@@ -4584,6 +4584,37 @@ void ClockTree::printClockNode( ClockTreeNode*node, int layer )
         else
             printf( "%12s( %4ld, %4ld, " GRN"O" RESET" ) ", node->getGateData()->getGateName().c_str(), node->getNodeNumber(), node->getParent()->getNodeNumber());
         
+        //--- Node is FF -----------------------------------------------------------
+        if( _ffsink.find(node->getGateData()->getGateName()) !=  _ffsink.end() )
+        {
+            printf( YELLOW );
+            int ctr = 0 ;
+            for( auto path: _pathlist )
+            {
+                if( path->getPathType() == FFtoFF || path->getPathType() == FFtoPO )
+                if( path->getStartPonitClkPath().back() == node )
+                {
+                    printf( "%4ld(St.) ", path->getPathNum() );
+                    ctr++ ;
+                    if( ctr%5 == 0 ){
+                        cout << endl ;
+                        printNodeLayerSpace( layer + 1 ) ;
+                    }
+                }
+                if( path->getPathType() == FFtoFF || path->getPathType() == PItoFF )
+                if( path->getEndPonitClkPath().back() == node )
+                {
+                    printf( "%4ld(Ed.) ", path->getPathNum() );
+                    ctr++ ;
+                    if( ctr%5 == 0 ){
+                        cout << endl ;
+                        printNodeLayerSpace( layer + 1 ) ;
+                    }
+                }
+            }
+            printf( RESET );
+        }
+        //--- Iteration of node's children -------------------------------------------
         for( int j = 0 ; j < node->getChildren().size(); j++ )
         {
             if( j != 0 ) printNodeLayerSpace( layer + 1 ) ;
