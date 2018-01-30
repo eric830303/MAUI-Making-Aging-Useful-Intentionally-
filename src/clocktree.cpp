@@ -1374,6 +1374,12 @@ void ClockTree::dccPlacementByMasked( )
                 if( nodeptr->getDepth() <= (this->_maxlevel - this->_masklevel) ){
 					//nodeptr->setIfPlaceDcc(1);
                     nodeptr->setifMasked(false);
+                    /*
+                    if( nodeptr->getGateData()->getGateName() == "CK__L4_I227" )
+                    {
+                        printf( "Path: %ld, Start side unmasked it\n", pathptr->getPathNum() );
+                    }
+                     */ //Log code
                 }
 		}
 		// Deal with the clock path of the endpoint
@@ -1406,6 +1412,12 @@ void ClockTree::dccPlacementByMasked( )
                 if(nodeptr->getDepth() <= (this->_maxlevel - this->_masklevel)){
 					//nodeptr->setIfPlaceDcc(1)   ;
                     nodeptr->setifMasked(false) ;
+                    /*
+                    if( nodeptr->getGateData()->getGateName() == "CK__L4_I227" )
+                    {
+                        printf( "Path: %ld, End side unmasked it\n", pathptr->getPathNum() );
+                    }
+                     *///log code
                 }
 		}
 	}
@@ -4553,8 +4565,12 @@ void ClockTree::printClockNode()
             node =  searchClockTreeNode( nodeID ) ;
             if( node == NULL )
                 cerr << RED"[ERROR]" RESET<< "The node ID " << nodeID << " is not identified\n" ;
-            else
+            else{
+                printf("------------------------- " CYAN"Topology " RESET"-------------------------------\n");
+                printf("Following is the topology whose root is %d\n\n\n", nodeID );
                 printClockNode( node, 0 ) ;
+                
+            }
         }
     }
 }
@@ -4564,9 +4580,9 @@ void ClockTree::printClockNode( ClockTreeNode*node, int layer )
     else
     {
         if( node->ifMasked())
-            printf( "%s( %4ld, %4ld, " RED  "X" RESET" ) ", node->getGateData()->getGateName().c_str(), node->getNodeNumber(), node->getParent()->getNodeNumber());
+            printf( "%12s( %4ld, %4ld, " RED"X" RESET" ) ", node->getGateData()->getGateName().c_str(), node->getNodeNumber(), node->getParent()->getNodeNumber());
         else
-            printf( "%s( %4ld, %4ld, " GREEN"O" RESET" ) ", node->getGateData()->getGateName().c_str(), node->getNodeNumber(), node->getParent()->getNodeNumber());
+            printf( "%12s( %4ld, %4ld, " GRN"O" RESET" ) ", node->getGateData()->getGateName().c_str(), node->getNodeNumber(), node->getParent()->getNodeNumber());
         
         for( int j = 0 ; j < node->getChildren().size(); j++ )
         {
@@ -4580,7 +4596,7 @@ void ClockTree::printClockNode( ClockTreeNode*node, int layer )
 
 void ClockTree::printNodeLayerSpace( int layer )
 {
-    for( int i = 0 ; i < layer ; i++ )  printf( "                          " );
+    for( int i = 0 ; i < layer ; i++ )  printf( "                              " );
 }
 
 
