@@ -305,6 +305,7 @@ public:
     void    printClockNode(void);
     void    printClockNode(ClockTreeNode*, int layer = 0 );
     void    checkCNF(void);
+    bool    clauseJudgement( vector<string>&, bool * );
     ClockTreeNode *searchClockTreeNode(string);
     ClockTreeNode *searchClockTreeNode(long);
     vector<CriticalPath *> searchCriticalPath(char, string);

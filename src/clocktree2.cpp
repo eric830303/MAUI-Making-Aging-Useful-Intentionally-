@@ -183,18 +183,46 @@ void ClockTree::checkCNF()
     }
     fDCCVTA.close();
     //-- Read CNF ------------------------------------------------------------------
-    vector< string > clause;
+    vector< string > vClause;
     while( getline( fDCCVTA, line ) )
     {
-        clause = stringSplit( line, " " ) ;
+        vClause = stringSplit( line, " " ) ;
+        if( clauseJudgement( vClause, bolarray ) == false )
+            printf( RED"[Violation]" RST"Clause %s violated !\n", line.c_str() ) ;
         
-        
-        
-        
-        clause.clear();
+        vClause.clear();
     }
     free( bolarray );
 }
+
+bool ClockTree::clauseJudgement( vector<string> &vBVar, bool *BolArray )
+{
+    for( const auto &Var: vBVar )
+    {
+        int index = abs( stoi( Var ) );
+        int iVar = stoi( Var );
+        if( BolArray[ index ]  && iVar > 0 )  return true ;
+        if( !BolArray[ index ] && iVar < 0 )  return true ;
+    }
+    return false ;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
