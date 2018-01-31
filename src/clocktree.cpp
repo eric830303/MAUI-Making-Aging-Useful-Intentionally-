@@ -596,6 +596,8 @@ int ClockTree::checkParameter(int argc, char **argv, string *message)
             this->_checkfile  = 1;
         else if(strcmp(argv[loop], "-print=Clause") == 0)
             this->_printClause  = 1;
+        else if(strcmp(argv[loop], "-checkCNF") == 0)
+            this->_checkCNF  = 1;
         else if(strcmp(argv[loop], "-print=Node") == 0)
             this->_printClkNode  = 1;
         else if(strcmp(argv[loop], "-aging=Senior") == 0)
@@ -4540,117 +4542,6 @@ bool ClockTree::checkDCCVTAConstraint_givPath( CriticalPath * path )
     
     return correct ;
 }
-
-
-void ClockTree::printClockNode()
-{
-    //---- Iteration ----------------------------------------------------------------
-    int nodeID = 0 ;
-    ClockTreeNode *node = NULL ;
-    while( true )
-    {
-        printf( "---------------------- " CYAN"Print Topology " RESET"----------------------------\n" );
-        printf(" Clk_Name( nodeID, parentID, " GREEN"O" RESET"/" RED"X" RESET" )\n");
-        printf( GREEN" O" RESET": those clk nodes that are Not masked\n");
-        printf( RED  " X" RESET": those clk nodes that are     masked\n");
-        printf(" number <= 0 : leave the loop\n");
-        printf(" number > 0 : The ID of clock node\n");
-        printf(" Please type the clknode ID:");
-        
-        cin >> nodeID ;
-        
-        if( nodeID < 0 ) break ;
-        else
-        {
-            node =  searchClockTreeNode( nodeID ) ;
-            if( node == NULL )
-                cerr << RED"[ERROR]" RESET<< "The node ID " << nodeID << " is not identified\n" ;
-            else{
-                printf("------------------------- " CYAN"Topology " RESET"-------------------------------\n");
-                printf("Following is the topology whose root is %d\n\n\n", nodeID );
-                printClockNode( node, 0 ) ;
-                
-            }
-        }
-    }
-}
-void ClockTree::printClockNode( ClockTreeNode*node, int layer )
-{
-    if( node == NULL ) return ;
-    else
-    {
-        int targetStrLen = 12;           // Target output length
-        const char *padding="------------------------------";
-        
-        long int padLen = targetStrLen - strlen(node->getGateData()->getGateName().c_str()); // Calc Padding length
-        if(padLen < 0) padLen = 0;    // Avoid negative length
-        
-        if( node->ifMasked())
-            printf( "--%*.*s%s( %4ld, %4ld, " RED"X" RESET" )", (int)padLen, (int)padLen, padding,node->getGateData()->getGateName().c_str(), node->getNodeNumber(), node->getParent()->getNodeNumber());
-        else
-            printf( "--%*.*s%s( %4ld, %4ld, " GRN"O" RESET" )", (int)padLen, (int)padLen, padding, node->getGateData()->getGateName().c_str(), node->getNodeNumber(), node->getParent()->getNodeNumber());
-        
-        //--- Node is FF -----------------------------------------------------------
-        if( _ffsink.find(node->getGateData()->getGateName()) !=  _ffsink.end() )
-        {
-            printf( YELLOW );
-            int ctr = 0 ;
-            for( auto path: _pathlist )
-            {
-                if( path->getPathType() == FFtoFF || path->getPathType() == FFtoPO )
-                if( path->getStartPonitClkPath().back() == node )
-                {
-                    printf( YELLOW"%4ld(St.) " RESET, path->getPathNum() );
-                    ctr++ ;
-                    if( ctr%5 == 0 ){
-                        cout << endl ;
-                        printNodeLayerSpacel( layer  ) ;
-                        printNodeLayerSpace( 1 ) ;
-                    }
-                }
-                if( path->getPathType() == FFtoFF || path->getPathType() == PItoFF )
-                if( path->getEndPonitClkPath().back() == node )
-                {
-                    printf( YELLOW"%4ld(Ed.) " RESET, path->getPathNum() );
-                    ctr++ ;
-                    if( ctr%5 == 0 ){
-                        cout << endl ;
-                        printNodeLayerSpacel( layer  ) ;
-                        printNodeLayerSpace( 1 ) ;
-                    }
-                }
-            }
-            printf( RESET"\n" );
-        }
-        //--- Iteration of node's children -------------------------------------------
-        for( int j = 0 ; j < node->getChildren().size(); j++ )
-        {
-            if( j != 0 ) printNodeLayerSpacel( layer + 1 ) ;
-            printClockNode( node->getChildren().at(j), layer+1 ) ;
-        }
-       
-        if( node->getChildren().size() != 0 )
-        {
-            printNodeLayerSpacel( layer  ) ; //printNodeLayerSpace( 1 ) ;
-            printf( RESET"\n" );
-            printNodeLayerSpacel( layer  ) ; //printNodeLayerSpace( 1 ) ;
-            printf( RESET"\n" );
-        }
-            
-        
-    }
-    
-}
-
-void ClockTree::printNodeLayerSpacel( int layer )
-{
-    for( int i = 0 ; i < layer ; i++ )  printf( "                              |" );
-}
-void ClockTree::printNodeLayerSpace( int layer )
-{
-    for( int i = 0 ; i < layer ; i++ )  printf( "                               " );
-}
-
 
 
 

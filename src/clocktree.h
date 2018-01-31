@@ -12,6 +12,7 @@
 #define CLOCKTREE_H
 
 #include "criticalpath.h"
+#include "clocktree2.hpp"
 #include <assert.h>
 #include "utility.h"
 #include <map>
@@ -303,6 +304,7 @@ public:
     void    printNodeLayerSpace(int);
     void    printClockNode(void);
     void    printClockNode(ClockTreeNode*, int layer = 0 );
+    void    checkCNF(void);
     ClockTreeNode *searchClockTreeNode(string);
     ClockTreeNode *searchClockTreeNode(long);
     vector<CriticalPath *> searchCriticalPath(char, string);
