@@ -261,7 +261,7 @@ void ClockTree::genClauseByDccVTA( ClockTreeNode *node, string *clause, double d
     
 	long nodenum = node->getNodeNumber();
     
-    if( !node->ifPlacedDcc() || node->ifMasked() )
+    if( node->ifMasked() )
     {
         *clause += to_string(nodenum) + " " + to_string(nodenum + 1) + " ";
         //-- Put Header ------
@@ -280,9 +280,9 @@ void ClockTree::genClauseByDccVTA( ClockTreeNode *node, string *clause, double d
         if( dcctype == 0.5 || dcctype == -1 || dcctype == 0 )
             *clause += to_string(nodenum) + " " + to_string(nodenum + 1) + " ";
         else if( dcctype == 0.2 )
-            *clause += to_string(nodenum) + " " + to_string((nodenum + 1) * -1) + " ";
+            *clause += to_string(nodenum*(-1)) + " " + to_string((nodenum + 1)) + " ";
         else if( dcctype == 0.4 )
-            *clause += to_string(nodenum * -1) + " " + to_string(nodenum + 1) + " ";
+            *clause += to_string(nodenum) + " " + to_string((nodenum+1)*(-1)) + " ";
         else if( dcctype == 0.8 )
             *clause += to_string(nodenum * -1) + " " + to_string((nodenum + 1) * -1) + " ";
         else//Don't care
@@ -1939,9 +1939,14 @@ void ClockTree::timingConstraint_doDCC_ndoVTA( CriticalPath *path, bool update )
                 // Insert DCC on common part
                 if((candilocleft != -1) && (candilocleft <= sameparentloc))
                 {
+                    /*
                     this->timingConstraint_givDCC_givVTA( path, 0.2, -1, dcccandi.at(i).front(), NULL, -1, -1, NULL, NULL ) ;
                     this->timingConstraint_givDCC_givVTA( path, 0.4, -1, dcccandi.at(i).front(), NULL, -1, -1, NULL, NULL ) ;
                     this->timingConstraint_givDCC_givVTA( path, 0.8, -1, dcccandi.at(i).front(), NULL, -1, -1, NULL, NULL ) ;
+                     */
+                    this->timingConstraint_givDCC_givVTA( path, 0.2, 0.2, dcccandi.at(i).front(), dcccandi.at(i).front(), -1, -1, NULL, NULL ) ;
+                    this->timingConstraint_givDCC_givVTA( path, 0.4, 0.4, dcccandi.at(i).front(), dcccandi.at(i).front(), -1, -1, NULL, NULL ) ;
+                    this->timingConstraint_givDCC_givVTA( path, 0.8, 0.8, dcccandi.at(i).front(), dcccandi.at(i).front(), -1, -1, NULL, NULL ) ;
                 }
                 // Insert DCC on the right branch part
                 else if( candilocleft < candilocright )
@@ -2012,9 +2017,14 @@ void ClockTree::timingConstraint_doDCC_doVTA( CriticalPath *path, bool update )
                 // Insert DCC on common part
                 if((candilocleft != -1) && (candilocleft <= sameparentloc))
                 {
+                    /*
                     this->timingConstraint_givDCC_doVTA( path, 0.2, -1, dcccandi.at(i).front(), NULL ) ;
                     this->timingConstraint_givDCC_doVTA( path, 0.4, -1, dcccandi.at(i).front(), NULL ) ;
                     this->timingConstraint_givDCC_doVTA( path, 0.8, -1, dcccandi.at(i).front(), NULL ) ;
+                     */
+                    this->timingConstraint_givDCC_doVTA( path, 0.2, 0.2, dcccandi.at(i).front(), dcccandi.at(i).front() ) ;
+                    this->timingConstraint_givDCC_doVTA( path, 0.4, 0.4, dcccandi.at(i).front(), dcccandi.at(i).front() ) ;
+                    this->timingConstraint_givDCC_doVTA( path, 0.8, 0.8, dcccandi.at(i).front(), dcccandi.at(i).front() ) ;
                 }
                 // Insert DCC on the right branch part
                 else if( candilocleft < candilocright )
@@ -2094,8 +2104,13 @@ void ClockTree::timingConstraint_ndoDCC_doVTA( CriticalPath *path, bool update )
     {
         long sameparentloc = path->nodeLocationInClockPath('s', path->findLastSameParentNode() );
         
-        //Part 1: One header at left clk path.
-        for( long i = 0 ; i < stClkPath.size()-1; i++ )
+        //Part 1: One header at COMMON clk path.
+        for( long i = 0 ; i <= sameparentloc; i++ )
+            for( int LibIndex = 0 ; LibIndex < this->getLibList().size() ; LibIndex++ )
+                this->timingConstraint_givDCC_givVTA( path, -1, -1, NULL, NULL, LibIndex, LibIndex, stClkPath.at(i), NULL );
+        
+        //Part 2: One header left clk path.
+        for( long i = sameparentloc+1 ; i < stClkPath.size()-1; i++ )
             for( int LibIndex = 0 ; LibIndex < this->getLibList().size() ; LibIndex++ )
                 this->timingConstraint_givDCC_givVTA( path, -1, -1, NULL, NULL, LibIndex, -1, stClkPath.at(i), NULL );
         
@@ -2138,13 +2153,19 @@ void ClockTree::timingConstraint_givDCC_doVTA(  CriticalPath *path,
     {
         long sameparentloc = path->nodeLocationInClockPath('s', path->findLastSameParentNode() );
         
-        //Part 1: One header at left clk path.
-        for( long i = 0 ; i < stClkPath.size()-1; i++ )
+        //Part 1: One header at common clk path.
+        for( long i = 0 ; i <= sameparentloc; i++ )
+        {
+            for( int LibIndex = 0 ; LibIndex < this->getLibList().size() ; LibIndex++ )
+                this->timingConstraint_givDCC_givVTA( path, stDccType, edDccType, stDccLoc, edDccLoc, LibIndex, LibIndex, stClkPath.at(i), stClkPath.at(i) );
+        }
+        //Part 1: One header at left lower clk path.
+        for( long i = sameparentloc+1 ; i < stClkPath.size()-1; i++ )
         {
             for( int LibIndex = 0 ; LibIndex < this->getLibList().size() ; LibIndex++ )
                 this->timingConstraint_givDCC_givVTA( path, stDccType, edDccType, stDccLoc, edDccLoc, LibIndex, -1, stClkPath.at(i), NULL );
         }
-        //Part 2: One header at right clk path.
+        //Part 2: One header at right lower clk path.
         for( long i = sameparentloc + 1 ; i < edClkPath.size()-1; i++ )
         {
             for( int LibIndex = 0 ; LibIndex < this->getLibList().size() ; LibIndex++ )
@@ -2341,9 +2362,9 @@ void ClockTree::writeClause_givDCC( string &clause, ClockTreeNode *node, double 
     if( DCCType == 0.5 || DCCType == -1 || DCCType == 0 )
             clause += to_string(nodenum) + " " + to_string(nodenum + 1) + " ";
     else if( DCCType == 0.2 )
-            clause += to_string(nodenum) + " " + to_string((nodenum + 1 ) * -1) + " ";
+            clause += to_string(nodenum*-1) + " " + to_string((nodenum + 1 )) + " ";
     else if( DCCType == 0.4 )
-            clause += to_string(nodenum * -1) + " " + to_string(nodenum + 1 ) + " ";
+            clause += to_string(nodenum) + " " + to_string( (nodenum+1)*(-1) ) + " ";
     else if( DCCType == 0.8 )
             clause += to_string(nodenum * -1) + " " + to_string((nodenum + 1 ) * -1 ) + " ";
     else

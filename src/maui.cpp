@@ -109,6 +109,11 @@ int main(int argc, char **argv)
     
     //---- Mask -------------------------------------------------------
     circuit.dccPlacementByMasked();
+    //-------- Check CNF/DccVTA.txt -----------------------------------
+    if( circuit.ifCheckCNF() ){
+        circuit.checkCNF() ;
+        return 0 ;
+    }
     //-------- Check Timing with given DccVTA.txt ---------------------
     if( circuit.ifCheckFile() ){
         circuit.CheckTiming_givFile() ;
@@ -124,7 +129,7 @@ int main(int argc, char **argv)
         circuit.printPath();
         return 0;
     }
-    //-------- print Node-----------------------------------------
+    //-------- print Node----------------------------------------------
     if( circuit.ifprintNode()){
         circuit.printClockNode();
         return 0;

@@ -134,15 +134,24 @@ void ClockTree::checkCNF()
     string          fn_DCCVTA;
     string          fn_CNF   ;
     
-    printf("Please type the CNF filename:");
-    cin >> fn_CNF ;
-    fn_CNF = "setting/" + fn_CNF ;
+    printf("-------------------- " CYAN"Check CNF and DCC/VTA " RST"-------------------------------\n");
+    fn_CNF = "setting/cnfinput" ;
     fDCCVTA.open( "setting/DccVTA.txt", ios::in ) ;
     fCNF.open( fn_CNF.c_str(), ios::in )          ;
-    if( !fDCCVTA || !fCNF ) return                ;
+    if( !fDCCVTA )
+    {
+        cerr << RED"[Error]" << "Can not read 'DccVTA.txt'\n";
+        return                ;
+    }
+    if( !fCNF )
+    {
+        cerr << RED"[Error]" << "Can not read 'cnfinput_XXXXX.txt'\n";
+        return                ;
+    }
+        
     
-    bool *bolarray = new bool [ _totalnodenum ]   ;
-    for( int i = 0 ; i < _totalnodenum; i++ ) bolarray[i] = false;
+    bool *bolarray = new bool [ _totalnodenum + 5000 ]   ;
+    for( int i = 0 ; i <= _totalnodenum; i++ ) bolarray[i] = false;
     //-- Read DCC/VTA Deployment ------------------------------------------------------
     getline( fDCCVTA, line )        ;
     string          tc              ;
@@ -184,15 +193,21 @@ void ClockTree::checkCNF()
     fDCCVTA.close();
     //-- Read CNF ------------------------------------------------------------------
     vector< string > vClause;
-    while( getline( fDCCVTA, line ) )
+    bool correct = true ;
+    while( getline( fCNF, line ) )
     {
         vClause = stringSplit( line, " " ) ;
         if( clauseJudgement( vClause, bolarray ) == false )
+        {
             printf( RED"[Violation]" RST"Clause %s violated !\n", line.c_str() ) ;
+            correct = false ;
+        }
         
         vClause.clear();
     }
     free( bolarray );
+    if( correct )
+        printf( GRN"[PASS]" RST"All clauses pass !\n" ) ;
 }
 
 bool ClockTree::clauseJudgement( vector<string> &vBVar, bool *BolArray )
@@ -200,7 +215,8 @@ bool ClockTree::clauseJudgement( vector<string> &vBVar, bool *BolArray )
     for( const auto &Var: vBVar )
     {
         int index = abs( stoi( Var ) );
-        int iVar = stoi( Var );
+        int iVar  = stoi( Var );
+        if( iVar == 0 || index == 0 )         continue    ;
         if( BolArray[ index ]  && iVar > 0 )  return true ;
         if( !BolArray[ index ] && iVar < 0 )  return true ;
     }
