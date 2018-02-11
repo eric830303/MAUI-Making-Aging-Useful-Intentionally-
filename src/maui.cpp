@@ -87,7 +87,7 @@ int main(int argc, char **argv)
 	
 	// Parameters storing execution time of each part of framework
 	chrono::steady_clock::time_point starttime, endtime, midtime;
-	chrono::duration<double> totaltime, preprocesstime, dccconstrainttime, timingconstrainttime, sattime, checktime, bufinstime;
+	chrono::duration<double> totaltime, preprocesstime, DccVTAconstrainttime, timingconstrainttime, sattime, checktime, bufinstime;
 	
 	cout << "\033[32m[Info]: Open the timing report file.\033[0m\n";
 	starttime = chrono::steady_clock::now();
@@ -171,7 +171,7 @@ int main(int argc, char **argv)
     //2.
     circuit.dccConstraint();
     endtime = chrono::steady_clock::now();
-    dccconstrainttime = chrono::duration_cast<chrono::duration<double>>(endtime - midtime);
+    DccVTAconstrainttime = chrono::duration_cast<chrono::duration<double>>(endtime - midtime);
 	//-------- Generate all kinds of DCC deployment ----------------------------------------
 	circuit.genDccPlacementCandidate();
 	
@@ -250,7 +250,7 @@ int main(int argc, char **argv)
 	cout << " ***** Execution time (unit: s) *****\n";
 	cout << "   Total                 : " << totaltime.count() << "\n";
 	cout << "   Parser & Preprocessing: " << preprocesstime.count() << "\n";
-	cout << "   DCC constraint        : " << dccconstrainttime.count() << "\n";
+	cout << "   DCC & VTA constraint  : " << DccVTAconstrainttime.count() << "\n";
 	cout << "   Timing constraint     : " << timingconstrainttime.count() << "\n";
 	cout << "   MiniSAT & Search      : " << sattime.count() << "\n";
 	cout << "   Finally check         : " << checktime.count() << "\n";

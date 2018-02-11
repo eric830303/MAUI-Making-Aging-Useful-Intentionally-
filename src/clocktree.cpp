@@ -1300,6 +1300,9 @@ void ClockTree::adjustOriginTc(void)
 	// Adjust Tc
 	this->_tc = this->_origintc + tcdiff;
     this->_tcAfterAdjust = this->_tc ;
+    printf( GRN "[Info] Tc adjustment...\n" );
+    printf( CYAN"\t[Data] " RST"Nominal  Tc = %f\n", this->_origintc );
+    printf( CYAN"\t[Data] " RST"Adjusted Tc = %f\n", this->_tc       );
 	// Initial the boundary of Tc using in Binary search
 	this->initTcBound();
 }
