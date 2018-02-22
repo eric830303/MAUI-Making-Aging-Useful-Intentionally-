@@ -2929,7 +2929,7 @@ void ClockTree::dumpDcctoFile()
     for( auto node: this->_buflist )
     {
         if( node.second->ifPlacedDcc()  )
-            fprintf( fPtr, "%ld -1 %f\n", node.second->getNodeNumber(), ((float)node.second->getDccType())/100 );
+            fprintf( fPtr, "%ld -1 %f\n", (node.second->getNodeNumber()-1)/2*3+1, ((float)node.second->getDccType())/100 );
     }
     fclose(fPtr);
     
