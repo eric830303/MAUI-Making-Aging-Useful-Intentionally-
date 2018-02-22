@@ -177,17 +177,17 @@ int main(int argc, char **argv)
 	// Update the timing of each critical path with given "Optimal tc"
 	circuit.updateAllPathTiming();
 	// Minimize DCC deployment
-	//circuit.minimizeDccPlacement();
+	circuit.minimizeDccPlacement();
 	// Recheck the "Optimal tc"
-	//circuit.tcRecheck();
+	circuit.tcRecheck();
 	endtime = chrono::steady_clock::now();
 	checktime = chrono::duration_cast<chrono::duration<double>>(endtime - midtime);
 	
 	midtime = chrono::steady_clock::now();
 	// Insert buffers with the given "optimal Tc"
-	//circuit.bufferInsertion();
+	circuit.bufferInsertion();
 	// Minimize buffers placement
-	//circuit.minimizeBufferInsertion();
+	circuit.minimizeBufferInsertion();
 	endtime = chrono::steady_clock::now();
 	bufinstime = chrono::duration_cast<chrono::duration<double>>(endtime - midtime);
 	totaltime = chrono::duration_cast<chrono::duration<double>>(endtime - starttime);
