@@ -61,7 +61,7 @@ private:
 	GateData        _gatedata       ;
 	long            _nodenum, _depth;
 	int             _ifused,_LibIndex;
-	bool            _iflook , _ifplacedcc, _ifclkgating, _ifinsertbuf, _ifplaceHeader, _ifMasked ;
+	bool            _iflook , _ifplacedcc, _ifclkgating, _ifinsertbuf, _ifplaceHeader, _ifMasked, _ifVTACtr ;
     double          _dcctype,_gatingprobability, _insbufdelay ;
     double          _buftime ;//only use in -print=path mode
     double          _DC      ;
@@ -74,10 +74,11 @@ public:
 	              bool look = 0, bool placedcc = 0, bool gating = 0, double probability = 0)
 	             : _parent(parent), _nodenum(num), _depth(depth), _ifused(used), _dcctype(type), _iflook(look),
 				   _ifplacedcc(placedcc), _ifclkgating(gating), _gatingprobability(probability),
-				   _ifinsertbuf(0), _insbufdelay(0), _ifplaceHeader(0), _LibIndex(-1), _buftime(0), _DC(0.5), _VthType(-1), _ifMasked(true) { }
+				   _ifinsertbuf(0), _insbufdelay(0), _ifplaceHeader(0), _LibIndex(-1), _buftime(0), _DC(0.5), _VthType(-1), _ifMasked(true), _ifVTACtr(false) { }
 	~ClockTreeNode() {}
 	
 	//-- Setter methods ----------------------------------------------------------------------
+    void    setVTACtr(bool b)                          { this->_ifVTACtr       = b   ; }
 	void    setDccType(int, int) ;
     void    setDC(double DC)                           { this->_DC             = DC    ; }//only used in -print=path mode
     void    setVthType(int Lib)                        { this->_VthType        = Lib   ; }//only used in -print=path mode
@@ -105,6 +106,7 @@ public:
 	double  getDccType(void)                           { return _dcctype    ; }
     int     getVTAType(void)                           { return _LibIndex   ; }
     bool    getIfPlaceHeader(void)                     { return _ifplaceHeader ; }
+    bool    getVTACtr(void)                            { return _ifVTACtr   ; }
 	double  getInsertBufferDelay(void)                 { return _insbufdelay; }
 	double  getGatingProbability(void)                 { return _gatingprobability; }
     double  getBufTime()                               { return _buftime    ; }//only used in -print=path mode

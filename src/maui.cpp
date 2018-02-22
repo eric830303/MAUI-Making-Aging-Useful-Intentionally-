@@ -109,6 +109,11 @@ int main(int argc, char **argv)
     
     //---- Mask -------------------------------------------------------
     circuit.dccPlacementByMasked();
+    //-------- cal VTA ------------------------------------------------
+    if( circuit.ifCalVTA() ){
+        circuit.calVTABufferCountByFile() ;
+        return 0 ;
+    }
     //-------- Check CNF/DccVTA.txt -----------------------------------
     if( circuit.ifCheckCNF() ){
         circuit.checkCNF() ;
@@ -256,7 +261,7 @@ int main(int argc, char **argv)
 	cout << "   Finally check         : " << checktime.count() << "\n";
 	cout << "   Buffer insertion      : " << bufinstime.count() << "\n";
 	
-    
+    circuit.calVTABufferCount() ;
     circuit.dumpDccVTALeaderToFile() ;//circuit.dumpToFile();
 	circuit.~ClockTree();
 	

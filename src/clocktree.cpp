@@ -593,7 +593,9 @@ int ClockTree::checkParameter(int argc, char **argv, string *message)
         else if(strcmp(argv[loop], "-checkCNF") == 0)
             this->_checkCNF  = 1;
         else if(strcmp(argv[loop], "-checkFile") == 0)
-            this->_checkfile  = 1;
+            this->_checkfile = 1;
+        else if(strcmp(argv[loop], "-calVTA") == 0)
+            this->_calVTA    = 1;
         else if(strcmp(argv[loop], "-print=Clause") == 0)
             this->_printClause  = 1;
         else if(strcmp(argv[loop], "-checkCNF") == 0)

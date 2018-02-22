@@ -224,9 +224,100 @@ bool ClockTree::clauseJudgement( vector<string> &vBVar, bool *BolArray )
 }
 
 
+void ClockTree::calVTABufferCountByFile()
+{
+    //-- Declaration --------------------------------------------------------------
+    ifstream        fDCCVTA  ;
+    string          line     ;
+    string          fn_DCCVTA;
+    
+    fDCCVTA.open( "setting/DccVTA.txt", ios::in ) ;
+    if( !fDCCVTA )
+    {
+        cerr << RED"[Error]" << "Can not read 'DccVTA.txt'\n";
+        return                ;
+    }
+    
+    //-- Read DCC/VTA Deployment ------------------------------------------------------
+    getline( fDCCVTA, line )        ;
+    string          tc              ;
+    istringstream   token( line )   ;
+    token     >>  tc   >> tc        ;
+    
+    while( getline( fDCCVTA, line ) )
+    {
+        long    BufID       = 0   ;
+        int     BufVthLib   = -1  ;
+        double  BufDCC      = 0.5 ;
+        istringstream   token( line )     ;
+        token >> BufID >> BufVthLib >> BufDCC ;
+        ClockTreeNode *buffer = searchClockTreeNode( BufID ) ;
+        if( buffer == NULL )
+        {
+            printf( RED"[Error] " RESET"Can't find clock node with id = %ld\n", BufID ) ;
+            return ;
+        }
+        if( BufDCC != 0.5 && BufDCC != -1 && BufDCC != 0 ){
+            buffer->setIfPlaceDcc(true);
+            buffer->setDccType( BufDCC )    ;
+        }
+        if( BufVthLib != -1  ){
+            buffer->setIfPlaceHeader(true);
+            buffer->setVTAType( BufVthLib ) ;
+        }
+    }
+    fDCCVTA.close();
+    
+    calVTABufferCount() ;
+}
 
+void ClockTree::calVTABufferCount()
+{
+    vector<ClockTreeNode *> stClkPath, edClkPath ;
+    long  nominal_ctr = 0, HTV_ctr = 0 ;
+    for( auto const& path: this->_pathlist )
+    {
+        stClkPath = path->getStartPonitClkPath() ;
+        edClkPath = path->getEndPonitClkPath()   ;
+        
+        if( stClkPath.size() > 0 )
+        {
+            bool meetLeader = false ;
+            for( auto const &clknode: stClkPath )
+            {
+                if( clknode->getVTACtr() == false && clknode != _clktreeroot )
+                {
+                    clknode->setVTACtr( true ) ;
+                    
+                    if( clknode->getIfPlaceHeader() ) meetLeader = true ;
+                    if( meetLeader )    HTV_ctr++       ;
+                    else                nominal_ctr++   ;
+                }
+            }
+        }
+        if( edClkPath.size() > 0 )
+        {
+            bool meetLeader = false ;
+            for( auto const &clknode: edClkPath )
+            {
+                if( clknode->getVTACtr() == false  && clknode != _clktreeroot  )
+                {
+                    clknode->setVTACtr( true ) ;
+                    
+                    if( clknode->getIfPlaceHeader() ) meetLeader = true ;
+                    if( meetLeader )    HTV_ctr++       ;
+                    else                nominal_ctr++   ;
+                }
+            }
+        }
+    }
 
-
+    printf( CYAN"[Info]" RST" Total FF        # = %ld \n", _ffsink.size()  );
+    printf( CYAN"[Info]" RST" Total Clk Buf   # = %ld \n", _buflist.size() );
+    printf( CYAN"[Info]" RST" Nominal Clk Buf # = %ld \n",  nominal_ctr-_ffsink.size() );
+    printf( CYAN"[Info]" RST" HTV     Clk Buf # = %ld \n",  HTV_ctr );
+    
+}
 
 
 

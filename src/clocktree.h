@@ -59,7 +59,7 @@ class ClockTree
 {
 private:
 	int     _pathselect, _bufinsert, _gpupbound, _gplowbound, _minisatexecnum;
-	bool    _placedcc, _aging, _mindccplace, _tcrecheck, _clkgating, _dumpdcc, _dumpcg, _dumpbufins, _doVTA, _printpath, _dumpCNF, _checkCNF, _checkfile, _printClause ;
+	bool    _placedcc, _aging, _mindccplace, _tcrecheck, _clkgating, _dumpdcc, _dumpcg, _dumpbufins, _doVTA, _printpath, _dumpCNF, _checkCNF, _checkfile, _printClause, _calVTA ;
     bool    _usingSeniorAging, _printClkNode ;
 	long    _pathusednum, _pitoffnum, _fftoffnum, _fftoponum, _nonplacedccbufnum;
 	long    _totalnodenum, _ffusednum, _bufferusednum, _dccatlastbufnum;
@@ -118,7 +118,7 @@ public:
 			   _clktreeroot(nullptr), _firstchildrennode(nullptr), _mostcriticalpath(nullptr),
 			   _timingreport(""), _timingreportfilename(""), _timingreportloc(""), _timingreportdesign(""),_dumpCNF(false), _checkCNF(false), _checkfile(false),
 			   _cgfilename(""), _outputdir(""), _tcAfterAdjust(0), _printClause(false), _baseVthOffset(0), _exp(0.2),  _usingSeniorAging(false),
-               _printClkNode(false) {}
+               _printClkNode(false), _calVTA(false) {}
 	//-Destructor------------------------------------------------------------------
     ~ClockTree(void);
 	
@@ -183,6 +183,7 @@ public:
     set< pair<ClockTreeNode*,ClockTreeNode*> >& getVTASet(void) { return _setVTALeader ; }
     set< pair<int,int> >& getDCCSet(void) { return _setDCC ; }
 	//-- Bool Attr Access -------------------------------------------------------
+    bool ifCalVTA(void)                             { return _calVTA            ; }
     bool ifprintNode(void)                          { return _printClkNode      ; }
     bool ifCheckFile(void)                          { return _checkfile         ; }
     bool ifCheckCNF(void)                           { return _checkCNF          ; }
@@ -305,6 +306,8 @@ public:
     void    printClockNode(void);
     void    printClockNode(ClockTreeNode*, int layer = 0 );
     void    checkCNF(void);
+    void    calVTABufferCount();
+    void    calVTABufferCountByFile();
     bool    clauseJudgement( vector<string>&, bool * );
     ClockTreeNode *searchClockTreeNode(string);
     ClockTreeNode *searchClockTreeNode(long);
