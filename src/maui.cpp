@@ -192,7 +192,7 @@ int main(int argc, char **argv)
 	bufinstime = chrono::duration_cast<chrono::duration<double>>(endtime - midtime);
 	totaltime = chrono::duration_cast<chrono::duration<double>>(endtime - starttime);
 	
-    
+    circuit.dumpDcctoFile() ;
     
     
     

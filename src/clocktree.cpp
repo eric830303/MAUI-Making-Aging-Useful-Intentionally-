@@ -2915,4 +2915,22 @@ void ClockTree::printNodeLayerSpace( int layer )
 {
     for( int i = 0 ; i < layer ; i++ )  printf( "                          " );
 }
-
+void ClockTree::dumpDcctoFile()
+{
+    FILE *fPtr;
+    string filename = this->_outputdir + "Dcc_master_" + to_string( this->_tc ) + ".txt";
+    fPtr = fopen( filename.c_str(), "w" );
+    if( !fPtr )
+    {
+        cerr << RED"[Error]" RESET "Cannot open the DCC VTA file\n" ;
+        return ;
+    }
+    fprintf( fPtr, "Tc %f\n", this->_tc );
+    for( auto node: this->_buflist )
+    {
+        if( node.second->ifPlacedDcc()  )
+            fprintf( fPtr, "%ld -1 %f\n", node.second->getNodeNumber(), ((float)node.second->getDccType())/100 );
+    }
+    fclose(fPtr);
+    
+}

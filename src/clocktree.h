@@ -285,7 +285,7 @@ public:
 	void printDccList(void);
 	void printClockGatingList(void);
 	void printBufferInsertedList(void);
-    
+    void dumpDcctoFile();
     void    printNodeLayerSpace(int);
     void    printClockNode(void);
     void    printClockNode(ClockTreeNode*, int layer = 0 );
