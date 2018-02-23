@@ -274,7 +274,7 @@ void ClockTree::calVTABufferCountByFile()
 void ClockTree::calVTABufferCount()
 {
     vector<ClockTreeNode *> stClkPath, edClkPath ;
-    long  nominal_ctr = 0, HTV_ctr = 0 ;
+    long  nominal_ctr = 0, HTV_ctr = 0 , HTV_DCC_ctr = 0 ;
     for( auto const& path: this->_pathlist )
     {
         stClkPath = path->getStartPonitClkPath() ;
@@ -290,8 +290,14 @@ void ClockTree::calVTABufferCount()
                     clknode->setVTACtr( true ) ;
                     
                     if( clknode->getIfPlaceHeader() ) meetLeader = true ;
-                    if( meetLeader )    HTV_ctr++       ;
-                    else                nominal_ctr++   ;
+                    if( meetLeader )
+                    {
+                        if( clknode->ifPlacedDcc() ) HTV_DCC_ctr++ ;
+                        HTV_ctr++       ;
+                    }
+                    else
+                        nominal_ctr++   ;
+                    
                 }
             }
         }
@@ -305,8 +311,13 @@ void ClockTree::calVTABufferCount()
                     clknode->setVTACtr( true ) ;
                     
                     if( clknode->getIfPlaceHeader() ) meetLeader = true ;
-                    if( meetLeader )    HTV_ctr++       ;
-                    else                nominal_ctr++   ;
+                    if( meetLeader )
+                    {
+                        if( clknode->ifPlacedDcc() ) HTV_DCC_ctr++ ;
+                        HTV_ctr++       ;
+                    }
+                    else
+                        nominal_ctr++   ;
                 }
             }
         }
@@ -316,6 +327,7 @@ void ClockTree::calVTABufferCount()
     printf( CYAN"[Info]" RST" Total Clk Buf   # = %ld \n", _buflist.size() );
     printf( CYAN"[Info]" RST" Nominal Clk Buf # = %ld \n",  nominal_ctr-_ffsink.size() );
     printf( CYAN"[Info]" RST" HTV     Clk Buf # = %ld \n",  HTV_ctr );
+    printf( CYAN"[Info]" RST" HTV     DCC     # = %ld \n",  HTV_DCC_ctr );
     
 }
 
