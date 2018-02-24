@@ -522,6 +522,7 @@ void ClockTree::readParameter()
                     printf( CYAN"\t[Setting] " RESET"Vth offset (VTA)       = " RED"%.2f (V)\n"  , ptrTech->_VTH_OFFSET );
                     printf( CYAN"\t[Setting] " RESET"Vth offset (Baseline)  = %.2f (V)\n" RESET  , this->getBaseVthOffset() );
                     printf( CYAN"\t[Setting] " RESET"Exponential term       = %.2f \n"     , this->getExp() );
+                    /*
                     printf( CYAN"\t---------------------------------------------------------------------------------\n" );
                     printf( CYAN"\t[Note] " RESET"Following is the timing information of clock buffers\n" );
                     printf( CYAN"\t[Note] " RESET"Delay gain includes aging rate\n" );
@@ -546,7 +547,7 @@ void ClockTree::readParameter()
                     
                     printf( CYAN"\t80 %%, S-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( 0.8,  0 )               - 1 )*100 );
                     printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.8,  0 ) - 2*(tof) - 1 )*100 );
-                    
+                    */
                 }
             }
         }
