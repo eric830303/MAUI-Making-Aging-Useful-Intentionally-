@@ -43,7 +43,8 @@ int main(int argc, char **argv)
             cout << "      -print=path            Print the pipeline\n";
             cout << "      -checkCNF              Check the DCC deployment with given CNF output file\n";
             cout << "      -checkFile             Check the DCC deployment with given DccVTA.txt \n";
-            cout << "      -checkPath             Check the DCC deployment with given DccVTA.txt \n";
+            cout << "      -checkCNF              Check the DCC deployment with given DccVTA.txt \n";
+            cout << "      -calVTA                Check the DCC deployment with given DccVTA.txt \n";
             cout << "      -aging=Senior           \n";
 			cout << "      -mindcc                Minimize the number of DCCs placed in clock tree. (default disable)\n";
 			cout << "                               Enable when \'-nondcc\' option enable.\n";
