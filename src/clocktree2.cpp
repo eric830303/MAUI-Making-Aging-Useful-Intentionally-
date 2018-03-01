@@ -19,15 +19,17 @@ void ClockTree::printClockNode()
     //---- Iteration ----------------------------------------------------------------
     int nodeID = 0 ;
     ClockTreeNode *node = NULL ;
+    readDCCVTAFile() ;
     while( true )
     {
         printf( "---------------------- " CYAN"Print Topology " RESET"----------------------------\n" );
-        printf(" Clk_Name( nodeID, parentID, " GREEN"O" RESET"/" RED"X" RESET" )\n");
-        printf( GREEN" O" RESET": those clk nodes that are Not masked\n");
-        printf( RED  " X" RESET": those clk nodes that are     masked\n");
-        printf(" number <= 0 : leave the loop\n");
-        printf(" number > 0 : The ID of clock node\n");
-        printf(" Please type the clknode ID:");
+        printf( " Reading DCC/HTV deployment from " CYAN "DccVTA.txt\n" RST );
+        printf( " Clk_Name( nodeID, parentID, " BLUE"O" RESET"/" MAGENTA"X" RESET" )\n" );
+        printf( BLUE     " O" RESET": those clk nodes that are Not masked\n" );
+        printf( MAGENTA  " X" RESET": those clk nodes that are     masked\n" );
+        printf( " number <= 0 : leave the loop\n" );
+        printf( " number > 0 : The ID of clock node\n" );
+        printf( " Please type the clknode ID:" );
         
         cin >> nodeID ;
         
@@ -51,16 +53,30 @@ void ClockTree::printClockNode( ClockTreeNode*node, int layer )
     if( node == NULL ) return ;
     else
     {
-        int targetStrLen = 12;           // Target output length
+        int targetStrLen = 16;
         const char *padding="------------------------------";
         
         long int padLen = targetStrLen - strlen(node->getGateData()->getGateName().c_str()); // Calc Padding length
-        if(padLen < 0) padLen = 0;    // Avoid negative length
         
+        
+        //-- Print Clock Node -----------------------------------------------------
+        printf( RST"--" );
+        
+        if( node->ifPlacedDcc() ){
+            if( node->getDccType() == 0.2 ) printf( RED"20 " RST );
+            if( node->getDccType() == 0.4 ) printf( RED"40 " RST );
+            if( node->getDccType() == 0.8 ) printf( RED"80 " RST );
+            padLen--;
+        }
+        if( node->getIfPlaceHeader()){
+            printf( GRN"HTV" RST );
+            padLen += -3 ;
+        }
+        if( padLen < 0 ) padLen = 0;    // Avoid negative length
         if( node->ifMasked())
-            printf( "--%*.*s%s( %4ld, %4ld, " RED"X" RESET" )", (int)padLen, (int)padLen, padding,node->getGateData()->getGateName().c_str(), node->getNodeNumber(), node->getParent()->getNodeNumber());
+            printf( "%*.*s%s( %4ld, " MAGENTA"X" RESET" )", (int)padLen, (int)padLen, padding,node->getGateData()->getGateName().c_str(), node->getNodeNumber() );
         else
-            printf( "--%*.*s%s( %4ld, %4ld, " GRN"O" RESET" )", (int)padLen, (int)padLen, padding, node->getGateData()->getGateName().c_str(), node->getNodeNumber(), node->getParent()->getNodeNumber());
+            printf( "%*.*s%s( %4ld, " BLUE   "O" RESET" )", (int)padLen, (int)padLen, padding, node->getGateData()->getGateName().c_str(), node->getNodeNumber() );
         
         //--- Node is FF -----------------------------------------------------------
         if( _ffsink.find(node->getGateData()->getGateName()) !=  _ffsink.end() )
@@ -113,11 +129,11 @@ void ClockTree::printClockNode( ClockTreeNode*node, int layer )
 }
 void ClockTree::printNodeLayerSpacel( int layer )
 {
-    for( int i = 0 ; i < layer ; i++ )  printf( "                              |" );
+    for( int i = 0 ; i < layer ; i++ )  printf( "                               |" );
 }
 void ClockTree::printNodeLayerSpace( int layer )
 {
-    for( int i = 0 ; i < layer ; i++ )  printf( "                               " );
+    for( int i = 0 ; i < layer ; i++ )  printf( "                                " );
 }
 /*----------------------------------------------------------------------------------
  Func:

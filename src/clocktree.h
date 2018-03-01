@@ -296,6 +296,7 @@ public:
     bool    checkDCCVTAConstraint(void);
     bool    checkDCCVTAConstraint_givPath(CriticalPath*);
     void    readDCCVTAFile(void);
+    void    readDCCVTAFile2(void);
     void    CheckTiming_givCNF();
     void    CheckTiming_givFile();
     void    removeCNFFile(void);

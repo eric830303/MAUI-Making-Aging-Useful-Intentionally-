@@ -3693,8 +3693,11 @@ void ClockTree::printPath( int pathid )
     printf("==> CLK_Node_Name( NodeID, Duty Cycle, VthType, " GREEN"Buffer Delay" RESET" ) \n");
     printf("==> Duty Cycle: 0.2, 0.4, 0.5, 0.8 \n" );
     printf("==> Vth type  : -1(Nominal), 0(VTA) \n" );
-    printPath_givFile( path, false /*DCC/VTA*/, false /*Aging*/, false /*Tc from file*/ ) ;
-    printPath_givFile( path, false /*DCC/VTA*/, true  /*Aging*/, true  /*Tc from file*/ ) ;
+    //printPath_givFile( path, false /*DCC/VTA*/, false /*Aging*/, false /*Tc from file*/ ) ;
+    //printPath_givFile( path, false /*DCC/VTA*/, true  /*Aging*/, true  /*Tc from file*/ ) ;
+    readDCCVTAFile2() ;
+    printPath_givFile( path, true  /*DCC/VTA*/, true  /*Aging*/, true  /*Tc from file*/ ) ;
+    readDCCVTAFile() ;
     printPath_givFile( path, true  /*DCC/VTA*/, true  /*Aging*/, true  /*Tc from file*/ ) ;
 }
 
@@ -3706,13 +3709,13 @@ void ClockTree::printPath_givFile(CriticalPath *path, bool doDCCVTA, bool aging,
         cerr << RED"[ERROR] Path id is out of range\n ";
         return ;
     }
-    readDCCVTAFile() ;
     if( !TcFromFile ) this->_tc = this->_tcAfterAdjust ;
     //-- Cal & Print ClockTree -------------------------------------------------
     printf("--------------------------------------------------------\n");
     printf(CYAN"[Topology]\n" RESET);
-    printAssociatedCriticalPathAtStartPoint( path, doDCCVTA, aging ) ;
-    printAssociatedCriticalPathAtEndPoint( path, doDCCVTA, aging ) ;
+    //printAssociatedCriticalPathAtStartPoint( path, doDCCVTA, aging ) ;
+    //printAssociatedCriticalPathAtEndPoint( path, doDCCVTA, aging ) ;
+    /*
     if( aging ) printf( "Aging   : " YELLOW"10 years" RESET" \n"  );
     else        printf( "Aging   : " YELLOW"Fresh   " RESET" \n"  );
     if( doDCCVTA )
@@ -3720,6 +3723,7 @@ void ClockTree::printPath_givFile(CriticalPath *path, bool doDCCVTA, bool aging,
     else
         printf( "DCC/VTA : " YELLOW"DCC/VTA are NOT considered" RESET" \n"  );
     printf( "Tc      : " YELLOW"Given by outer file" RESET" \n"  );
+     */
     this->printFFtoFF_givFile( path, doDCCVTA, aging );
     this->printPItoFF_givFile( path, doDCCVTA, aging );
     this->printFFtoPO_givFile( path, doDCCVTA, aging );
@@ -4460,6 +4464,42 @@ void ClockTree::readDCCVTAFile()
     ifstream        file  ;
     string          line  ;
     file.open( "setting/DccVTA.txt", ios::in ) ;
+    if( !file ) return              ;
+    getline( file, line )           ;
+    string          tc              ;
+    istringstream   token( line )   ;
+    token     >>  tc   >> this->_tc ;
+    
+    while( getline( file, line ) )
+    {
+        long    BufID       = 0   ;
+        int     BufVthLib   = -1  ;
+        double  BufDCC      = 0.5 ;
+        istringstream   token( line )     ;
+        token >> BufID >> BufVthLib >> BufDCC ;
+        ClockTreeNode *buffer = searchClockTreeNode( BufID ) ;
+        if( buffer == NULL )
+        {
+            printf( RED"[Error] " RESET"Can't find clock node with id = %ld\n", BufID ) ;
+            return ;
+        }
+        if( BufDCC != 0.5 && BufDCC != -1 && BufDCC != 0 ){
+            buffer->setIfPlaceDcc(true);
+            buffer->setDccType( BufDCC )    ;
+        }
+        if( BufVthLib != -1  ){
+            buffer->setIfPlaceHeader(true);
+            buffer->setVTAType( BufVthLib ) ;
+        }
+    }
+}
+void ClockTree::readDCCVTAFile2()
+{
+    InitClkTree()                  ;//Init ifPlacedDCC();
+    //-- Read Tc/DCC/Leader Info ----------------------------------------------
+    ifstream        file  ;
+    string          line  ;
+    file.open( "setting/DccVTA2.txt", ios::in ) ;
     if( !file ) return              ;
     getline( file, line )           ;
     string          tc              ;
