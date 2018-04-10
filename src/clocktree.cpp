@@ -2439,15 +2439,17 @@ double ClockTree::calClkLaten_givDcc_givVTA(    vector<ClockTreeNode *> clkpath,
             //--- DCC Loc is behind VTA Header ------------------------------------
             else if( meetHeader )
                 LibVthTypeDCC = LibVthType ;
+            agingrate = (this->_aging)? getAgingRate_givDC_givVth( DC, LibVthType ) : (1)  ;
         }
         //--- First meet VTA Header -------------------------------------------------
         if( ( clkpath.at(i) == Header ) && (!meetHeader) )
         {
             LibVthType = LibIndex ;//Need modifys
             meetHeader = true ;
+            agingrate = (this->_aging)? getAgingRate_givDC_givVth( DC, LibVthType ) : (1)  ;
         }
         
-        agingrate = (this->_aging)? getAgingRate_givDC_givVth( DC, LibVthType ) : (1)  ;
+        
         
         laten += buftime*agingrate ;
         //printf("Buf = %f, ", buftime*agingrate );
