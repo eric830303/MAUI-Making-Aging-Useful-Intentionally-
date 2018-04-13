@@ -89,7 +89,8 @@ private:
     double  _baseVthOffset  ;
     vector< VTH_TECH* > _VthTechList ;
     double  _exp            ;
-    
+    double  _nominal_agr[4] ;
+    double  _HTV_agr[4]     ;
 	bool ifSkipLine(string)                 ;
     bool AnotherSolution(void)              ;
 	void pathTypeChecking(void)             ;
@@ -254,7 +255,7 @@ public:
     void    writeClause_givDCC( string &clause, ClockTreeNode* node, double DCCType  );
     void    writeClause_givVTA( string &clause, ClockTreeNode* node, int    LibIndex );
     //---VTA-related -------------------------------------------------------------
-    double  getAgingRate_givDC_givVth( double DC, int LibIndex ) ;
+    double  getAgingRate_givDC_givVth( double DC, int LibIndex, bool initial = false ) ;
     //---Timing-related ----------------------------------------------------------
     void    adjustOriginTc(void)        ;
     void    updateAllPathTiming(void)   ;
