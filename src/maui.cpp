@@ -39,10 +39,11 @@ int main(int argc, char **argv)
 			cout << "      -nondcc                Don't consider placing any DCC in clock tree. (default disable)\n";
 			cout << "      -nonaging              Don't consider any aging in clock tree. (default disable)\n";
             cout << "      -nonVTA                Don't do Vth assignment\n";
-            cout << "      -dump=UNSAT_CNF        Decode Unsat CNF file and dump its DCC/VTA Deployment\n";
+            cout << "      -dump=SAT_CNF          Decode other CNF files and dump its DCC/VTA Deployment\n";
             cout << "      -print=path            Print the pipeline\n";
             cout << "      -checkCNF              Check the DCC deployment with given CNF output file\n";
             cout << "      -checkFile             Check the DCC deployment with given DccVTA.txt \n";
+            cout << "      -print=Clause          Dump clauses while execution\n";
             cout << "      -checkCNF              Check the DCC deployment with given DccVTA.txt \n";
             cout << "      -calVTA                Check the DCC deployment with given DccVTA.txt \n";
             cout << "      -aging=Senior           \n";

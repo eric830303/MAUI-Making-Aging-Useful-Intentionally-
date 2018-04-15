@@ -1468,40 +1468,38 @@ void ClockTree::VTAConstraint(void)
         }
     }
 
+    //-- Don't Put Header at Root ---------------------------------------------------
+    string clause = "" ;
+    clause = to_string( (this->_clktreeroot->getNodeNumber() + 2 ) * -1 ) + " 0" ;
+    this->_VTAconstraintlist.insert( clause );
+    if( _printClause ) fprintf( fptr, "Root: %s(%ld) %s\n", _clktreeroot->getGateData()->getGateName().c_str(), _clktreeroot->getNodeNumber(), clause.c_str() );
+    
     //-- Don't Put Header at FF ---------------------------------------------------
     for( auto FF: this->_ffsink )
     {
-        string clause = to_string( (FF.second->getNodeNumber() + 2 ) * -1 ) + " 0" ;
+        clause = to_string( (FF.second->getNodeNumber() + 2 ) * -1 ) + " 0" ;
         this->_VTAconstraintlist.insert( clause );
         if( _printClause ) fprintf( fptr, "FF: %s(%ld) %s\n", FF.second->getGateData()->getGateName().c_str(), FF.second->getNodeNumber(), clause.c_str() );
     }
     
-    if( this->ifdoVTA() == true ){
-    for( auto path : this->_pathlist )
+    if( this->ifdoVTA() == true )
     {
-        if( path->getPathType() == FFtoFF )         this->VTAConstraintFFtoFF( path ) ;
-        else if( path->getPathType() == PItoFF )    this->VTAConstraintPItoFF( path ) ;
-        else if( path->getPathType() == FFtoPO )    this->VTAConstraintFFtoPO( path ) ;
-        else if( path->getPathType() == PItoPO )    continue    ;
-        else if( path->getPathType() == NONE   )    continue    ;
-    }
-    for( auto const& node: this->_buflist )//_buflist = map< string, clknode * >
-    {
-        if( node.second->ifMasked() )
+        for( auto path : this->_pathlist )
         {
-            string clause = to_string( (node.second->getNodeNumber()+2) * -1) + " 0";
-            
-            if(this->_VTAconstraintlist.size() < (this->_VTAconstraintlist.max_size()-2))
-            {
+            if( path->getPathType() == FFtoFF )         this->VTAConstraintFFtoFF( path ) ;
+            else if( path->getPathType() == PItoFF )    this->VTAConstraintPItoFF( path ) ;
+            else if( path->getPathType() == FFtoPO )    this->VTAConstraintFFtoPO( path ) ;
+            else if( path->getPathType() == PItoPO )    continue    ;
+            else if( path->getPathType() == NONE   )    continue    ;
+        }
+        for( auto const& node: this->_buflist )//_buflist = map< string, clknode * >
+        {
+            if( node.second->ifMasked() ){
+                string clause = to_string( (node.second->getNodeNumber()+2) * -1) + " 0";
                 this->_VTAconstraintlist.insert(clause);
                 if( _printClause ) fprintf( fptr,"Masked TVA node(%ld): %s \n", node.second->getNodeNumber(), clause.c_str());
             }
-            else{
-                cerr << "\033[32m[Info]: TVA Constraint List Full!\033[0m\n";
-                return;
-            }
         }
-    }
     }
     if( _printClause ) fclose( fptr );
 }
@@ -2102,8 +2100,8 @@ void ClockTree::timingConstraint_ndoDCC_doVTA( CriticalPath *path, bool update )
     {
         for( int i = 0 ; i < stClkPath.size()-1; i++ )
         {
-            //if( stClkPath.at(i)->ifMasked() ) continue ;
-            this->timingConstraint_givDCC_givVTA( path, -1, -1, NULL, NULL, 0, -1, stClkPath.at(i), NULL);
+            if( stClkPath.at(i)->ifMasked() ) continue ;
+            else this->timingConstraint_givDCC_givVTA( path, -1, -1, NULL, NULL, 0, -1, stClkPath.at(i), NULL);
         }
                 
     }
@@ -2111,8 +2109,8 @@ void ClockTree::timingConstraint_ndoDCC_doVTA( CriticalPath *path, bool update )
     {
         for( int i = 0 ; i < edClkPath.size()-1; i++ )
         {
-            //if( stClkPath.at(i)->ifMasked() ) continue ;
-            this->timingConstraint_givDCC_givVTA( path, -1, -1, NULL, NULL, -1, 0, NULL, edClkPath.at(i));
+            if( edClkPath.at(i)->ifMasked() ) continue ;
+            else this->timingConstraint_givDCC_givVTA( path, -1, -1, NULL, NULL, -1, 0, NULL, edClkPath.at(i));
         }
     }
     else if( path->getPathType() == FFtoFF )
@@ -2122,34 +2120,35 @@ void ClockTree::timingConstraint_ndoDCC_doVTA( CriticalPath *path, bool update )
         //Part 1: One header at COMMON clk path.
         for( long i = 0 ; i <= sameparentloc; i++ )
         {
-            //if( stClkPath.at(i)->ifMasked() ) continue ;
-            this->timingConstraint_givDCC_givVTA( path, -1, -1, NULL, NULL, 0, 0, stClkPath.at(i), NULL );
+            if( stClkPath.at(i)->ifMasked() ) continue ;
+            else this->timingConstraint_givDCC_givVTA( path, -1, -1, NULL, NULL, 0, 0, stClkPath.at(i), NULL );
         }
         
         //Part 2: One header left clk path.
         for( long i = sameparentloc+1 ; i < stClkPath.size()-1; i++ )
         {
-            //if( stClkPath.at(i)->ifMasked() ) continue ;
-            this->timingConstraint_givDCC_givVTA( path, -1, -1, NULL, NULL, 0, -1, stClkPath.at(i), NULL );
+            if( stClkPath.at(i)->ifMasked() ) continue ;
+            else this->timingConstraint_givDCC_givVTA( path, -1, -1, NULL, NULL, 0, -1, stClkPath.at(i), NULL );
         }
         
         
         //Part 2: One header at right clk path.
         for( long i = sameparentloc + 1 ; i < edClkPath.size()-1; i++ )
         {
-            //if( edClkPath.at(i)->ifMasked() ) continue ;
-            this->timingConstraint_givDCC_givVTA( path, -1, -1, NULL, NULL, -1, 0, NULL, edClkPath.at(i));
+            if( edClkPath.at(i)->ifMasked() ) continue ;
+            else this->timingConstraint_givDCC_givVTA( path, -1, -1, NULL, NULL, -1, 0, NULL, edClkPath.at(i));
         }
                
         
         //Part 3: Two headers at both branches.
         for( long i = sameparentloc + 1 ; i < stClkPath.size()-1; i++ )
         {
-            //if( stClkPath.at(i)->ifMasked() ) continue ;
+            if( stClkPath.at(i)->ifMasked() ) continue ;
+            else
             for( long j = sameparentloc + 1 ; j < edClkPath.size()-1; j++ )
             {
-                //if( edClkPath.at(j)->ifMasked() ) continue ;
-                this->timingConstraint_givDCC_givVTA( path, -1, -1, NULL, NULL, 0, 0, stClkPath.at(i),edClkPath.at(j) );
+                if( edClkPath.at(j)->ifMasked() ) continue ;
+                else this->timingConstraint_givDCC_givVTA( path, -1, -1, NULL, NULL, 0, 0, stClkPath.at(i),edClkPath.at(j) );
             }
         }
     }
@@ -2181,35 +2180,36 @@ void ClockTree::timingConstraint_givDCC_doVTA(  CriticalPath *path,
         //Part 1: One header at common clk path.
         for( long i = 0 ; i <= sameparentloc; i++ )
         {
-            //if( stClkPath.at(i)->ifMasked() ) continue ;
-            this->timingConstraint_givDCC_givVTA( path, stDccType, edDccType, stDccLoc, edDccLoc, 0, 0, stClkPath.at(i), stClkPath.at(i) );
+            if( stClkPath.at(i)->ifMasked() ) continue ;
+            else    this->timingConstraint_givDCC_givVTA( path, stDccType, edDccType, stDccLoc, edDccLoc, 0, 0, stClkPath.at(i), stClkPath.at(i) );
         }
         //Part 1: One header at left lower clk path.
         for( long i = sameparentloc+1 ; i < stClkPath.size()-1; i++ )
         {
-            //if( stClkPath.at(i)->ifMasked() ) continue ;
-            this->timingConstraint_givDCC_givVTA( path, stDccType, edDccType, stDccLoc, edDccLoc, 0, -1, stClkPath.at(i), NULL );
+            if( stClkPath.at(i)->ifMasked() ) continue ;
+            else    this->timingConstraint_givDCC_givVTA( path, stDccType, edDccType, stDccLoc, edDccLoc, 0, -1, stClkPath.at(i), NULL );
         }
         //Part 2: One header at right lower clk path.
         for( long i = sameparentloc + 1 ; i < edClkPath.size()-1; i++ )
         {
-            //if( edClkPath.at(i)->ifMasked() ) continue ;
-            this->timingConstraint_givDCC_givVTA( path, stDccType, edDccType, stDccLoc, edDccLoc, -1, 0, NULL, edClkPath.at(i));
+            if( edClkPath.at(i)->ifMasked() ) continue ;
+            else this->timingConstraint_givDCC_givVTA( path, stDccType, edDccType, stDccLoc, edDccLoc, -1, 0, NULL, edClkPath.at(i));
         }
         //Part 3: Two headers at both branches.
         for( long i = sameparentloc + 1 ; i < stClkPath.size()-1; i++ ){
-            //if( stClkPath.at(i)->ifMasked() ) continue ;
+            if( stClkPath.at(i)->ifMasked() ) continue ;
+            else
             for( long j = sameparentloc + 1 ; j < edClkPath.size()-1; j++ ){
-                //if( edClkPath.at(j)->ifMasked() ) continue ;
-                this->timingConstraint_givDCC_givVTA( path, stDccType, edDccType, stDccLoc, edDccLoc, 0, 0, stClkPath.at(i),edClkPath.at(j) );
+                if( edClkPath.at(j)->ifMasked() ) continue ;
+                else this->timingConstraint_givDCC_givVTA( path, stDccType, edDccType, stDccLoc, edDccLoc, 0, 0, stClkPath.at(i),edClkPath.at(j) );
             }
         }
     }
     else if( path->getPathType() == PItoFF )
     {
         for( int i = 0 ; i < edClkPath.size()-1; i++ ){
-            //if( edClkPath.at(i)->ifMasked() ) continue ;
-                this->timingConstraint_givDCC_givVTA( path, -1, edDccType, NULL, edDccLoc, -1, 0, NULL, edClkPath.at(i));
+            if( edClkPath.at(i)->ifMasked() ) continue ;
+            else this->timingConstraint_givDCC_givVTA( path, -1, edDccType, NULL, edDccLoc, -1, 0, NULL, edClkPath.at(i));
         }
                 
     }
@@ -2217,8 +2217,8 @@ void ClockTree::timingConstraint_givDCC_doVTA(  CriticalPath *path,
     {
         for( int i = 0 ; i < stClkPath.size()-1; i++ )
         {
-            //if( stClkPath.at(i)->ifMasked() ) continue ;
-                timingConstraint_givDCC_givVTA( path, stDccType, -1, stDccLoc, NULL, 0, -1, stClkPath.at(i), NULL);
+            if( stClkPath.at(i)->ifMasked() ) continue ;
+            else    timingConstraint_givDCC_givVTA( path, stDccType, -1, stDccLoc, NULL, 0, -1, stClkPath.at(i), NULL);
         }
     }
 }
@@ -4377,8 +4377,7 @@ void ClockTree::dumpCNF()
         cnffile.close();
         return;
     }
-    printf(CYAN"[Info] " RESET"Please Type the Tc of Unsat CNF file \n");
-    cin >> this->_tc  ;
+
     
     getline( cnffile, line ) ;//Read SAT/UNSAT
     getline( cnffile, line ) ;//Read DCC/VTA
@@ -4400,37 +4399,33 @@ void ClockTree::dumpCNF()
         else
         {
             ClockTreeNode *findnode = this->searchClockTreeNode(abs(stoi(strspl.at(loop))));
-            if( !findnode ) cerr << RED"[Error] " RESET"Unrecognized Clknode ID in dumpUnsatCNF()\n";
-            fprintf( fPtr, "%ld ",  findnode->getNodeNumber() );
-            //-- Put Header ------------------------------------------------------------
-            if( stoi(strspl.at(loop+2)) > 0 )   fprintf( fPtr, "%d ", 0 );
-            
-            //-- Put DCC --------------------------------------------------------------
-            if( stoi(strspl.at(loop)) > 0 || stoi(strspl.at(loop + 1)) > 0  )
+            if( !findnode ) cerr << RED"[Error] " RESET"Unrecognized Clknode ID " << strspl[loop] <<" in dumpUnsatCNF()\n";
+            else
             {
-                int bit1 = stoi(strspl.at(loop)), bit2 = stoi(strspl.at(loop + 1)) ;
-                if((bit1 > 0) && (bit2 > 0))
-                    fprintf( fPtr, "%f\n", 0.8 );
-                else if((bit1 > 0) && (bit2 < 0))
-                    fprintf( fPtr, "%f\n", 0.4 );
-                else if((bit1 < 0) && (bit2 > 0))
-                    fprintf( fPtr, "%f\n", 0.2 );
-                else if((bit1 < 0) && (bit2 < 0))
-                    fprintf( fPtr, "%f\n", 0.5 );
-                else
-                    fprintf( fPtr, "%f\n", 0.5 );
+                fprintf( fPtr, "%ld ",  findnode->getNodeNumber() );
+                //-- Put Header ------------------------------------------------------------
+                if( stoi(strspl.at(loop+2)) > 0 )   fprintf( fPtr, "%d ", 0 );
+            
+                //-- Put DCC --------------------------------------------------------------
+                if( stoi(strspl.at(loop)) > 0 || stoi(strspl.at(loop + 1)) > 0  )
+                {
+                    int bit1 = stoi(strspl.at(loop)), bit2 = stoi(strspl.at(loop + 1)) ;
+                    if((bit1 > 0) && (bit2 > 0))
+                        fprintf( fPtr, "%f\n", 0.8 );
+                    else if((bit1 > 0) && (bit2 < 0))
+                        fprintf( fPtr, "%f\n", 0.4 );
+                    else if((bit1 < 0) && (bit2 > 0))
+                        fprintf( fPtr, "%f\n", 0.2 );
+                    else if((bit1 < 0) && (bit2 < 0))
+                        fprintf( fPtr, "%f\n", 0.5 );
+                    else
+                        fprintf( fPtr, "%f\n", 0.5 );
+                }
             }
         }
     }//Clk node iteration
     fclose(fPtr);
     cnffile.close() ;
-    for( auto const& path: this->_pathlist )
-    {
-        if((path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF))   continue;
-        
-        double slack = this->UpdatePathTiming( path, false );
-        if( slack < 0 ) printf("%ld slack (%f) < 0 \n", path->getPathNum(), slack );
-    }
 }
 
 void ClockTree::CheckTiming_givFile()
