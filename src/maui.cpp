@@ -39,6 +39,7 @@ int main(int argc, char **argv)
 			cout << "      -nondcc                Don't consider placing any DCC in clock tree. (default disable)\n";
 			cout << "      -nonaging              Don't consider any aging in clock tree. (default disable)\n";
             cout << "      -nonVTA                Don't do Vth assignment\n";
+            cout << "      -dcc_leader            Leader is in the downstream part of dcc\n";
             cout << "      -dump=SAT_CNF          Decode other CNF files and dump its DCC/VTA Deployment\n";
             cout << "      -print=path            Print the pipeline\n";
             cout << "      -checkCNF              Check the DCC deployment with given CNF output file\n";
@@ -177,6 +178,8 @@ int main(int argc, char **argv)
     circuit.VTAConstraint();
     //2.
     circuit.dccConstraint();
+    //3.
+    circuit.DCCLeaderConstraint();
     endtime = chrono::steady_clock::now();
     DccVTAconstrainttime = chrono::duration_cast<chrono::duration<double>>(endtime - midtime);
 	//-------- Generate all kinds of DCC deployment ----------------------------------------

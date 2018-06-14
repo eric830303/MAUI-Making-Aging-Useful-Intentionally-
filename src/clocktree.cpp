@@ -582,6 +582,8 @@ int ClockTree::checkParameter(int argc, char **argv, string *message)
             this->_doVTA = 0;
 		else if(strcmp(argv[loop], "-nonaging") == 0)
 			this->_aging = 0;									// Non-aging
+        else if(strcmp(argv[loop], "-dcc_leader") == 0)
+            this->_dcc_leader = 1;                                    
 		else if(strcmp(argv[loop], "-mindcc") == 0)
 			this->_mindccplace = 1;								// Minimize DCC deployment
 		else if(strcmp(argv[loop], "-tc_recheck") == 0)
@@ -1503,6 +1505,148 @@ void ClockTree::VTAConstraint(void)
     }
     if( _printClause ) fclose( fptr );
 }
+
+/*---------------------------------------------------------------------------
+ FuncName:
+    DCCLeaderConstraint(),       VTAConstraintFFtoFF(),
+    DCCLeaderConstraintPItoFF(), VTAConstraintFFtoPO(),
+ Where defined:
+    ClockTree Class - Public Method
+ Introduction:
+    VTA constraint and generate clauses
+    Formulate unwanted scenario as clauses (CNF)
+    So-called unwanted scenario: More than one "header" exist along one clock path
+ Creator:
+    Tien-Hung Tseng
+ ----------------------------------------------------------------------------*/
+void ClockTree::DCCLeaderConstraint(void)
+{
+    if( _printClause ){
+        this->clauseFileName = this->_outputdir + "clause_" +  "DCC_Leader_Constraint.txt";
+        if( !isDirectoryExist(this->_outputdir) )
+            mkdir(this->_outputdir.c_str(), 0775);
+        this->fptr = fopen( this->clauseFileName.c_str(), "w" );
+        if( !fptr )
+            cerr << RED"[Error]" RESET" Cannot open " << this->clauseFileName << endl ;
+    }
+    
+    //-- Don't Put Leader at Root ---------------------------------------------------
+    string clause = "" ;
+    
+    if( this->ifdoVTA() == true )
+    {
+        for( auto path : this->_pathlist )
+        {
+            if( path->getPathType() == FFtoFF )         this->DCCLeaderConstraintFFtoFF( path ) ;
+            else if( path->getPathType() == PItoFF )    this->DCCLeaderConstraintPItoFF( path ) ;
+            else if( path->getPathType() == FFtoPO )    this->DCCLeaderConstraintFFtoPO( path ) ;
+            else if( path->getPathType() == PItoPO )    continue    ;
+            else if( path->getPathType() == NONE   )    continue    ;
+        }
+    }
+    if( _printClause ) fclose( fptr );
+}
+void ClockTree::DCCLeaderConstraintFFtoFF( CriticalPath *path )
+{
+    if( this->ifdoVTA() == false ) return ;
+    if( this->_dcc_leader == false ) return ;
+    assert( path->getPathType() == FFtoFF );
+    const vector<ClockTreeNode *> stClkPath = path->getStartPonitClkPath() ;
+    const vector<ClockTreeNode *> edClkPath = path->getEndPonitClkPath()   ;
+    string  clause = "" ;
+    
+    for( int leadLoc = 0 ; leadLoc < stClkPath.size()-1; leadLoc++ )
+    {
+        if( stClkPath.at(leadLoc)->ifMasked() ) continue ;
+        
+        for( int dccLoc = leadLoc; dccLoc < stClkPath.size()-1; dccLoc++ )
+        {
+            if( stClkPath.at(dccLoc)->ifMasked() ) continue ;
+            {
+                clause = to_string((stClkPath.at(dccLoc)->getNodeNumber()) * -1) + " " + to_string( (stClkPath.at(leadLoc)->getNodeNumber()+2) * -1 )+ " 0";
+                this->_VTAconstraintlist.insert( clause );
+                if( _printClause ) fprintf( this->fptr, "%ld(20 or 80) with %ld (leader): %s \n",stClkPath.at(dccLoc)->getNodeNumber(), stClkPath.at(leadLoc)->getNodeNumber(), clause.c_str() );
+                
+                clause = to_string((stClkPath.at(dccLoc)->getNodeNumber()+1) * -1) + " " + to_string( (stClkPath.at(leadLoc)->getNodeNumber()+2) * -1 )+ " 0";
+                this->_VTAconstraintlist.insert( clause );
+                if( _printClause ) fprintf( this->fptr, "%ld(40 or 80) with %ld (leader): %s \n",stClkPath.at(dccLoc)->getNodeNumber(), stClkPath.at(leadLoc)->getNodeNumber(), clause.c_str() );
+            }
+        }
+    }
+    for( int leadLoc = 0 ; leadLoc < edClkPath.size()-1; leadLoc++ )
+    {
+        if( edClkPath.at(leadLoc)->ifMasked() ) continue ;
+        
+        for( int dccLoc = leadLoc; dccLoc < edClkPath.size()-1; dccLoc++ )
+        {
+            if( edClkPath.at(dccLoc)->ifMasked() ) continue ;
+            {
+                clause = to_string((edClkPath.at(dccLoc)->getNodeNumber()) * -1) + " " + to_string( (edClkPath.at(leadLoc)->getNodeNumber()+2) * -1 )+ " 0";
+                this->_VTAconstraintlist.insert( clause );
+                if( _printClause ) fprintf( this->fptr, "%ld(20 or 80) with %ld (leader): %s \n",edClkPath.at(dccLoc)->getNodeNumber(), edClkPath.at(leadLoc)->getNodeNumber(), clause.c_str() );
+                
+                clause = to_string((edClkPath.at(dccLoc)->getNodeNumber()+1) * -1) + " " + to_string( (edClkPath.at(leadLoc)->getNodeNumber()+2) * -1 )+ " 0";
+                this->_VTAconstraintlist.insert( clause );
+                if( _printClause ) fprintf( this->fptr, "%ld(40 or 80) with %ld (leader): %s \n",edClkPath.at(dccLoc)->getNodeNumber(), edClkPath.at(leadLoc)->getNodeNumber(), clause.c_str() );
+            }
+        }
+    }
+}
+void ClockTree::DCCLeaderConstraintPItoFF( CriticalPath *path )
+{
+    if( this->ifdoVTA() == false ) return ;
+    assert( path->getPathType() == PItoFF );
+    //const vector<ClockTreeNode *> stClkPath = path->getStartPonitClkPath() ;
+    const vector<ClockTreeNode *> edClkPath = path->getEndPonitClkPath()   ;
+    string  clause = "" ;
+    for( int leadLoc = 0 ; leadLoc < edClkPath.size()-1; leadLoc++ )
+    {
+        if( edClkPath.at(leadLoc)->ifMasked() ) continue ;
+        
+        for( int dccLoc = leadLoc; dccLoc < edClkPath.size()-1; dccLoc++ )
+        {
+            if( edClkPath.at(dccLoc)->ifMasked() ) continue ;
+            {
+                clause = to_string((edClkPath.at(dccLoc)->getNodeNumber()) * -1) + " " + to_string( (edClkPath.at(leadLoc)->getNodeNumber()+2) * -1 )+ " 0";
+                this->_VTAconstraintlist.insert( clause );
+                if( _printClause ) fprintf( this->fptr, "%ld(20 or 80) with %ld (leader): %s \n",edClkPath.at(dccLoc)->getNodeNumber(), edClkPath.at(leadLoc)->getNodeNumber(), clause.c_str() );
+                
+                clause = to_string((edClkPath.at(dccLoc)->getNodeNumber()+1) * -1) + " " + to_string( (edClkPath.at(leadLoc)->getNodeNumber()+2) * -1 )+ " 0";
+                this->_VTAconstraintlist.insert( clause );
+                if( _printClause ) fprintf( this->fptr, "%ld(40 or 80) with %ld (leader): %s \n",edClkPath.at(dccLoc)->getNodeNumber(), edClkPath.at(leadLoc)->getNodeNumber(), clause.c_str() );
+            }
+        }
+    }
+}
+
+void ClockTree::DCCLeaderConstraintFFtoPO( CriticalPath *path )
+{
+    if( this->ifdoVTA() == false ) return ;
+    assert( path->getPathType() == FFtoPO );
+    const vector<ClockTreeNode *> stClkPath = path->getStartPonitClkPath() ;
+    //const vector<ClockTreeNode *> edClkPath = path->getEndPonitClkPath()   ;
+    string  clause = "" ;
+    
+    for( int leadLoc = 0 ; leadLoc < stClkPath.size()-1; leadLoc++ )
+    {
+        if( stClkPath.at(leadLoc)->ifMasked() ) continue ;
+        
+        for( int dccLoc = leadLoc; dccLoc < stClkPath.size()-1; dccLoc++ )
+        {
+            if( stClkPath.at(dccLoc)->ifMasked() ) continue ;
+            {
+                clause = to_string((stClkPath.at(dccLoc)->getNodeNumber()) * -1) + " " + to_string( (stClkPath.at(leadLoc)->getNodeNumber()+2) * -1 )+ " 0";
+                this->_VTAconstraintlist.insert( clause );
+                if( _printClause ) fprintf( this->fptr, "%ld(20 or 80) with %ld (leader): %s \n",stClkPath.at(dccLoc)->getNodeNumber(), stClkPath.at(leadLoc)->getNodeNumber(), clause.c_str() );
+                
+                clause = to_string((stClkPath.at(dccLoc)->getNodeNumber()+1) * -1) + " " + to_string( (stClkPath.at(leadLoc)->getNodeNumber()+2) * -1 )+ " 0";
+                this->_VTAconstraintlist.insert( clause );
+                if( _printClause ) fprintf( this->fptr, "%ld(40 or 80) with %ld (leader): %s \n",stClkPath.at(dccLoc)->getNodeNumber(), stClkPath.at(leadLoc)->getNodeNumber(), clause.c_str() );
+            }
+        }
+    }
+}
+
 void ClockTree::VTAConstraintFFtoFF( CriticalPath *path )
 {
     assert( path->getPathType() == FFtoFF );

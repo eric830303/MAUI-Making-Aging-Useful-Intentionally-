@@ -59,7 +59,7 @@ class ClockTree
 {
 private:
 	int     _pathselect, _bufinsert, _gpupbound, _gplowbound, _minisatexecnum;
-	bool    _placedcc, _aging, _mindccplace, _tcrecheck, _clkgating, _dumpdcc, _dumpcg, _dumpbufins, _doVTA, _printpath, _dumpCNF, _checkCNF, _checkfile, _printClause, _calVTA ;
+	bool    _placedcc, _aging, _mindccplace, _tcrecheck, _clkgating, _dumpdcc, _dumpcg, _dumpbufins, _doVTA, _printpath, _dumpCNF, _checkCNF, _checkfile, _printClause, _calVTA, _dcc_leader ;
     bool    _usingSeniorAging, _printClkNode ;
 	long    _pathusednum, _pitoffnum, _fftoffnum, _fftoponum, _nonplacedccbufnum;
 	long    _totalnodenum, _ffusednum, _bufferusednum, _dccatlastbufnum;
@@ -119,7 +119,7 @@ public:
 			   _clktreeroot(nullptr), _firstchildrennode(nullptr), _mostcriticalpath(nullptr),
 			   _timingreport(""), _timingreportfilename(""), _timingreportloc(""), _timingreportdesign(""),_dumpCNF(false), _checkCNF(false), _checkfile(false),
 			   _cgfilename(""), _outputdir(""), _tcAfterAdjust(0), _printClause(false), _baseVthOffset(0), _exp(0.2),  _usingSeniorAging(false),
-               _printClkNode(false), _calVTA(false) {}
+               _printClkNode(false), _calVTA(false), _dcc_leader(false) {}
 	//-Destructor------------------------------------------------------------------
     ~ClockTree(void);
 	
@@ -185,6 +185,7 @@ public:
     set< pair<int,int> >& getDCCSet(void) { return _setDCC ; }
 	//-- Bool Attr Access -------------------------------------------------------
     bool ifCalVTA(void)                             { return _calVTA            ; }
+    bool ifdccleader(void)                          { return _dcc_leader        ; }
     bool ifprintNode(void)                          { return _printClkNode      ; }
     bool ifCheckFile(void)                          { return _checkfile         ; }
     bool ifCheckCNF(void)                           { return _checkCNF          ; }
@@ -213,18 +214,29 @@ public:
     void    bufferInsertion(void);
     void    minimizeBufferInsertion(void);
     
-    //---Refine: Minimize DCC Count ------------------------------------------
+    //---Refine: Minimize DCC Count ------------------------------------------------
     void    minimizeDccPlacement(void);
     
    
-    //---DCC Constraint ---------------------------------------------------------
+    //---DCC Constraint ------------------------------------------------------------
+    //Constraint: At most 1 dcc exist along a clock path
 	void    dccConstraint(void);
     void    dccPlacementByMasked(void);
-    //---VTA Constraint ---------------------------------------------------------
+    //---Leader Constraint ---------------------------------------------------------
+    //Constraint: At most 1 leader exist along a clock path
     void    VTAConstraint(void);
     void    VTAConstraintFFtoFF( CriticalPath* );
     void    VTAConstraintPItoFF( CriticalPath* );
     void    VTAConstraintFFtoPO( CriticalPath* );
+    
+    //---DCC-Leader Constraint ----------------------------------------------------
+    //Constraints: Leader must be put in the downstream of dcc
+    void    DCCLeaderConstraint(void);
+    void    DCCLeaderConstraintFFtoFF( CriticalPath* );
+    void    DCCLeaderConstraintPItoFF( CriticalPath* );
+    void    DCCLeaderConstraintFFtoPO( CriticalPath* );
+    
+    
     
 	void    genDccPlacementCandidate(void);
     
