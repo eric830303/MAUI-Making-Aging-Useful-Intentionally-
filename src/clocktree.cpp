@@ -1317,8 +1317,8 @@ void ClockTree::adjustOriginTc(void)
 /////////////////////////////////////////////////////////////////////
 void ClockTree::dccPlacementByMasked( )
 {
-	if( !this->_placedcc )//-nondcc
-		return ;
+	//if( !this->_placedcc )//-nondcc
+	//	return ;
 	long pathcount = 0;
 	for( auto const &pathptr : this->_pathlist )
 	{
@@ -1777,21 +1777,39 @@ void ClockTree::VTAConstraintFFtoPO( CriticalPath *path )
  ----------------------------------------------------------------------------*/
 void ClockTree::dccConstraint(void)
 {
-	if( !this->_placedcc )
-	{
-		this->_nonplacedccbufnum = this->_buflist.size();
-		return;
-	}
-    
     if( _printClause )
     {
         this->clauseFileName = this->_outputdir + "clause_" +  "DCC_Constraint.txt";
         if( !isDirectoryExist(this->_outputdir) )
             mkdir(this->_outputdir.c_str(), 0775);
         this->fptr = fopen( this->clauseFileName.c_str(), "w" );
-    
+        
         if( !fptr ) cerr << RED"[Error]" RESET" Cannot open " << this->clauseFileName << endl ;
     }
+	if( !this->_placedcc )
+	{
+		this->_nonplacedccbufnum = this->_buflist.size();
+        
+        for( auto const& node: this->_buflist )//_buflist = map< string, clknode * >
+        {
+            string clause ;
+            clause = to_string((node.second->getNodeNumber()+0) * -1) + " 0";
+            if( this->_dccconstraintlist.size() < (this->_dccconstraintlist.max_size()-2) )
+                this->_dccconstraintlist.insert(clause);
+            else
+                cerr << "\033[32m[Info]: DCC Constraint List Full!\033[0m\n";
+            
+            if( _printClause )  fprintf( fptr, "NodoDCC: %s(%ld) %s\n", node.second->getGateData()->getGateName().c_str(),  node.second->getNodeNumber(), clause.c_str() );
+            
+            clause = to_string((node.second->getNodeNumber()+1) * -1) + " 0";
+            if( this->_dccconstraintlist.size() < (this->_dccconstraintlist.max_size()-2) )
+                this->_dccconstraintlist.insert(clause);
+            else
+                cerr << "\033[32m[Info]: DCC Constraint List Full!\033[0m\n";
+            
+            if( _printClause )  fprintf( fptr, "NodoDCC: %s(%ld) %s\n", node.second->getGateData()->getGateName().c_str(),  node.second->getNodeNumber(), clause.c_str() );
+        }
+	}
     
 	// Generate two clauses for the clock tree root (clock source)
 	if( this->_dccconstraintlist.size() < (this->_dccconstraintlist.max_size()-2) )
@@ -1899,6 +1917,7 @@ double ClockTree::timingConstraint(void)
     if( this->_placedcc == false && this->ifdoVTA() == false ) return -1 ;
     
     this->_timingconstraintlist.clear();
+    
     //-- Dump Clause log --------------------------------------------------------
     if( _printClause ){
         this->clauseFileName = this->_outputdir + "clause_" + to_string(this->_tc) + ".txt";
@@ -1919,8 +1938,7 @@ double ClockTree::timingConstraint(void)
         if( this->_placedcc )
         {
             this->timingConstraint_doDCC_ndoVTA(path);
-            if( this->ifdoVTA() )
-                this->timingConstraint_doDCC_doVTA(path);
+            this->timingConstraint_doDCC_doVTA(path);
         }
         
 	}
@@ -2085,8 +2103,7 @@ double ClockTree::UpdatePathTiming( CriticalPath * path, bool update, bool DCCVT
  -------------------------------------------------------------------------------------*/
 void ClockTree::timingConstraint_doDCC_ndoVTA( CriticalPath *path, bool update )
 {
-    if( path == nullptr )
-        return  ;
+    if( path == nullptr || this->_placedcc == false ) return  ;
     
     //List all possible combination of VTA with a given DCC deployment
     vector<vector<ClockTreeNode *> > dcccandi = path->getDccPlacementCandi();
@@ -2156,8 +2173,7 @@ void ClockTree::timingConstraint_doDCC_ndoVTA( CriticalPath *path, bool update )
  -------------------------------------------------------------------------------------*/
 void ClockTree::timingConstraint_doDCC_doVTA( CriticalPath *path, bool update )
 {
-    if( path == nullptr )
-        return  ;
+    if( path == nullptr || this->_placedcc == false || this->ifdoVTA() == false )return  ;
     
     //List all possible combination of VTA with a given DCC deployment
 
@@ -2662,7 +2678,7 @@ double ClockTree::calClkLaten_givDcc_givVTA(    vector<ClockTreeNode *> clkpath,
 /////////////////////////////////////////////////////////////////////
 void ClockTree::dumpClauseToCnfFile(void)
 {
-	if( !this->_placedcc && !(this->ifdoVTA()) )  return ;
+	//if( !this->_placedcc && !(this->ifdoVTA()) )  return ;
 	fstream cnffile ;
 	string cnfinput = this->_outputdir + "cnfinput_" + to_string(this->_tc);
 	if( !isDirectoryExist(this->_outputdir) )
