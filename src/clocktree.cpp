@@ -504,15 +504,24 @@ void ClockTree::readParameter()
                     ptrTech->_VTH_CONVGNT[1] = this->calConvergentVth( 0.4, this->getExp() ) ;//40% DCC
                     ptrTech->_VTH_CONVGNT[2] = this->calConvergentVth( 0.5, this->getExp() ) ;//No  DCC
                     ptrTech->_VTH_CONVGNT[3] = this->calConvergentVth( 0.8, this->getExp() ) ;//80% DCC
+                    ptrTech->_VTH_CONVGNT[4] = this->calConvergentVth( 0.24, this->getExp() ) ;//20% DCC
+                    ptrTech->_VTH_CONVGNT[5] = this->calConvergentVth( 0.44, this->getExp() ) ;//40% DCC
+                    ptrTech->_VTH_CONVGNT[6] = this->calConvergentVth( 0.86, this->getExp() ) ;//80% DCC
             
-                    ptrTech->_Sv[0]          = this->calSv( 0.2, this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[0] ) ;//20% DCC
-                    ptrTech->_Sv[1]          = this->calSv( 0.4, this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[1] ) ;//40% DCC
-                    ptrTech->_Sv[2]          = this->calSv( 0.5, this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[2] ) ;//No  DCC
-                    ptrTech->_Sv[3]          = this->calSv( 0.8, this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[3] ) ;//80% DCC
-                    ptrTech->_Sv[4]          = this->calSv( 0.2, ptrTech->_VTH_OFFSET + this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[0] ) ;//20% DCC
-                    ptrTech->_Sv[5]          = this->calSv( 0.4, ptrTech->_VTH_OFFSET + this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[1] ) ;//40% DCC
-                    ptrTech->_Sv[6]          = this->calSv( 0.5, ptrTech->_VTH_OFFSET + this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[2] ) ;//No  DCC
-                    ptrTech->_Sv[7]          = this->calSv( 0.8, ptrTech->_VTH_OFFSET + this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[3] ) ;//80% DCC
+                    ptrTech->_Sv[0]          = this->calSv( 0.2 , this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[0] ) ;//20% DCC
+                    ptrTech->_Sv[1]          = this->calSv( 0.4 , this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[1] ) ;//40% DCC
+                    ptrTech->_Sv[2]          = this->calSv( 0.5 , this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[2] ) ;//No  DCC
+                    ptrTech->_Sv[3]          = this->calSv( 0.8 , this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[3] ) ;//80% DCC
+                    ptrTech->_Sv[4]          = this->calSv( 0.24, this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[4] ) ;//20% DCC
+                    ptrTech->_Sv[5]          = this->calSv( 0.48, this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[5] ) ;//40% DCC
+                    ptrTech->_Sv[6]          = this->calSv( 0.86, this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[6] ) ;//80% DCC
+                    ptrTech->_Sv[7]          = this->calSv( 0.2 , ptrTech->_VTH_OFFSET + this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[0] ) ;//20% DCC
+                    ptrTech->_Sv[8]          = this->calSv( 0.4 , ptrTech->_VTH_OFFSET + this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[1] ) ;//40% DCC
+                    ptrTech->_Sv[9]          = this->calSv( 0.5 , ptrTech->_VTH_OFFSET + this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[2] ) ;//No  DCC
+                    ptrTech->_Sv[10]         = this->calSv( 0.8 , ptrTech->_VTH_OFFSET + this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[3] ) ;//80% DCC
+                    ptrTech->_Sv[11]         = this->calSv( 0.24, ptrTech->_VTH_OFFSET + this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[4] ) ;//80% DCC
+                    ptrTech->_Sv[12]         = this->calSv( 0.48, ptrTech->_VTH_OFFSET + this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[5] ) ;//80% DCC
+                    ptrTech->_Sv[13]         = this->calSv( 0.86, ptrTech->_VTH_OFFSET + this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[6] ) ;//80% DCC
                     this->getLibList().push_back( ptrTech ) ;
                     
                     //double bof = this->getBaseVthOffset() ;
@@ -528,25 +537,39 @@ void ClockTree::readParameter()
                     printf( CYAN"\t[Note] " RESET"Delay gain includes aging rate\n" );
                     printf( CYAN"\t[Note] " RESET"Delay gain = aging rate + " RED"intrinsic delay" RESET" due to adjusted Vth\n" );
                     printf( CYAN"\t[Note] " RESET"N-Vth denotes clock buffer with 'nominal  Vth'\n" );
-                    printf( CYAN"\t[Note] " RESET"S-Vth denotes clock buffer with 'specific Vth'\n" );
+                    printf( CYAN"\t[Note] " RESET"H-Vth denotes clock buffer with 'high     Vth'\n" );
                     printf( CYAN"\t------------------------- Nominal Clk buffer -----------------------------------\n" );
                     
                     printf( CYAN"\t20 %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.2, -1, true )        - 1 )*100 );
                     printf( CYAN"\t40 %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.4, -1, true )        - 1 )*100 );
                     printf( CYAN"\t50 %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.5, -1, true )        - 1 )*100 );
                     printf( CYAN"\t80 %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.8, -1, true )        - 1 )*100 );
-                    printf( CYAN"\t------------------------- Specific Clk buffer -----------------------------------\n" );
-                    printf( CYAN"\t20 %%, S-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( 0.2,  0, true )               - 1 )*100 );
+                    printf( CYAN"\t2x %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_20DCC, -1, true )   - 1 )*100 );
+                    printf( CYAN"\t4x %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_40DCC, -1, true )   - 1 )*100 );
+                    printf( CYAN"\t8x %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_80DCC, -1, true )   - 1 )*100 );
+                    
+                    
+                    printf( CYAN"\t------------------------- High-Vth Clk buffer -----------------------------------\n" );
+                    printf( CYAN"\t20 %%, H-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( 0.2,  0, true )               - 1 )*100 );
                     printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.2,  0 ) - 2*(tof) - 1 )*100 );
                     
-                    printf( CYAN"\t40 %%, S-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( 0.4,  0, true )               - 1 )*100 );
+                    printf( CYAN"\t40 %%, H-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( 0.4,  0, true )               - 1 )*100 );
                     printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.4,  0 ) - 2*(tof) - 1 )*100 );
                     
-                    printf( CYAN"\t50 %%, S-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( 0.5,  0, true )               - 1 )*100 );
+                    printf( CYAN"\t50 %%, H-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( 0.5,  0, true )               - 1 )*100 );
                     printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.5,  0 ) - 2*(tof) - 1 )*100 );
                     
-                    printf( CYAN"\t80 %%, S-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( 0.8,  0, true )               - 1 )*100 );
+                    printf( CYAN"\t80 %%, H-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( 0.8,  0, true )               - 1 )*100 );
                     printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.8,  0 ) - 2*(tof) - 1 )*100 );
+                    
+                    printf( CYAN"\t2x %%, H-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( DC_20DCC,  0, true )               - 1 )*100 );
+                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_20DCC,  0 ) - 2*(tof) - 1 )*100 );
+                    
+                    printf( CYAN"\t4x %%, H-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( DC_40DCC,  0, true )               - 1 )*100 );
+                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_40DCC,  0 ) - 2*(tof) - 1 )*100 );
+                    
+                    printf( CYAN"\t8x %%, H-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( DC_80DCC,  0, true )               - 1 )*100 );
+                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_80DCC,  0 ) - 2*(tof) - 1 )*100 );
                 }
             }
         }
@@ -592,6 +615,8 @@ int ClockTree::checkParameter(int argc, char **argv, string *message)
             this->_printpath = 1;
         else if(strcmp(argv[loop], "-dump=UNSAT_CNF") == 0)
             this->_dumpCNF   = 1;
+        else if(strcmp(argv[loop], "-dc_for") == 0)
+            this->_dc_formulation = 1;
         else if(strcmp(argv[loop], "-checkFile") == 0)
             this->_checkfile = 1;
         else if(strcmp(argv[loop], "-calVTA") == 0)
@@ -1533,7 +1558,7 @@ void ClockTree::DCCLeaderConstraint(void)
     //-- Don't Put Leader at Root ---------------------------------------------------
     string clause = "" ;
     
-    if( this->ifdoVTA() == true )
+    if( this->ifdoVTA() == true && this->_dcc_leader == true )
     {
         for( auto path : this->_pathlist )
         {
@@ -1908,7 +1933,7 @@ void ClockTree::genDccPlacementCandidate(void)
 /////////////////////////////////////////////////////////////////////
 //
 // ClockTree Class - Public Method
-// Timing constraint and generate clauses based on each DCC
+//      Timing constraint and generate clauses based on each DCC
 // deployment
 //
 /////////////////////////////////////////////////////////////////////
@@ -2614,15 +2639,30 @@ double ClockTree::calClkLaten_givDcc_givVTA(    vector<ClockTreeNode *> clkpath,
         {
             DC          = DCCType ;
             meetDCCLoc  = true ;
-            //--- DCC Loc == VTA Header ---------------------------------------------
+            //--- DCC Loc == VTA Leader ---------------------------------------------
             if( clkpath.at(i) == Header )
+            {
                 LibVthTypeDCC = LibIndex ;
-            //--- DCC Loc is ahead of VTA Header ------------------------------------
+                if( this->_dc_formulation )
+                {
+                    if( DC == 0.8 )         DC = DC_80DCC ;
+                    else if( DC == 0.2 )    DC = DC_20DCC ;
+                    else if( DC == 0.4 )    DC = DC_40DCC ;
+                }
+            }
+            //--- DCC Loc is ahead of VTA Leader ------------------------------------
             else if( !meetHeader )
                 LibVthTypeDCC = -1 ;
-            //--- DCC Loc is behind VTA Header ------------------------------------
+            //--- DCC Loc is behind VTA Leader ------------------------------------
             else if( meetHeader )
+            {
                 LibVthTypeDCC = LibVthType ;
+                if( this->_dc_formulation ){
+                    if( DC == 0.8 )         DC = DC_80DCC ;
+                    else if( DC == 0.2 )    DC = DC_20DCC ;
+                    else if( DC == 0.4 )    DC = DC_40DCC ;
+                }
+            }
             agingrate = (this->_aging)? getAgingRate_givDC_givVth( DC, LibVthType ) : (1)  ;
         }
         //--- First meet VTA Header -------------------------------------------------
@@ -2647,7 +2687,7 @@ double ClockTree::calClkLaten_givDcc_givVTA(    vector<ClockTreeNode *> clkpath,
     }
     agingrate = (this->_aging)? getAgingRate_givDC_givVth( DC, -1 ) : (1)  ;
     laten += clkpath.back()->getGateData()->getWireTime() * agingrate ;
-    //printf("Wire = %f \n", clkpath.back()->getGateData()->getWireTime() * getAgingRate_givDC_givVth( DC, -1 ) );
+    
     if( DCCLoc != NULL )
     {
         double agr_DCC =  (this->_aging)? (getAgingRate_givDC_givVth( 0.5, LibVthTypeDCC )) : (1) ;//DCC use 0.5 DC?
@@ -2660,7 +2700,11 @@ double ClockTree::calClkLaten_givDcc_givVTA(    vector<ClockTreeNode *> clkpath,
             DCC_Delay = minbufdelay*agr_DCC*DCCDELAY50PA ;
         else if( DCCType == 0.8 )
             DCC_Delay = minbufdelay*agr_DCC*DCCDELAY80PA ;
+        
+        //if( LibVthTypeDCC != -1 ) DCC_Delay *= 1.2 ;//New!!!
         laten += DCC_Delay ;
+        
+        
         //printf("MinBuffer = %f, DCC Delay = %f\n", minbufdelay ,DCC_Delay );
         //printf("DCC Type = %f\n\n", DCCType );
     }
@@ -3776,13 +3820,19 @@ double ClockTree::getAgingRate_givDC_givVth( double DC, int Libindex, bool initi
         if( Libindex != -1 )
         {
             if( DC == 0.2 )
-                Sv = this->getLibList().at(Libindex)->_Sv[4] ;
-            else if( DC == 0.4 )
-                Sv = this->getLibList().at(Libindex)->_Sv[5] ;
-            else if( DC == 0.5 || DC == -1 || DC == 0 )
-                Sv = this->getLibList().at(Libindex)->_Sv[6] ;
-            else if( DC == 0.8 )
                 Sv = this->getLibList().at(Libindex)->_Sv[7] ;
+            else if( DC == 0.4 )
+                Sv = this->getLibList().at(Libindex)->_Sv[8] ;
+            else if( DC == 0.5 || DC == -1 || DC == 0 )
+                Sv = this->getLibList().at(Libindex)->_Sv[9] ;
+            else if( DC == 0.8 )
+                Sv = this->getLibList().at(Libindex)->_Sv[10] ;
+            else if( DC == DC_20DCC )
+                Sv = this->getLibList().at(Libindex)->_Sv[11] ;
+            else if( DC == DC_40DCC )
+                Sv = this->getLibList().at(Libindex)->_Sv[12] ;
+            else if( DC == DC_80DCC )
+                Sv = this->getLibList().at(Libindex)->_Sv[13] ;
             else
             {
                 cerr << "[Error] Irrecognized duty cycle in func \"getAgingRate_givDC_givVth (double DC, int LibIndex )\"    \n" ;
@@ -3799,8 +3849,15 @@ double ClockTree::getAgingRate_givDC_givVth( double DC, int Libindex, bool initi
                 Sv = this->getLibList().at(0)->_Sv[2] ;
             else if( DC == 0.8 )
                 Sv = this->getLibList().at(0)->_Sv[3] ;
+            else if( DC == DC_20DCC )
+                Sv = this->getLibList().at(0)->_Sv[4] ;
+            else if( DC == DC_40DCC )
+                Sv = this->getLibList().at(0)->_Sv[5] ;
+            else if( DC == DC_80DCC )
+                Sv = this->getLibList().at(0)->_Sv[6] ;
             else
             {
+                //Sv = this->calSv( 0.2, this->getLibList().at(0)->_VTH_OFFSET + this->getBaseVthOffset(), this->getLibList().at(0)->_VTH_CONVGNT[0] ) ;//20% DCC
                 cerr << "[Error] Irrecognized duty cycle in func \"getAgingRate_givDC_givVth (double DC, int LibIndex )\"    \n" ;
                 return -1 ;
             }
@@ -3820,27 +3877,43 @@ double ClockTree::getAgingRate_givDC_givVth( double DC, int Libindex, bool initi
         
         if( Libindex == -1 ){
             if( DC == -1 || DC == 0 || DC == 0.5 ) _nominal_agr[2] = agr ;
-            if( DC == 0.2 )                        _nominal_agr[0] = agr ;
-            if( DC == 0.4 )                        _nominal_agr[1] = agr ;
-            if( DC == 0.8 )                        _nominal_agr[3] = agr ;
+            else if( DC == 0.2 )                   _nominal_agr[0] = agr ;
+            else if( DC == 0.4 )                   _nominal_agr[1] = agr ;
+            else if( DC == 0.8 )                   _nominal_agr[3] = agr ;
+            else if( DC == DC_20DCC )              _nominal_agr[4] = agr ;
+            else if( DC == DC_40DCC )              _nominal_agr[5] = agr ;
+            else if( DC == DC_80DCC )              _nominal_agr[6] = agr ;
+
         }else{
             if( DC == -1 || DC == 0 || DC == 0.5 ) _HTV_agr[2] = agr  ;
-            if( DC == 0.2 )                        _HTV_agr[0] = agr  ;
-            if( DC == 0.4 )                        _HTV_agr[1] = agr  ;
-            if( DC == 0.8 )                        _HTV_agr[3] = agr  ;
+            else if( DC == 0.2 )                   _HTV_agr[0] = agr  ;
+            else if( DC == 0.4 )                   _HTV_agr[1] = agr  ;
+            else if( DC == 0.8 )                   _HTV_agr[3] = agr  ;
+            else if( DC == DC_20DCC )              _HTV_agr[4] = agr  ;
+            else if( DC == DC_40DCC )              _HTV_agr[5] = agr  ;
+            else if( DC == DC_80DCC )              _HTV_agr[6] = agr  ;
         }
         return agr ;
-    }else{
-        if( Libindex == -1 ){
+    }else//initial
+    {
+        if( Libindex == -1 )
+        {
             if( DC == -1 || DC == 0 || DC == 0.5 ) return _nominal_agr[2] ;
-            if( DC == 0.2 )                        return _nominal_agr[0] ;
-            if( DC == 0.4 )                        return _nominal_agr[1] ;
-            if( DC == 0.8 )                        return _nominal_agr[3] ;
-        }else{
+            else if( DC == 0.2 )                   return _nominal_agr[0] ;
+            else if( DC == 0.4 )                   return _nominal_agr[1] ;
+            else if( DC == 0.8 )                   return _nominal_agr[3] ;
+            else if( DC == DC_20DCC )              return _nominal_agr[4] ;
+            else if( DC == DC_40DCC )              return _nominal_agr[5] ;
+            else if( DC == DC_80DCC )              return _nominal_agr[6] ;
+        }else
+        {
             if( DC == -1 || DC == 0 || DC == 0.5 ) return _HTV_agr[2] ;
-            if( DC == 0.2 )                        return _HTV_agr[0] ;
-            if( DC == 0.4 )                        return _HTV_agr[1] ;
-            if( DC == 0.8 )                        return _HTV_agr[3] ;
+            else if( DC == 0.2 )                   return _HTV_agr[0] ;
+            else if( DC == 0.4 )                   return _HTV_agr[1] ;
+            else if( DC == 0.8 )                   return _HTV_agr[3] ;
+            else if( DC == DC_20DCC )              return _HTV_agr[4] ;
+            else if( DC == DC_40DCC )              return _HTV_agr[5] ;
+            else if( DC == DC_80DCC )              return _HTV_agr[6] ;
         }
     }
     return -1 ;
@@ -3894,7 +3967,7 @@ void ClockTree::printPath( int pathid )
     CriticalPath* path = this->_pathlist.at( pathid ) ;
     if( path->getPathType() == NONE )
     {
-        cerr << RED"[Error]" RESET" The path is not include in the scope that you specified\n";
+        cerr << RED"[Error]" RESET" The path is not included in the scope that you specified\n";
         cerr << RED"[Error]" RESET" Please check your input args '-path=only', '-path=all'... \n";
         return ;
     }
@@ -3905,15 +3978,13 @@ void ClockTree::printPath( int pathid )
     printf("==> CLK_Node_Name( NodeID, Duty Cycle, VthType, " GREEN"Buffer Delay" RESET" ) \n");
     printf("==> Duty Cycle: 0.2, 0.4, 0.5, 0.8 \n" );
     printf("==> Vth type  : -1(Nominal), 0(VTA) \n" );
-    //printPath_givFile( path, false /*DCC/VTA*/, false /*Aging*/, false /*Tc from file*/ ) ;
-    //printPath_givFile( path, false /*DCC/VTA*/, true  /*Aging*/, true  /*Tc from file*/ ) ;
     readDCCVTAFile() ;
     printPath_givFile( path, true  /*DCC/VTA*/, true  /*Aging*/, true  /*Tc from file*/ ) ;
     readDCCVTAFile2() ;
     printPath_givFile( path, true  /*DCC/VTA*/, true  /*Aging*/, true  /*Tc from file*/ ) ;
 }
 
-void ClockTree::printPath_givFile(CriticalPath *path, bool doDCCVTA, bool aging, bool TcFromFile )
+void ClockTree::printPath_givFile( CriticalPath *path, bool doDCCVTA, bool aging, bool TcFromFile )
 {
     //-- Check ---------------------------------------------------------------
     if( path == NULL )
@@ -3976,7 +4047,7 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
     double          req_time     = 0    ;
     double          avl_time     = 0    ;
     GateData*       gatePtr      = NULL ;
-    //-- Common Part (Only Cal) ---------------------------------------------
+    //-- Common Part (Calulation only, no printing) ---------------------------------------------
     for( long i = 0; i <= common; i++ )
     {
         clknode  = edClkPath.at(i) ;
@@ -3987,17 +4058,33 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
             DC_Com      = clknode->getDccType() ;
             DCC_R = DCC_L = 1 ;
             DCC_R_Type = DCC_L_Type = clknode->getDccType() ;
-            //-- Clknode is both inserted DCC and header
+            //-- Clknode is both inserted DCC and selected as leader
             if( clknode->getIfPlaceHeader() )
+            {
                 DCCLib_L = DCCLib_R = clknode->getVTAType() ;
-            //-- DCC is ahead of header
+                if( this->_dc_formulation )
+                {
+                    if(      DC_Com == 0.2 )     DC_Com = DC_20DCC  ;
+                    else if( DC_Com == 0.4 )     DC_Com = DC_40DCC  ;
+                    else if( DC_Com == 0.8 )     DC_Com = DC_80DCC  ;
+                }
+            }
+            //-- DCC is ahead of leader
             else if( !MeetVTA_Com )
                 DCCLib_L = DCCLib_R = -1 ;
-            //-- DCC is behind header
+            //-- DCC is behind leader
             else if( MeetVTA_Com )
+            {
                 DCCLib_L = DCCLib_R = LibIndex_Com ;
+                if( this->_dc_formulation )
+                {
+                    if(      DC_Com == 0.2 )     DC_Com = DC_20DCC  ;
+                    else if( DC_Com == 0.4 )     DC_Com = DC_40DCC  ;
+                    else if( DC_Com == 0.8 )     DC_Com = DC_80DCC  ;
+                }
+            }
         }
-        //-- First Meet Header -------------------------------------------------
+        //-- First Meet leader -------------------------------------------------
         if( !MeetVTA_Com && doDCCVTA && clknode->getIfPlaceHeader() ){
             MeetVTA_Com =  true ;
             LibIndex_Com=  clknode->getVTAType() ;
@@ -4036,15 +4123,30 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
             DC_right      = clknode->getDccType() ;
             DCC_R         = 1 ;
             DCC_R_Type    = clknode->getDccType();
-            //-- Clknode is both inserted DCC and header
+            //-- Clknode is both inserted DCC and selected as leader
             if( clknode->getIfPlaceHeader() )
+            {
                 DCCLib_R = clknode->getVTAType() ;
-            //-- DCC is ahead of header
+                if( this->_dc_formulation )
+                {
+                    if(      DC_right == 0.2 )    DC_right = DC_20DCC ;
+                    else if( DC_right == 0.4 )    DC_right = DC_40DCC  ;
+                    else if( DC_right == 0.8 )    DC_right = DC_80DCC  ;
+                }
+            }
+            //-- DCC is ahead of leader
             else if( !MeetVTA_right )
                 DCCLib_R = -1 ;
-            //-- DCC is behind header
-            else if( MeetVTA_right )
+            //-- DCC is behind leader
+            else if( MeetVTA_right ){
                 DCCLib_R = LibIndex_right ;
+                if( this->_dc_formulation )
+                {
+                    if(      DC_right == 0.2 )    DC_right = DC_20DCC ;
+                    else if( DC_right == 0.4 )    DC_right = DC_40DCC  ;
+                    else if( DC_right == 0.8 )    DC_right = DC_80DCC  ;
+                }
+            }
         }
         //-- First Meet Header -------------------------------------------------
         if( !MeetVTA_right && doDCCVTA && clknode->getIfPlaceHeader() ){
@@ -4079,9 +4181,9 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
         gatePtr  = clknode->getGateData() ;
         printClkNodeFeature( clknode, doDCCVTA );
         if( clknode->ifMasked() )
-            printf( "%s(%3ld,%.1f,%2d," GREEN"%f" RESET"," RED"X" RESET")---", gatePtr->getGateName().c_str() ,clknode->getNodeNumber(), clknode->getDC(), clknode->getVthType(),clknode->getBufTime() );
+            printf( "%s(%3ld,%.2f,%2d," GREEN"%f" RESET"," RED"X" RESET")---", gatePtr->getGateName().c_str() ,clknode->getNodeNumber(), clknode->getDC(), clknode->getVthType(),clknode->getBufTime() );
         else
-            printf( "%s(%3ld,%.1f,%2d," GREEN"%f" RESET"," GRN"O" RESET")---", gatePtr->getGateName().c_str() ,clknode->getNodeNumber(), clknode->getDC(), clknode->getVthType(),clknode->getBufTime() );
+            printf( "%s(%3ld,%.2f,%2d," GREEN"%f" RESET"," GRN"O" RESET")---", gatePtr->getGateName().c_str() ,clknode->getNodeNumber(), clknode->getDC(), clknode->getVthType(),clknode->getBufTime() );
     }
     printf( "  => " YELLOW"End " RESET"Clk Path\n");
     
@@ -4097,9 +4199,9 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
         printClkNodeFeature( clknode, doDCCVTA );
         
         if( clknode->ifMasked() )
-            printf( "%s(%3ld,%.1f,%2d," GREEN"%f" RESET"," RED"X" RESET")---", gatePtr->getGateName().c_str() ,clknode->getNodeNumber(), clknode->getDC(), clknode->getVthType(),clknode->getBufTime() );
+            printf( "%s(%3ld,%.2f,%2d," GREEN"%f" RESET"," RED"X" RESET")---", gatePtr->getGateName().c_str() ,clknode->getNodeNumber(), clknode->getDC(), clknode->getVthType(),clknode->getBufTime() );
         else
-            printf( "%s(%3ld,%.1f,%2d," GREEN"%f" RESET"," GRN"O" RESET")---", gatePtr->getGateName().c_str() ,clknode->getNodeNumber(), clknode->getDC(), clknode->getVthType(),clknode->getBufTime() );
+            printf( "%s(%3ld,%.2f,%2d," GREEN"%f" RESET"," GRN"O" RESET")---", gatePtr->getGateName().c_str() ,clknode->getNodeNumber(), clknode->getDC(), clknode->getVthType(),clknode->getBufTime() );
     }
     cout << endl ;
     
@@ -4131,13 +4233,29 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
             DCC_L_Type    = clknode->getDccType();
             //-- Clknode is both inserted DCC and header
             if( clknode->getIfPlaceHeader() )
+            {
                 DCCLib_L = clknode->getVTAType() ;
+                if( this->_dc_formulation )
+                {
+                    if(      DC_left == 0.2 )    DC_left = DC_20DCC ;
+                    else if( DC_left == 0.4 )    DC_left = DC_40DCC  ;
+                    else if( DC_left == 0.8 )    DC_left = DC_80DCC  ;
+                }
+            }
             //-- DCC is ahead of header
             else if( !MeetVTA_left )
                 DCCLib_L = -1 ;
             //-- DCC is behind header
             else if( MeetVTA_left )
+            {
                 DCCLib_L = LibIndex_left ;
+                if( this->_dc_formulation )
+                {
+                    if(      DC_left == 0.2 )    DC_left = DC_20DCC ;
+                    else if( DC_left == 0.4 )    DC_left = DC_40DCC  ;
+                    else if( DC_left == 0.8 )    DC_left = DC_80DCC  ;
+                }
+            }
         }
         //-- First Meet Header -------------------------------------------------
         if( !MeetVTA_left && doDCCVTA && clknode->getIfPlaceHeader() ){
@@ -4162,9 +4280,9 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
         printClkNodeFeature( clknode, doDCCVTA );
         
         if( clknode->ifMasked() )
-            printf( "%s(%3ld,%.1f,%d," GREEN"%.4f" RESET", " RED  "X" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_left, LibIndex_left, buftime );
+            printf( "%s(%3ld,%.2f,%d," GREEN"%.4f" RESET", " RED  "X" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_left, LibIndex_left, buftime );
         else
-            printf( "%s(%3ld,%.1f,%d," GREEN"%.4f" RESET", " GREEN"O" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_left, LibIndex_left, buftime );
+            printf( "%s(%3ld,%.2f,%d," GREEN"%.4f" RESET", " GREEN"O" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_left, LibIndex_left, buftime );
     }
     printf( "  => " YELLOW"Start " RESET"Clk Path\n");
         
@@ -4240,13 +4358,29 @@ void ClockTree::printPItoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
             DCC_R_Type    = clknode->getDccType();
             //-- Clknode is both inserted DCC and header
             if( clknode->getIfPlaceHeader() )
+            {
                 DCCLib_R = clknode->getVTAType() ;
-            //-- DCC is ahead of header
+                if( this->_dc_formulation )
+                {
+                    if(      DC_right == 0.2 ) DC_right = DC_20DCC ;
+                    else if( DC_right == 0.4 ) DC_right = DC_40DCC ;
+                    else if( DC_right == 0.8 ) DC_right = DC_80DCC ;
+                }
+            }
+            //-- DCC is ahead of leader
             else if( !MeetVTA_right )
                 DCCLib_R = -1 ;
-            //-- DCC is behind header
+            //-- DCC is behind leader
             else if( MeetVTA_right )
+            {
                 DCCLib_R = LibIndex_right ;
+                if( this->_dc_formulation )
+                {
+                    if(      DC_right == 0.2 ) DC_right = DC_20DCC ;
+                    else if( DC_right == 0.4 ) DC_right = DC_40DCC ;
+                    else if( DC_right == 0.8 ) DC_right = DC_80DCC ;
+                }
+            }
         }
         //-- First Meet Header -------------------------------------------------
         if( !MeetVTA_right && doDCCVTA && clknode->getIfPlaceHeader() ){
@@ -4269,9 +4403,9 @@ void ClockTree::printPItoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
         
         printClkNodeFeature( clknode, doDCCVTA );
         if( clknode->ifMasked() )
-            printf( "%s(%3ld,%.1f,%d," GREEN"%.4f" RESET"," RED"X" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_right, LibIndex_right, buftime );
+            printf( "%s(%3ld,%.2f,%d," GREEN"%.4f" RESET"," RED"X" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_right, LibIndex_right, buftime );
         else
-            printf( "%s(%3ld,%.1f,%d," GREEN"%.4f" RESET"," GRN"O" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_right, LibIndex_right, buftime );
+            printf( "%s(%3ld,%.2f,%d," GREEN"%.4f" RESET"," GRN"O" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_right, LibIndex_right, buftime );
     }
     printf( "=> " YELLOW"End " RESET"Clk Path\n");
         
@@ -4327,13 +4461,23 @@ void ClockTree::printFFtoPO_givFile( CriticalPath *path, bool doDCCVTA, bool agi
             DCC_L_Type    = clknode->getDccType();
             //-- Clknode is both inserted DCC and header
             if( clknode->getIfPlaceHeader() )
+            {
                 DCCLib_L = clknode->getVTAType() ;
+                if(      DC_left == 0.2 ) DC_left = DC_20DCC ;
+                else if( DC_left == 0.4 ) DC_left = DC_40DCC ;
+                else if( DC_left == 0.8 ) DC_left = DC_80DCC ;
+            }
             //-- DCC is ahead of header
             else if( !MeetVTA_left )
                 DCCLib_L = -1 ;
             //-- DCC is behind header
             else if( MeetVTA_left )
+            {
                 DCCLib_L = LibIndex_left ;
+                if(      DC_left == 0.2 ) DC_left = DC_20DCC ;
+                else if( DC_left == 0.4 ) DC_left = DC_40DCC ;
+                else if( DC_left == 0.8 ) DC_left = DC_80DCC ;
+            }
         }
         //-- First Meet Header -------------------------------------------------
         if( !MeetVTA_left && doDCCVTA && clknode->getIfPlaceHeader() ){
@@ -4356,9 +4500,9 @@ void ClockTree::printFFtoPO_givFile( CriticalPath *path, bool doDCCVTA, bool agi
         
         printClkNodeFeature( clknode, doDCCVTA );
         if( clknode->ifMasked() )
-            printf( "%s(%3ld,%.1f,%d," GREEN"%.4f" RESET"," RED"X" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_left, LibIndex_left, buftime );
+            printf( "%s(%3ld,%.2f,%d," GREEN"%.4f" RESET"," RED"X" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_left, LibIndex_left, buftime );
         else
-            printf( "%s(%3ld,%.1f,%d," GREEN"%.4f" RESET"," GRN"O" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_left, LibIndex_left, buftime );
+            printf( "%s(%3ld,%.2f,%d," GREEN"%.4f" RESET"," GRN"O" RESET")--", gatePtr->getGateName().c_str() , clknode->getNodeNumber(), DC_left, LibIndex_left, buftime );
     }
     printf( "=> " YELLOW"Start " RESET"Clk Path\n");
     //-- A DCC Exist along left clk path -----------------------------------------------------

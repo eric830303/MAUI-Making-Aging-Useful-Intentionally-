@@ -42,6 +42,7 @@ int main(int argc, char **argv)
             cout << "      -dcc_leader            Leader is in the downstream part of dcc\n";
             cout << "      -dump=SAT_CNF          Decode other CNF files and dump its DCC/VTA Deployment\n";
             cout << "      -print=path            Print the pipeline\n";
+            cout << "      -dc_for                formulat the situation that dcc impacted by leader\n";
             cout << "      -checkCNF              Check the DCC deployment with given CNF output file\n";
             cout << "      -checkFile             Check the DCC deployment with given DccVTA.txt \n";
             cout << "      -print=Clause          Dump clauses while execution\n";

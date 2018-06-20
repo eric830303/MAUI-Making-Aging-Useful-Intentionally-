@@ -24,6 +24,9 @@
 #define DCCDELAY50PA    (1.33)		// 50% DCC Delay
 #define DCCDELAY80PA    (1.67)		// 80% DCC Delay
 
+#define DC_20DCC        (0.22)
+#define DC_40DCC        (0.44)
+#define DC_80DCC        (0.83)
 #define PRECISION       (4)			// Precision of real number
 #define PATHMASKPERCENT (1.0)	    // Mask how many percentage of critical path (0~1)
 #define TenYear_Sec     (315360000)
@@ -41,8 +44,8 @@ using namespace std;
 struct VTH_TECH
 {
     double _VTH_OFFSET     ;//Vth offset due to technology
-    double _VTH_CONVGNT[4] ;//Convergent Vth value over a long period
-    double _Sv[8]          ;//Sv value of 20/40/50/80
+    double _VTH_CONVGNT[8] ;//Convergent Vth value over a long period
+    double _Sv[16]          ;//Sv value of 20/40/50/80
     VTH_TECH()
     {
         _VTH_OFFSET = _Sv[0] = _Sv[1] = _Sv[2] = _Sv[3] = 0.0 ;
@@ -59,7 +62,7 @@ class ClockTree
 {
 private:
 	int     _pathselect, _bufinsert, _gpupbound, _gplowbound, _minisatexecnum;
-	bool    _placedcc, _aging, _mindccplace, _tcrecheck, _clkgating, _dumpdcc, _dumpcg, _dumpbufins, _doVTA, _printpath, _dumpCNF, _checkCNF, _checkfile, _printClause, _calVTA, _dcc_leader ;
+	bool    _placedcc, _aging, _mindccplace, _tcrecheck, _clkgating, _dumpdcc, _dumpcg, _dumpbufins, _doVTA, _printpath, _dumpCNF, _checkCNF, _checkfile, _printClause, _calVTA, _dcc_leader, _dc_formulation ;
     bool    _usingSeniorAging, _printClkNode ;
 	long    _pathusednum, _pitoffnum, _fftoffnum, _fftoponum, _nonplacedccbufnum;
 	long    _totalnodenum, _ffusednum, _bufferusednum, _dccatlastbufnum;
@@ -89,8 +92,8 @@ private:
     double  _baseVthOffset  ;
     vector< VTH_TECH* > _VthTechList ;
     double  _exp            ;
-    double  _nominal_agr[4] ;
-    double  _HTV_agr[4]     ;
+    double  _nominal_agr[8] ;
+    double  _HTV_agr[8]     ;
 	bool ifSkipLine(string)                 ;
     bool AnotherSolution(void)              ;
 	void pathTypeChecking(void)             ;
@@ -119,7 +122,7 @@ public:
 			   _clktreeroot(nullptr), _firstchildrennode(nullptr), _mostcriticalpath(nullptr),
 			   _timingreport(""), _timingreportfilename(""), _timingreportloc(""), _timingreportdesign(""),_dumpCNF(false), _checkCNF(false), _checkfile(false),
 			   _cgfilename(""), _outputdir(""), _tcAfterAdjust(0), _printClause(false), _baseVthOffset(0), _exp(0.2),  _usingSeniorAging(false),
-               _printClkNode(false), _calVTA(false), _dcc_leader(false) {}
+               _printClkNode(false), _calVTA(false), _dcc_leader(false), _dc_formulation(false) {}
 	//-Destructor------------------------------------------------------------------
     ~ClockTree(void);
 	
