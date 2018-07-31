@@ -89,7 +89,7 @@ private:
     //VTA-related attribute
     int     _VTH_LIB_cnt    ;
     int     _FIN_CONV_Year  ;
-    long    Max_timing_count;
+    long long int Max_timing_count;
     double  _baseVthOffset  ;
     vector< VTH_TECH* > _VthTechList ;
     double  _exp            ;

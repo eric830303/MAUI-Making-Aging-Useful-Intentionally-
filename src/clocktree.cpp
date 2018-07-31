@@ -2034,8 +2034,8 @@ double ClockTree::timingConstraint_ndoDCC_ndoVTA( CriticalPath *path, bool updat
 	}
     if( _printClause ){
         if( newslack < 0 ) fprintf( this->fptr, "Path(%ld), stDCC(%.1f), edDCC(%.1f), stVTA(%d), edVTA(%d), slack = %f, %s \n", path->getPathNum(), -1.0, -1.0, -1, -1, newslack, clause.c_str() );
-        else
-            fprintf( this->fptr, "Path(%ld), stDCC(%.1f), edDCC(%.1f), stVTA(%d), edVTA(%d), slack = %f \n", path->getPathNum(), -1.0, -1.0, -1, -1, newslack  );
+        //else
+            //fprintf( this->fptr, "Path(%ld), stDCC(%.1f), edDCC(%.1f), stVTA(%d), edVTA(%d), slack = %f \n", path->getPathNum(), -1.0, -1.0, -1, -1, newslack  );
     }
     
     return newslack ;
@@ -2533,23 +2533,24 @@ double ClockTree::timingConstraint_givDCC_givVTA(   CriticalPath *path,
             this->_timingconstraintlist.insert(clause) ;
         else
             cerr << "\033[32m[Info]: Timing Constraint List Full!\033[0m\n";
+        
+        if( _printClause )
+        {
+            fprintf( this->fptr,"Path(%4ld), ", path->getPathNum() );
+            if( stDCCLoc )  fprintf( this->fptr,"stDCC (%4ld, %.1f ), ", stDCCLoc->getNodeNumber(), stDCCType  );
+            else            fprintf( this->fptr,"stDCC (%4d, %.1f ), ",                          -1, -1.0       );
+            if( edDCCLoc )  fprintf( this->fptr,"edDCC (%4ld, %.1f ), ", edDCCLoc->getNodeNumber(), edDCCType  );
+            else            fprintf( this->fptr,"edDCC (%4d, %.1f ), ",                          -1, -1.0       );
+            if( stHeader )  fprintf( this->fptr,"stVTA (%4ld, %2d ), ", stHeader->getNodeNumber(), stLibIndex );
+            else            fprintf( this->fptr,"stVTA (%4d, %2d ), ",                           -1, -1         );
+            if( edHeader )  fprintf( this->fptr,"edVTA (%4ld, %2d ), ", edHeader->getNodeNumber(), edLibIndex  );
+            else            fprintf( this->fptr,"edVTA (%4d, %2d ), ",                           -1, -1         );
+            
+            if( slack < 0 ) fprintf( this->fptr,"slk = %f: %s \n", slack, clause.c_str() );
+            else            fprintf( this->fptr,"slk = %f: %s \n", slack, " " );
+        }
     }//if( newslack < 0 )
     
-    if( _printClause )
-    {
-        fprintf( this->fptr,"Path(%4ld), ", path->getPathNum() );
-        if( stDCCLoc )  fprintf( this->fptr,"stDCC (%4ld, %.1f ), ", stDCCLoc->getNodeNumber(), stDCCType  );
-        else            fprintf( this->fptr,"stDCC (%4d, %.1f ), ",                          -1, -1.0       );
-        if( edDCCLoc )  fprintf( this->fptr,"edDCC (%4ld, %.1f ), ", edDCCLoc->getNodeNumber(), edDCCType  );
-        else            fprintf( this->fptr,"edDCC (%4d, %.1f ), ",                          -1, -1.0       );
-        if( stHeader )  fprintf( this->fptr,"stVTA (%4ld, %2d ), ", stHeader->getNodeNumber(), stLibIndex );
-        else            fprintf( this->fptr,"stVTA (%4d, %2d ), ",                           -1, -1         );
-        if( edHeader )  fprintf( this->fptr,"edVTA (%4ld, %2d ), ", edHeader->getNodeNumber(), edLibIndex  );
-        else            fprintf( this->fptr,"edVTA (%4d, %2d ), ",                           -1, -1         );
-        
-        if( slack < 0 ) fprintf( this->fptr,"slk = %f: %s \n", slack, clause.c_str() );
-        else            fprintf( this->fptr,"slk = %f: %s \n", slack, " " );
-    }
     return slack ;
 }
 
@@ -4967,6 +4968,7 @@ void ClockTree::printClauseCount()
     cout << "   Clause # of DCC constraints    :" << this->_dccconstraintlist.size() << "\n";
     cout << "   Clause # of Leader constraints :" << this->_VTAconstraintlist.size() << "\n";
     cout << "   Clause # of Timing constraints :" << this->Max_timing_count << "\n";
+    cout << this->_dccconstraintlist.max_size() << endl;
 }
 
 
