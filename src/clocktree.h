@@ -89,6 +89,7 @@ private:
     //VTA-related attribute
     int     _VTH_LIB_cnt    ;
     int     _FIN_CONV_Year  ;
+    long    Max_timing_count;
     double  _baseVthOffset  ;
     vector< VTH_TECH* > _VthTechList ;
     double  _exp            ;
@@ -122,7 +123,7 @@ public:
 			   _clktreeroot(nullptr), _firstchildrennode(nullptr), _mostcriticalpath(nullptr),
 			   _timingreport(""), _timingreportfilename(""), _timingreportloc(""), _timingreportdesign(""),_dumpCNF(false), _checkCNF(false), _checkfile(false),
 			   _cgfilename(""), _outputdir(""), _tcAfterAdjust(0), _printClause(false), _baseVthOffset(0), _exp(0.2),  _usingSeniorAging(false),
-               _printClkNode(false), _calVTA(false), _dcc_leader(false), _dc_formulation(false) {}
+               _printClkNode(false), _calVTA(false), _dcc_leader(false), _dc_formulation(false), Max_timing_count(0) {}
 	//-Destructor------------------------------------------------------------------
     ~ClockTree(void);
 	
@@ -293,6 +294,7 @@ public:
 	void    printClockGatingList(void);
 	void    printBufferInsertedList(void);
     void    printSpace(long common);
+    void    printClauseCount();
     //---Printer 2 ------------------------------------------------------------------
     void    printPath(void);
     void    printPath(int);

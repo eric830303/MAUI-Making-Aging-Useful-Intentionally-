@@ -2746,6 +2746,7 @@ void ClockTree::dumpClauseToCnfFile(void)
 		
         cnffile.close();
 	}
+    if( this->_timingconstraintlist.size() > this->Max_timing_count ) this->Max_timing_count = this->_timingconstraintlist.size() ;
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -4959,7 +4960,14 @@ bool ClockTree::checkDCCVTAConstraint_givPath( CriticalPath * path )
     return correct ;
 }
 
-
+void ClockTree::printClauseCount()
+{
+    cout << "---------------------------------------------------------------------------\n";
+    cout << " ***** CNF Clause count *****\n";
+    cout << "   Clause # of DCC constraints    :" << this->_dccconstraintlist.size() << "\n";
+    cout << "   Clause # of Leader constraints :" << this->_VTAconstraintlist.size() << "\n";
+    cout << "   Clause # of Timing constraints :" << this->Max_timing_count << "\n";
+}
 
 
 
