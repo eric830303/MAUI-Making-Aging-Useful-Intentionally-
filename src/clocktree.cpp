@@ -2744,10 +2744,11 @@ void ClockTree::dumpClauseToCnfFile(void)
         for( auto const& clause: this->_VTAconstraintlist )     {    cnffile << clause << "\n" ; }
 		//--- Timing constraint -------------------------------
         for( auto const& clause: this->_timingconstraintlist )  {    cnffile << clause << "\n" ; }
-		
+        printf( YELLOW"\t[------CNF--------] " RESET"Encoded as %s...\033[0m\n", cnfinput.c_str());
+		printf( YELLOW"\t[--Clause Count---] " RESET"Timing Constraint = %lu\n", this->_timingconstraintlist.size());
         cnffile.close();
 	}
-    if( this->_timingconstraintlist.size() > this->Max_timing_count ) this->Max_timing_count = this->_timingconstraintlist.size() ;
+    if( this->_timingconstraintlist.size() > this->Max_timing_count ) this->Max_timing_count = (long long int)(this->_timingconstraintlist.size()) ;
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -4968,7 +4969,7 @@ void ClockTree::printClauseCount()
     cout << "   Clause # of DCC constraints    :" << this->_dccconstraintlist.size() << "\n";
     cout << "   Clause # of Leader constraints :" << this->_VTAconstraintlist.size() << "\n";
     cout << "   Clause # of Timing constraints :" << this->Max_timing_count << "\n";
-    cout << this->_dccconstraintlist.max_size() << endl;
+    cout << "---------------------------------------------------------------------------\n";
 }
 
 

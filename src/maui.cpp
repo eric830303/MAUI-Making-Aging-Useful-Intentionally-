@@ -91,7 +91,7 @@ int main(int argc, char **argv)
 	
 	// Parameters storing execution time of each part of framework
 	chrono::steady_clock::time_point starttime, endtime, midtime;
-	chrono::duration<double> totaltime, preprocesstime, DccVTAconstrainttime, timingconstrainttime, sattime, checktime, bufinstime;
+	chrono::duration<double> totaltime, preprocesstime, DccVTAconstrainttime, timingconstrainttime, sattime, sattime2, checktime, bufinstime;
 	
 	cout << "\033[32m[Info]: Open the timing report file.\033[0m\n";
 	starttime = chrono::steady_clock::now();
@@ -214,7 +214,10 @@ int main(int argc, char **argv)
 		circuit.tcBinarySearch();
         //---- MiniSat Time -----------------------------
 		endtime = chrono::steady_clock::now();
-		sattime += chrono::duration_cast<chrono::duration<double>>(endtime - midtime);
+        sattime2 = chrono::duration_cast<chrono::duration<double>>(endtime - midtime);
+        sattime += sattime2;
+        cout<< YELLOW"\t[-MiniSAT (time)--] " << RESET"runtime: " << sattime2.count() << endl ;
+        
 		
 		if( prepretc == circuit.getTc() )
 			break;
