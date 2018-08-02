@@ -311,6 +311,7 @@ public:
     double  calConvergentVth( double dc , double Exp = 0.2 ) ;
     double  calSv( double dc, double VthOffset, double VthFin ) ;
     //---Other ----------------------------------------------------------------------
+    int     calBufChildSize( ClockTreeNode *buffer );
     bool    checkDCCVTAConstraint(void);
     bool    checkDCCVTAConstraint_givPath(CriticalPath*);
     void    readDCCVTAFile(void);

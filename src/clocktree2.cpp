@@ -290,81 +290,41 @@ void ClockTree::calVTABufferCountByFile()
 void ClockTree::calVTABufferCount()
 {
     vector<ClockTreeNode *> stClkPath, edClkPath ;
-    long  nominal_ctr = 0, HTV_ctr = 0 , HTV_DCC_ctr = 0 ;
-    for( auto const& path: this->_pathlist )
+    long HTV_ctr = 0 ;
+    
+    for( auto const &node: this->_VTAlist )
     {
-        stClkPath = path->getStartPonitClkPath() ;
-        edClkPath = path->getEndPonitClkPath()   ;
-        
-        if( stClkPath.size() > 0 )
-        {
-            bool meetLeader = false ;
-            for( auto const &clknode: stClkPath )
-            {
-                if( clknode == _clktreeroot || clknode->getVTACtr()  ) continue ;
-                else
-                {
-                    if( clknode->getIfPlaceHeader() ) meetLeader = true ;
-                    
-                    if( meetLeader )
-                    {
-                        if( clknode->ifPlacedDcc() ) HTV_DCC_ctr++ ;
-                        
-                        if( clknode->getVTACtr() == false )
-                        {
-                            clknode->setVTACtr( true ) ;
-                            HTV_ctr++       ;
-                        }
-                    }
-                    else
-                        if( !clknode->getVTACtr() )
-                        {
-                            clknode->setVTACtr( true ) ;
-                            nominal_ctr++   ;
-                        }
-                }
-            }
-        }
-        if( edClkPath.size() > 0 )
-        {
-            bool meetLeader = false ;
-            for( auto const &clknode: edClkPath )
-            {
-                if( clknode == _clktreeroot || clknode->getVTACtr()  ) continue ;
-                else
-                {
-                    if( clknode->getIfPlaceHeader() ) meetLeader = true ;
-                    
-                    if( meetLeader )
-                    {
-                        if( clknode->ifPlacedDcc() ) HTV_DCC_ctr++ ;
-                        
-                        if( clknode->getVTACtr() == false )
-                        {
-                            clknode->setVTACtr( true ) ;
-                            HTV_ctr++       ;
-                        }
-                    }
-                    else
-                        if( !clknode->getVTACtr() )
-                        {
-                            clknode->setVTACtr( true ) ;
-                            nominal_ctr++   ;
-                        }
-                }
-            }
-        }
+        HTV_ctr += calBufChildSize( node.second ) ;
     }
 
     printf( CYAN"[Info]" RST" Total FF        # = %ld \n", _ffsink.size()  );
     printf( CYAN"[Info]" RST" Total Clk Buf   # = %ld \n", _buflist.size() );
-    printf( CYAN"[Info]" RST" Nominal Clk Buf # = %ld \n",  nominal_ctr-_ffsink.size() );
-    printf( CYAN"[Info]" RST" HTV     Clk Buf # = %ld \n",  HTV_ctr );
-    printf( CYAN"[Info]" RST" HTV     DCC     # = %ld \n",  HTV_DCC_ctr );
+    //printf( CYAN"[Info]" RST" Nominal Clk Buf # = %ld \n",  nominal_ctr-_ffsink.size() );
+    printf( CYAN"[Info]" RST" HTV   Clk Buf   # = %ld \n",  HTV_ctr );
+    //printf( CYAN"[Info]" RST" HTV     DCC     # = %ld \n",  HTV_DCC_ctr );
     
 }
 
-
+int ClockTree::calBufChildSize( ClockTreeNode *buffer )
+{
+    if( buffer == NULL ) return 0 ;
+    
+    
+    //If buffer is flip-flop
+    auto it = _ffsink.find( buffer->getGateData()->getGateName() );
+    if( it != _ffsink.end() ) return 0 ;
+    printf( "%s (%ld)\n", buffer->getGateData()->getGateName().c_str(), buffer->getNodeNumber() ) ;
+    
+    if( buffer->getChildren().size() <= 0 ) return 0;
+    
+    int Descendants = 1;//(int)buffer->getChildren().size() ;
+    
+    for( auto const& child_buff: buffer->getChildren() )
+    {
+        Descendants += calBufChildSize( child_buff );
+    }
+    return Descendants ;
+}
 
 
 
