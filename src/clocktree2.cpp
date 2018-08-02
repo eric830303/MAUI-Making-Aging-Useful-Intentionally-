@@ -301,19 +301,27 @@ void ClockTree::calVTABufferCount()
             bool meetLeader = false ;
             for( auto const &clknode: stClkPath )
             {
-                if( clknode->getVTACtr() == false && clknode != _clktreeroot )
+                if( clknode == _clktreeroot || clknode->getVTACtr()  ) continue ;
+                else
                 {
-                    clknode->setVTACtr( true ) ;
-                    
                     if( clknode->getIfPlaceHeader() ) meetLeader = true ;
+                    
                     if( meetLeader )
                     {
                         if( clknode->ifPlacedDcc() ) HTV_DCC_ctr++ ;
-                        HTV_ctr++       ;
+                        
+                        if( clknode->getVTACtr() == false )
+                        {
+                            clknode->setVTACtr( true ) ;
+                            HTV_ctr++       ;
+                        }
                     }
                     else
-                        nominal_ctr++   ;
-                    
+                        if( !clknode->getVTACtr() )
+                        {
+                            clknode->setVTACtr( true ) ;
+                            nominal_ctr++   ;
+                        }
                 }
             }
         }
@@ -322,18 +330,27 @@ void ClockTree::calVTABufferCount()
             bool meetLeader = false ;
             for( auto const &clknode: edClkPath )
             {
-                if( clknode->getVTACtr() == false  && clknode != _clktreeroot  )
+                if( clknode == _clktreeroot || clknode->getVTACtr()  ) continue ;
+                else
                 {
-                    clknode->setVTACtr( true ) ;
-                    
                     if( clknode->getIfPlaceHeader() ) meetLeader = true ;
+                    
                     if( meetLeader )
                     {
                         if( clknode->ifPlacedDcc() ) HTV_DCC_ctr++ ;
-                        HTV_ctr++       ;
+                        
+                        if( clknode->getVTACtr() == false )
+                        {
+                            clknode->setVTACtr( true ) ;
+                            HTV_ctr++       ;
+                        }
                     }
                     else
-                        nominal_ctr++   ;
+                        if( !clknode->getVTACtr() )
+                        {
+                            clknode->setVTACtr( true ) ;
+                            nominal_ctr++   ;
+                        }
                 }
             }
         }
