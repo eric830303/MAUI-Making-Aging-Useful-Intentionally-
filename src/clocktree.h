@@ -220,6 +220,7 @@ public:
     
     //---Refine: Minimize DCC Count ------------------------------------------------
     void    minimizeDccPlacement(void);
+    void    minimizeLeader(void);
     
    
     //---DCC Constraint ------------------------------------------------------------

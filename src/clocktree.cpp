@@ -3040,7 +3040,7 @@ void ClockTree::minimizeDccPlacement(void)
 	cout << "\033[32m[Info]: Minimizing DCC Placement...\033[0m\n";
 	cout << "\033[32m    Before DCC Placement Minimization\033[0m\n";
 	this->printDccList();
-	map<string, ClockTreeNode *> dcclist = this->_dcclist;
+	map<string, ClockTreeNode *> dcclist = this->_dcclist;//Initialize redundant dcc list
 	map<string, ClockTreeNode *>::iterator finddccptr;
 	// Reserve the DCCs locate before the critical path dominating the optimal Tc
 	for(auto const& path: this->_pathlist)
@@ -3065,14 +3065,13 @@ void ClockTree::minimizeDccPlacement(void)
 		if( path == this->_mostcriticalpath)
 			break;
 	}
-	for(auto const& node: dcclist)
+	for(auto const& node: dcclist)//the dcclist is "redundant dcc list"?
 		node.second->setIfPlaceDcc(0);
 	this->_tc = this->_besttc;
 	// Greedy minimization
-	while(1)
+	while( true )
 	{
-		if(dcclist.empty())
-			break;
+		if( dcclist.empty()) break;
 		bool endflag = 1, findstartpath = 1;
 		// Reserve one of the rest of DCCs above if one of critical paths occurs timing violation
 		for(auto const& path: this->_pathlist)
@@ -3081,7 +3080,7 @@ void ClockTree::minimizeDccPlacement(void)
 				continue;
 			// Assess if the critical path occurs timing violation in the DCC deployment
 			double slack = this->UpdatePathTiming( path, false ) ;
-			if(slack < 0)
+			if( slack < 0 )
 			{
 				endflag = 0;
 				for(auto const& node: dcclist)
@@ -3110,8 +3109,7 @@ void ClockTree::minimizeDccPlacement(void)
 				break;
 			}
 		}
-		if(endflag)
-			break;
+		if( endflag ) break;
 	}
 	for(auto const& node: this->_dcclist)
 	{

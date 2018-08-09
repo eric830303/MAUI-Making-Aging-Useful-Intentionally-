@@ -291,17 +291,17 @@ void ClockTree::calVTABufferCount()
 {
     vector<ClockTreeNode *> stClkPath, edClkPath ;
     long HTV_ctr = 0 ;
-    
+    long HTV_ctr_2 = 0 ;
     for( auto const &node: this->_VTAlist )
     {
-        HTV_ctr += calBufChildSize( node.second ) ;
+        HTV_ctr_2 = calBufChildSize( node.second ) ;
+        HTV_ctr += HTV_ctr_2 ;
+        printf( "%s (%ld): %ld\n", node.second->getGateData()->getGateName().c_str(), node.second->getNodeNumber(), HTV_ctr_2 ) ;
     }
 
     printf( CYAN"[Info]" RST" Total FF        # = %ld \n", _ffsink.size()  );
     printf( CYAN"[Info]" RST" Total Clk Buf   # = %ld \n", _buflist.size() );
-    //printf( CYAN"[Info]" RST" Nominal Clk Buf # = %ld \n",  nominal_ctr-_ffsink.size() );
     printf( CYAN"[Info]" RST" HTV   Clk Buf   # = %ld \n",  HTV_ctr );
-    //printf( CYAN"[Info]" RST" HTV     DCC     # = %ld \n",  HTV_DCC_ctr );
     
 }
 
@@ -313,7 +313,7 @@ int ClockTree::calBufChildSize( ClockTreeNode *buffer )
     //If buffer is flip-flop
     auto it = _ffsink.find( buffer->getGateData()->getGateName() );
     if( it != _ffsink.end() ) return 0 ;
-    printf( "%s (%ld)\n", buffer->getGateData()->getGateName().c_str(), buffer->getNodeNumber() ) ;
+    //printf( "%s (%ld)\n", buffer->getGateData()->getGateName().c_str(), buffer->getNodeNumber() ) ;
     
     if( buffer->getChildren().size() <= 0 ) return 0;
     
@@ -326,7 +326,95 @@ int ClockTree::calBufChildSize( ClockTreeNode *buffer )
     return Descendants ;
 }
 
-
+void ClockTree::minimizeLeader(void)
+{
+    if( this->ifdoVTA() == false ) return;
+    printf("[Info] Remove Redundant Leader...\n");
+    printf("[Info] Before Leader Minimization:\n");
+    this->calVTABufferCount();
+    
+    map<string, ClockTreeNode *> redun_leader = this->_VTAlist;//Initialize the list of redundant leader
+    map<string, ClockTreeNode *>::iterator leaderitr;
+    
+    //Remove necessary leaders from the list of redundant leader.
+    for(auto const& path: this->_pathlist)
+    {
+        ClockTreeNode *st_leader = nullptr, *ed_leader = nullptr;
+        // If DCC locate in the clock path of startpoint
+        st_leader = path->findVTAInClockPath('s');
+        // If DCC locate in the clock path of endpoint
+        ed_leader = path->findVTAInClockPath('e');
+        if( st_leader != nullptr)
+        {
+            leaderitr = redun_leader.find( st_leader->getGateData()->getGateName() );
+            if( leaderitr != redun_leader.end() )
+                redun_leader.erase(leaderitr);
+        }
+        if( ed_leader != nullptr)
+        {
+            leaderitr = redun_leader.find( ed_leader->getGateData()->getGateName() );
+            if( leaderitr != redun_leader.end() )
+                redun_leader.erase(leaderitr);
+        }
+        if( path == this->_mostcriticalpath)
+            break;
+    }
+    
+    //Remove leaders from redundant leader list
+    for( auto const& node: redun_leader ) node.second->setIfPlaceHeader( false );
+    this->_tc = this->_besttc;
+    // Greedy minimization
+    while( true )
+    {
+        if( redun_leader.empty()) break;
+        bool endflag = 1, findstartpath = 1;
+        // Reserve one of the rest of DCCs above if one of critical paths occurs timing violation
+        for(auto const& path: this->_pathlist)
+        {
+            if((path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF))
+                continue;
+            // Assess if the critical path occurs timing violation in the DCC deployment
+            double slack = this->UpdatePathTiming( path, false ) ;
+            if( slack < 0 )
+            {
+                endflag = 0;
+                for( auto const& node: redun_leader )
+                    if( node.second->getIfPlaceHeader() )
+                        redun_leader.erase(node.first);
+                // Reserve the DCC locate in the clock path of endpoint
+                for(auto const& node: path->getEndPonitClkPath())
+                {
+                    leaderitr = redun_leader.find(node->getGateData()->getGateName());
+                    if(( leaderitr != redun_leader.end()) && !leaderitr->second->ifPlacedDcc())
+                    {
+                        leaderitr->second->setIfPlaceHeader(1);
+                        findstartpath = 0;
+                    }
+                }
+                // Reserve the DCC locate in the clock path of startpoint
+                if(findstartpath)
+                {
+                    for(auto const& node: path->getStartPonitClkPath())
+                    {
+                        leaderitr = redun_leader.find(node->getGateData()->getGateName());
+                        if((leaderitr != redun_leader.end()) && !leaderitr->second->ifPlacedDcc())
+                            leaderitr->second->setIfPlaceHeader(1);
+                    }
+                }
+                break;
+            }
+        }
+        if( endflag ) break;
+    }
+    for(auto const& node: this->_VTAlist )
+    {
+        if( !node.second->getIfPlaceHeader())
+        {
+            node.second->setVTAType(-1);
+            this->_VTAlist.erase(node.first);
+        }
+    }
+}
 
 
 

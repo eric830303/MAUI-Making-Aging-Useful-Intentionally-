@@ -270,6 +270,7 @@ int main(int argc, char **argv)
 	cout << "   Finally check         : " << checktime.count() << "\n";
 	cout << "   Buffer insertion      : " << bufinstime.count() << "\n";
     circuit.printClauseCount();
+    circuit.minimizeLeader();
     circuit.calVTABufferCount() ;
     circuit.dumpDccVTALeaderToFile() ;//circuit.dumpToFile();
 	circuit.~ClockTree();
