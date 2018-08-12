@@ -219,8 +219,9 @@ public:
     void    minimizeBufferInsertion(void);
     
     //---Refine: Minimize DCC Count ------------------------------------------------
-    void    minimizeDccPlacement(void);
+    void    minimizeDccPlacement(void);//Actually, minimal rather than minimum
     void    minimizeLeader(void);
+    void    minimizeLeader2(double tc = 0); //minimum
     
    
     //---DCC Constraint ------------------------------------------------------------
@@ -327,9 +328,11 @@ public:
     void    printClockNode(void);
     void    printClockNode(ClockTreeNode*, int layer = 0 );
     void    checkCNF(void);
-    void    calVTABufferCount();
+    long    calVTABufferCount(bool print=false);
     void    calVTABufferCountByFile();
     bool    clauseJudgement( vector<string>&, bool * );
+    bool    SolveCNFbyMiniSAT( double tc, bool ifDeploy=false );
+    void    EncodeDccLeader( double tc );
     ClockTreeNode *searchClockTreeNode(string);
     ClockTreeNode *searchClockTreeNode(long);
     vector<CriticalPath *> searchCriticalPath(char, string);

@@ -287,22 +287,22 @@ void ClockTree::calVTABufferCountByFile()
     calVTABufferCount() ;
 }
 
-void ClockTree::calVTABufferCount()
+long ClockTree::calVTABufferCount(bool print)
 {
     vector<ClockTreeNode *> stClkPath, edClkPath ;
     long HTV_ctr = 0 ;
     long HTV_ctr_2 = 0 ;
+    
+    if( print ) printf( GRN"[2.HTV Buf Leader Selection] " RST"\n" );
+
     for( auto const &node: this->_VTAlist )
     {
         HTV_ctr_2 = calBufChildSize( node.second ) ;
         HTV_ctr += HTV_ctr_2 ;
-        printf( "%s (%ld): %ld\n", node.second->getGateData()->getGateName().c_str(), node.second->getNodeNumber(), HTV_ctr_2 ) ;
+        if( print ) printf( "\t%s(%ld): %ld\n", node.second->getGateData()->getGateName().c_str(), node.second->getNodeNumber(), HTV_ctr_2 ) ;
     }
-
-    printf( CYAN"[Info]" RST" Total FF        # = %ld \n", _ffsink.size()  );
-    printf( CYAN"[Info]" RST" Total Clk Buf   # = %ld \n", _buflist.size() );
-    printf( CYAN"[Info]" RST" HTV   Clk Buf   # = %ld \n",  HTV_ctr );
-    
+    if( print ) printf( RST"\t==> Clk Buf HTV/Total = " RED"%ld" RST"/%ld\n",  HTV_ctr, _buflist.size() );
+    return HTV_ctr ;
 }
 
 int ClockTree::calBufChildSize( ClockTreeNode *buffer )
@@ -326,12 +326,22 @@ int ClockTree::calBufChildSize( ClockTreeNode *buffer )
     return Descendants ;
 }
 
+
+/*----------------------------------------------------------------------------------
+ Func:
+    minimizeLeader
+ Intro:
+    Actually, the function minimalize the leader count
+ -----------------------------------------------------------------------------------*/
 void ClockTree::minimizeLeader(void)
 {
     if( this->ifdoVTA() == false ) return;
-    printf("[Info] Remove Redundant Leader...\n");
-    printf("[Info] Before Leader Minimization:\n");
-    this->calVTABufferCount();
+    
+    //cout << "\n---------------------------------------------------------------------------\n";
+    //printf( YELLOW"[---Refinement2---] " RST"Leader count minimalization\n");
+    //printf("[Info] Before Leader Minimization:\n");
+    
+    //this->calVTABufferCount(true);
     
     map<string, ClockTreeNode *> redun_leader = this->_VTAlist;//Initialize the list of redundant leader
     map<string, ClockTreeNode *>::iterator leaderitr;
@@ -414,10 +424,205 @@ void ClockTree::minimizeLeader(void)
             this->_VTAlist.erase(node.first);
         }
     }
+    //printf("[Info] After Leader Minimization:\n");
+    //this->calVTABufferCount(true);
+}
+
+bool ClockTree::SolveCNFbyMiniSAT( double tc, bool ifDeploy )
+{
+    string cnfinput = this->_outputdir + "cnfinput_" + to_string( tc );
+    // MiniSat output file
+    string cnfoutput = this->_outputdir + "cnfoutput_" + to_string( tc );
+    if( !isDirectoryExist(this->_outputdir) ) mkdir(this->_outputdir.c_str(), 0775);
+    //----- Call MiniSAT -----------------------------------------------
+    if( isFileExist(cnfinput) )
+    {
+        pid_t childpid = fork();
+        if( childpid == -1 )    cerr << RED"[Error]: Cannot fork child process!\033[0m\n";
+        else if( childpid == 0 )
+        {
+            // Child process
+            string minisatfile = this->_outputdir + "minisat_output";
+            int fp = open(minisatfile.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0664);
+            if( fp == -1) cerr << RED"[Error]: Cannot dump the executive output of minisat!\033[0m\n";
+            else
+            {
+                dup2(fp, STDOUT_FILENO);
+                dup2(fp, STDERR_FILENO);
+                close(fp);
+            }
+            if( execlp("./minisat", "./minisat", cnfinput.c_str(), cnfoutput.c_str(), (char *)0) == -1 )
+            {
+                cerr << RED"[Error]: Cannot execute minisat!\033[0m\n";
+                this->_minisatexecnum--;
+            }
+            exit(0);
+        }
+        else
+        {
+            // Parent process
+            int exitstatus;
+            waitpid(childpid, &exitstatus, 0);
+        }
+    }
+    else return 0;
+        
+    //----- See result from the output returned from MiniSAT -----------------------------------------------
+    fstream cnffile;
+    string line;
+    if( !isFileExist(cnfoutput) ) return false;
+    
+    cnffile.open(cnfoutput, ios::in);
+    if( !cnffile.is_open() )
+    {
+        cerr << RED"\t[Error]: Cannot open " << cnfoutput << "\033[0m\n";
+        cnffile.close();
+        return false;
+    }
+    getline(cnffile, line);
+    
+    //------ Check SAT/UNSAT --------------------------------------------------------------
+    //If SAT, decoding the DCC deployment and leader selection
+    if((line.size() == 5) && (line.find("UNSAT") != string::npos))    return false ;
+    else if((line.size() == 3) && (line.find("SAT") != string::npos))
+    {
+        if( !ifDeploy ) return true ;
+        
+        //-- Init -------------------------------------------------------------------------
+        this->_dcclist.clear();
+        this->_VTAlist.clear();
+        for( auto const& node: this->_buflist )
+        {
+            node.second->setIfPlaceDcc(0)   ;
+            node.second->setDccType(0) ;
+            node.second->setIfPlaceHeader(0);
+            node.second->setVTAType(-1);
+        }
+        getline(cnffile, line) ;
+        vector<string> strspl = stringSplit(line, " ");
+        //------ Clk Node Iteration ---------------------------------------------------
+        for( long loop = 0; ; loop += 3 /*2*/ )
+        {
+            if( stoi( strspl[loop] ) == 0 ) break ;
+            
+            //-- Put DCC --------------------------------------------------------------
+            if( ( stoi(strspl.at(loop)) > 0) || (stoi(strspl.at(loop + 1)) > 0)  )
+            {
+                ClockTreeNode *findnode = this->searchClockTreeNode(abs(stoi(strspl.at(loop))));
+                    
+                if( findnode != nullptr )
+                {
+                    findnode->setIfPlaceDcc(1)      ;
+                    findnode->setDccType(stoi(strspl.at(loop)), stoi(strspl.at(loop + 1)));
+                    this->_dcclist.insert(pair<string, ClockTreeNode *> (findnode->getGateData()->getGateName(), findnode));
+                }
+                else
+                    cerr << "[Error] Clock node mismatch, when decoing DCC and Solution exist!\n" ;
+            }
+            //-- Put Header ------------------------------------------------------------
+            if( stoi(strspl.at(loop+2)) > 0 )
+            {
+                ClockTreeNode *findnode = this->searchClockTreeNode(abs(stoi(strspl.at(loop))));
+                    
+                if( findnode != nullptr )
+                {
+                    findnode->setIfPlaceHeader(1);
+                    findnode->setVTAType(0);
+                    this->_VTAlist.insert(pair<string, ClockTreeNode *> (findnode->getGateData()->getGateName(), findnode));
+                }
+                else
+                    cerr << "[Error] Clock node mismatch, when decoing VTA and Solution exist!\n" ;
+            }
+        }
+        cnffile.close() ;
+        double minslack = 9999;
+        for( auto const& path: this->_pathlist )
+        {
+            if((path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF))
+                continue;
+            // Update timing information
+            double slack = this->UpdatePathTiming( path, true, true, true );
+                
+            if( slack < minslack )
+            {
+                this->_mostcriticalpath = path;
+                minslack = min( slack, minslack );
+            }
+        }
+        return true ;
+    }//elif SAT
+    return false;
+}
+
+void ClockTree::EncodeDccLeader( double tc )
+{
+    fstream cnffile ;
+    string cnfinput = this->_outputdir + "cnfinput_" + to_string( tc );
+    if( !isDirectoryExist(this->_outputdir) )
+        mkdir(this->_outputdir.c_str(), 0775);
+    if( isFileExist(cnfinput) )
+    {
+        cnffile.open(cnfinput, ios::out | fstream::app );
+        if( !cnffile.is_open() )
+        {
+            cerr << RED"\t[Error]: Cannot open " << cnfinput << "\033[0m\n";
+            cnffile.close();
+            return;
+        }
+        //------- Encding --------------------
+        string clause = "";
+        for( auto const& node: this->_buflist )
+        {
+            if( node.second->getIfPlaceHeader() || node.second->ifPlacedDcc() )
+            {
+                writeClause_givDCC( clause, node.second, node.second->getDccType() );
+                writeClause_givVTA( clause, node.second, node.second->getVTAType() );
+            }
+        }
+        cnffile << clause << "0 \n" ;
+        cnffile.close();
+    }
+    else
+        cerr << RED"\t[Error]: No such a file named " << cnfinput << RESET << endl ;
 }
 
 
-
+void ClockTree::minimizeLeader2( double tc )
+{
+    if( tc == 0 ) tc = this->_besttc ;
+    long least_HTV_buf_ctr = 9999999 ;
+    long HTV_buf_ctr = 0 ;
+    long Bad_Result_ctr = 0 ;
+    long refine_ctr = 1;
+    
+    while( true )
+    {
+        EncodeDccLeader( tc );
+        
+        if( !SolveCNFbyMiniSAT( this->_besttc, false ) || Bad_Result_ctr > 300 ) break;
+        else
+        {
+            SolveCNFbyMiniSAT( this->_besttc, true );
+            HTV_buf_ctr = calVTABufferCount();
+            if( HTV_buf_ctr < least_HTV_buf_ctr )
+            {
+                cout << "---------------------------------------------------------------------------\n";
+                printf( YELLOW"[---Refinement---] " RST"%ld st CNF Reversion\n", refine_ctr );
+                printf( GRN"[1.DCC Deployment] " RST"\n" );
+                for( auto const& node: this->_dcclist )
+                    cout << "\t" << node.first << "(" << node.second->getNodeNumber()<< "): " << node.second->getDccType() << endl ;
+                cout << "\t==> DCC Ctr = " << RED << this->_dcclist.size() << RST << endl ;
+                
+                this->minimizeLeader();
+                least_HTV_buf_ctr = calVTABufferCount(true);
+                this->dumpDccVTALeaderToFile();
+            }
+            else
+                Bad_Result_ctr++ ;
+        }
+        refine_ctr++;
+    }//while
+}
 
 
 

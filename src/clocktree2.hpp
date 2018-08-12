@@ -23,4 +23,6 @@
 #include <fstream>
 #include <sstream>
 #include "clocktree.h"
+#include <fcntl.h>
+#include <sys/wait.h>
 #endif /* clocktree2_hpp */

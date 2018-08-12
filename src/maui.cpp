@@ -244,6 +244,7 @@ int main(int argc, char **argv)
 	bufinstime = chrono::duration_cast<chrono::duration<double>>(endtime - midtime);
 	totaltime = chrono::duration_cast<chrono::duration<double>>(endtime - starttime);
     
+    circuit.minimizeLeader2(0);
 	cout << "---------------------------------------------------------------------------\n";
 	cout << "\t*** # of most critical path        : " << circuit.getMostCriticalPath()->getPathNum();
     cout << " (" ;
@@ -270,10 +271,8 @@ int main(int argc, char **argv)
 	cout << "   Finally check         : " << checktime.count() << "\n";
 	cout << "   Buffer insertion      : " << bufinstime.count() << "\n";
     circuit.printClauseCount();
-    circuit.minimizeLeader();
-    circuit.calVTABufferCount() ;
-    circuit.dumpDccVTALeaderToFile() ;//circuit.dumpToFile();
-	circuit.~ClockTree();
+    //circuit.dumpDccVTALeaderToFile() ;//circuit.dumpToFile();
+	//circuit.~ClockTree();
 	
 	exit(0);
 }
