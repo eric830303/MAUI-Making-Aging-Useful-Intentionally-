@@ -606,22 +606,57 @@ void ClockTree::minimizeLeader2( double tc )
             HTV_buf_ctr = calVTABufferCount();
             if( HTV_buf_ctr < least_HTV_buf_ctr )
             {
+                this->_DccLeaderset.clear() ;
+                this->minimizeLeader();
+                least_HTV_buf_ctr = calVTABufferCount();
                 cout << "---------------------------------------------------------------------------\n";
                 printf( YELLOW"[---Refinement---] " RST"%ld st CNF Reversion\n", refine_ctr );
                 printf( GRN"[1.DCC Deployment] " RST"\n" );
-                for( auto const& node: this->_dcclist )
-                    cout << "\t" << node.first << "(" << node.second->getNodeNumber()<< "): " << node.second->getDccType() << endl ;
-                cout << "\t==> DCC Ctr = " << RED << this->_dcclist.size() << RST << endl ;
-                
-                this->minimizeLeader();
-                least_HTV_buf_ctr = calVTABufferCount(true);
-                this->dumpDccVTALeaderToFile();
+                for( auto const& node: this->_buflist )
+                {
+                    ClockTreeNode* buf = node.second ;
+                    if( buf->ifPlacedDcc() )    printf("\t%s(%ld):%2.1f\n", node.first.c_str(), buf->getNodeNumber(), buf->getDccType());
+                    if( buf->ifPlacedDcc() || buf->getIfPlaceHeader()  )    this->_DccLeaderset.insert( tuple<ClockTreeNode*,double,int>(buf,buf->getDccType(),buf->getVTAType()));
+                }
+                printf("\t==> DCC Ctr = " RED"%ld" RST"\n", this->_dcclist.size() );
+                calVTABufferCount(true);//print Leader
             }
             else
                 Bad_Result_ctr++ ;
         }
         refine_ctr++;
     }//while
+    
+    //Recover the DCC/Leader deployment to the best one
+    //Init
+    this->_dcclist.clear();
+    this->_VTAlist.clear();
+    for( auto const& node: this->_buflist )
+    {
+        node.second->setIfPlaceDcc(0)   ;
+        node.second->setDccType(0) ;
+        node.second->setIfPlaceHeader(0);
+        node.second->setVTAType(-1);
+    }
+    
+    for( auto const& node: this->_DccLeaderset )
+    {
+        ClockTreeNode *buf = get<0>(node);
+        double     Dcctype = get<1>(node);
+        int        HTVtype = get<2>(node);
+        if( Dcctype != 0 && Dcctype != 0.5 )
+        {
+            buf->setIfPlaceDcc(1);
+            buf->setDccType(Dcctype);
+            this->_dcclist.insert(pair<string, ClockTreeNode *> (buf->getGateData()->getGateName(), buf));
+        }
+        if( HTVtype != -1 )
+        {
+            buf->setIfPlaceHeader(1);
+            buf->setVTAType(HTVtype);
+            this->_VTAlist.insert(pair<string, ClockTreeNode *> (buf->getGateData()->getGateName(), buf));
+        }
+    }
 }
 
 

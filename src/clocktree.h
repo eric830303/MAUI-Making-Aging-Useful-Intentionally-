@@ -81,9 +81,10 @@ private:
 	CriticalPath    *_mostcriticalpath;
 	vector<CriticalPath *> _pathlist;
 	map<string, ClockTreeNode *> _ffsink, _buflist, _cglist, _dcclist, _VTAlist ;
+    set< tuple<ClockTreeNode*,double,int>  > _DccLeaderset;
     set< pair<ClockTreeNode*,ClockTreeNode*> > _setVTALeader ;
     set< pair<int,int> > _setDCC ;
-    //Constraint-related attribute
+    
 	set<string> _VTAconstraintlist, _dccconstraintlist, _timingconstraintlist;
 	
     //VTA-related attribute
