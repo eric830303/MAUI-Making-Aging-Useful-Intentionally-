@@ -91,22 +91,19 @@ int main(int argc, char **argv)
 	
 	// Parameters storing execution time of each part of framework
 	chrono::steady_clock::time_point starttime, endtime, midtime;
-	chrono::duration<double> totaltime, preprocesstime, DccVTAconstrainttime, timingconstrainttime, sattime, sattime2, checktime, bufinstime;
+	chrono::duration<double> totaltime, preprocesstime, DccVTAconstrainttime, timingconstrainttime, sattime, sattime2, minitime, bufinstime;
 	
-	cout << "\033[32m[Info]: Open the timing report file.\033[0m\n";
+    printf( YELLOW"[Parser]" RST" Reading timing report...\n" );
 	starttime = chrono::steady_clock::now();
 	//---- Parse *.rpt -----------------------------------------------
 	circuit.parseTimingReport();
-	cout << "\033[32m[Info]: Close the timing report file.\033[0m\n";
-    
-    
     
 	//---- CLK Gating ------------------------------------------------
     //1. Replace some buffers in the clock tree to clock gating cells
 	circuit.clockGatingCellReplacement();
-	cout << "\033[32m[Info]: Adjusting original Tc...\033[0m\n";
     
     //---- Tc Adjust --------------------------------------------------
+    printf( YELLOW"[Setting]" RST" Adjusting original Tc...\n" );
 	circuit.adjustOriginTc();
 	endtime = chrono::steady_clock::now();
 	preprocesstime = chrono::duration_cast<chrono::duration<double>>(endtime - starttime);
@@ -122,7 +119,7 @@ int main(int argc, char **argv)
     if( circuit.ifCheckCNF() ){
         circuit.checkCNF() ;
         return 0 ;
-    }
+}
     //-------- Check Timing with given DccVTA.txt ---------------------
     if( circuit.ifCheckFile() ){
         circuit.CheckTiming_givFile() ;
@@ -143,43 +140,21 @@ int main(int argc, char **argv)
         circuit.printClockNode();
         return 0;
     }
-	cout << "---------------------------------------------------------------------------\n";
-
-	chrono::system_clock::time_point nowtime = chrono::system_clock::now();
-	time_t tt = chrono::system_clock::to_time_t(nowtime);
-	cout << "\t*** Time                           : " << ctime(&tt);
-	cout << "\t*** Timing report                  : " << circuit.getTimingReportFileName()                              << "\n";
-	cout << "\t*** Timing report location         : " << circuit.getTimingReportLocation()                              << "\n";
-	cout << "\t*** Timing report design           : " << circuit.getTimingReportDesign()                                << "\n";
-	cout << "\t*** Tc in timing report (Origin)   : " << circuit.getOriginTc()                                          << "\n";
-	cout << "\t*** Total critical paths           : " << circuit.getTotalPathNumber()                                   << "\n";
-	cout << "\t*** # of critical paths in used    : " << circuit.getPathUsedNumber()                                    << "\n";
-	cout << "\t*** # of PI to FF paths            : " << circuit.getPiToFFNumber()                                      << "\n";
-	cout << "\t*** # of FF to PO paths            : " << circuit.getFFToPoNumber()                                      << "\n";
-	cout << "\t*** # of FF to FF paths            : " << circuit.getFFToFFNumber()                                      << "\n";
-	cout << "\t*** Clock tree level (max)         : " << circuit.getMaxTreeLevel()                                      << "\n";
-	cout << "\t*** Total clock tree nodes         : " << circuit.getTotalNodeNumber()                                   << "\n";
-	cout << "\t*** Total # of FF nodes            : " << circuit.getTotalFFNumber()                                     << "\n";
-	cout << "\t*** Total # of clock buffer nodes  : " << circuit.getTotalBufferNumber()                                 << "\n";
-	cout << "\t*** # of FF nodes in used          : " << circuit.getFFUsedNumber()                                      << "\n";
-	cout << "\t*** # of clock buffer nodes in used: " << circuit.getBufferUsedNumber()                                  << "\n";
-	cout << "\t*** No. last same parent           : " << circuit.getFirstChildrenNode()->getGateData()->getGateName();
-	cout << " ("                                      << circuit.getFirstChildrenNode()->getNodeNumber()                << ")\n";
-	cout << "\t*** # of clock gating cells        : " << circuit.getTotalClockGatingNumber()                            << "\n";
-	circuit.printClockGatingList();
-	cout << "---------------------------------------------------------------------------\n";
-	
-	cout << "\033[32m[Info]: Analyzing DCC Constraint...\033[0m\n";
-	midtime = chrono::steady_clock::now();
     
-    //-------- Remove CNF file --------------------------------------------------------------
+    
+	cout << "---------------------------------------------------------------------------\n";
+    //-------- Remove CNF file ------------------------------------------------------------
     circuit.removeCNFFile() ;
+    midtime = chrono::steady_clock::now();
 	//-------- Constraint -----------------------------------------------------------------
 	//1.
+    printf( YELLOW"[HTV Buf Leader Constraint]" RST" Analyze leader constraint and corresponding clauses\n" );
     circuit.VTAConstraint();
     //2.
+    printf( YELLOW"[DCC Constraint]" RST" Analyze DCC constraint and corresponding clauses\n" );
     circuit.dccConstraint();
     //3.
+    printf( YELLOW"[DCC-Leader Constraint]" RST" Analyze DCC-leader constraint and corresponding clauses\n" );
     circuit.DCCLeaderConstraint();
     endtime = chrono::steady_clock::now();
     DccVTAconstrainttime = chrono::duration_cast<chrono::duration<double>>(endtime - midtime);
@@ -191,7 +166,7 @@ int main(int argc, char **argv)
     
     
     //-------- Binary Search -------------------------
-	printf( GREEN"[Info]: Analyzing Timing Constraint and Searching Optimal Tc...\033[0m\n" );
+	printf( YELLOW"[Binary Search for Tc]" RST" Analyzing Timing Constraint and Searching Optimal Tc...\033[0m\n" );
 	double pretc = 0, prepretc = 0;
 	while( 1 )
 	{
@@ -223,17 +198,18 @@ int main(int argc, char **argv)
 			break;
 	}
 	
-	midtime = chrono::steady_clock::now();
-	cout << "\033[32m[Info]: Updating Timing Information of Each Path...\033[0m\n";
-	// Update the timing of each critical path with given "Optimal tc"
+    //4. Update the timing of each critical path with given "Optimal tc"
+    printf( YELLOW"[Update]" RST"Update path timing (formally DCC deployment and leader selection)\n" );
 	circuit.updateAllPathTiming();
-	// Minimize DCC deploymentwhere
+    
+    
+    //5. Minimize DCC deploymentwhere
+    midtime = chrono::steady_clock::now();
+    printf( YELLOW"[Overhead Minimization]" RST"Minimize DCC # and HTV buf #\n" );
 	circuit.minimizeDccPlacement();
-	// Recheck the "Optimal tc"
-    cout << "\033[32m[Info]: Tc recheck...\033[0m\n";
-	circuit.tcRecheck();
+    circuit.minimizeLeader2(0);
 	endtime = chrono::steady_clock::now();
-	checktime = chrono::duration_cast<chrono::duration<double>>(endtime - midtime);
+	minitime = chrono::duration_cast<chrono::duration<double>>(endtime - midtime);
 	
 	midtime = chrono::steady_clock::now();
 	// Insert buffers with the given "optimal Tc"
@@ -244,34 +220,20 @@ int main(int argc, char **argv)
 	bufinstime = chrono::duration_cast<chrono::duration<double>>(endtime - midtime);
 	totaltime = chrono::duration_cast<chrono::duration<double>>(endtime - starttime);
     
-    circuit.minimizeLeader2(0);
-	cout << "---------------------------------------------------------------------------\n";
-	cout << "\t*** # of most critical path        : " << circuit.getMostCriticalPath()->getPathNum();
-    cout << " (" ;
-    circuit.getMostCriticalPath()->coutPathType();
-    cout << ", " << circuit.getMostCriticalPath()->getStartPointName();
-	cout << " -> " << circuit.getMostCriticalPath()->getEndPointName() << ")\n";
-	cout << "\t*** Minimal slack                  : " << circuit.getMostCriticalPath()->getSlack() << "\n";
-	cout << "\t*** Optimal tc                     : \033[36m" << circuit.getBestTc() << "\033[0m\n";
-	if(circuit.ifPlaceDcc())
-	{
-		cout << "\t*** # of minisat executions        : " << circuit.getMinisatExecuteNumber() << "\n";
-		cout << "\t*** # of DCC condidates            : " << circuit.getTotalBufferNumber() - circuit.getNonPlacedDccBufferNumber() << "\n";
-	}
-	circuit.printDccList();
-	circuit.printBufferInsertedList();
-    circuit.printVTAList();
-	cout << "---------------------------------------------------------------------------\n";
-	cout << " ***** Execution time (unit: s) *****\n";
-	cout << "   Total                 : " << totaltime.count() << "\n";
-	cout << "   Parser & Preprocessing: " << preprocesstime.count() << "\n";
-	cout << "   DCC & VTA constraint  : " << DccVTAconstrainttime.count() << "\n";
-	cout << "   Timing constraint     : " << timingconstrainttime.count() << "\n";
-	cout << "   MiniSAT & Search      : " << sattime.count() << "\n";
-	cout << "   Finally check         : " << checktime.count() << "\n";
-	cout << "   Buffer insertion      : " << bufinstime.count() << "\n";
-    circuit.printClauseCount();
-    //circuit.dumpDccVTALeaderToFile() ;//circuit.dumpToFile();
+   
+    circuit.tcRecheck();
+    circuit.printFinalResult();
+    cout << "---------------------------------------------------------------------------\n";
+    cout << " ***** Execution time (unit: s) *****\n";
+    cout << " \tTotal                 : " << totaltime.count() << "\n";
+    cout << " \tParser & Preprocessing: " << preprocesstime.count() << "\n";
+    cout << " \tDCC & VTA constraint  : " << DccVTAconstrainttime.count() << "\n";
+    cout << " \tTiming constraint     : " << timingconstrainttime.count() << "\n";
+    cout << " \tMiniSAT & Search      : " << sattime.count() << "\n";
+    cout << " \tOverhead reduction    : " << minitime.count() << "\n";
+    cout << " \tBuffer insertion      : " << bufinstime.count() << "\n";
+    circuit.dumpDccVTALeaderToFile() ;//circuit.dumpToFile();
+    circuit.printPathCriticality();
 	//circuit.~ClockTree();
 	
 	exit(0);

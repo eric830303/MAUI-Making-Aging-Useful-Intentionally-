@@ -2744,7 +2744,6 @@ void ClockTree::dumpClauseToCnfFile(void)
         for( auto const& clause: this->_VTAconstraintlist )     {    cnffile << clause << "\n" ; }
 		//--- Timing constraint -------------------------------
         for( auto const& clause: this->_timingconstraintlist )  {    cnffile << clause << "\n" ; }
-        printf( YELLOW"\t[------CNF--------] " RESET"Encoded as %s...\033[0m\n", cnfinput.c_str());
 		printf( YELLOW"\t[--Clause Count---] " RESET"Timing Constraint = %lu\n", this->_timingconstraintlist.size());
         cnffile.close();
 	}
@@ -2939,17 +2938,7 @@ void ClockTree::updateAllPathTiming(void)
             for( long loop = 0; ; loop += 3 /*2*/ )
             {
                 //-- End of CNF -----------------------------------------------------------
-                //cout << loop << endl ;
-                if( strspl[loop] == ""  )
-                {
-                    printf( GREEN"Finish Decoding (space)\n");
-                    break ;
-                }
-                if( stoi( strspl[loop] ) == 0 )
-                {
-                    printf( GREEN"Finish Decoding (0)\n");
-                    break ;
-                }
+                if( stoi( strspl[loop] ) == 0 ) break ;
                 
                 //-- Put DCC --------------------------------------------------------------
                 if( this->_placedcc && (( stoi(strspl.at(loop)) > 0) || (stoi(strspl.at(loop + 1)) > 0) ) )
@@ -3164,12 +3153,12 @@ void ClockTree::tcRecheck(void)
             slack = this->UpdatePathTiming( path, false ) ;
 			if( slack < 0 )
 			{
-				endflag = 1;
+                endflag = 1;
+                printf( RED"[Error] Path: %ld timing error", path->getPathNum() );
 				break;
 			}
 		}
-		if( endflag )
-			break;
+		if( endflag ) break ;
 		this->_besttc = this->_tc;
 	}
 	if( oribesttc == this->_besttc )

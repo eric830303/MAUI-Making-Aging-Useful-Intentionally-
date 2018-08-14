@@ -334,6 +334,8 @@ public:
     bool    clauseJudgement( vector<string>&, bool * );
     bool    SolveCNFbyMiniSAT( double tc, bool ifDeploy=false );
     void    EncodeDccLeader( double tc );
+    void    printFinalResult();
+    void    printPathCriticality();
     ClockTreeNode *searchClockTreeNode(string);
     ClockTreeNode *searchClockTreeNode(long);
     vector<CriticalPath *> searchCriticalPath(char, string);

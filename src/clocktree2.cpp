@@ -337,12 +337,6 @@ void ClockTree::minimizeLeader(void)
 {
     if( this->ifdoVTA() == false ) return;
     
-    //cout << "\n---------------------------------------------------------------------------\n";
-    //printf( YELLOW"[---Refinement2---] " RST"Leader count minimalization\n");
-    //printf("[Info] Before Leader Minimization:\n");
-    
-    //this->calVTABufferCount(true);
-    
     map<string, ClockTreeNode *> redun_leader = this->_VTAlist;//Initialize the list of redundant leader
     map<string, ClockTreeNode *>::iterator leaderitr;
     
@@ -366,12 +360,15 @@ void ClockTree::minimizeLeader(void)
             if( leaderitr != redun_leader.end() )
                 redun_leader.erase(leaderitr);
         }
-        if( path == this->_mostcriticalpath)
-            break;
+        if( path == this->_mostcriticalpath )   break;
     }
     
     //Remove leaders from redundant leader list
-    for( auto const& node: redun_leader ) node.second->setIfPlaceHeader( false );
+    for( auto const& node: redun_leader )
+    {
+        node.second->setIfPlaceHeader( false );
+        node.second->setVTAType( -1 );
+    }
     this->_tc = this->_besttc;
     // Greedy minimization
     while( true )
@@ -381,23 +378,27 @@ void ClockTree::minimizeLeader(void)
         // Reserve one of the rest of DCCs above if one of critical paths occurs timing violation
         for(auto const& path: this->_pathlist)
         {
-            if((path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF))
-                continue;
+            if((path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF)) continue;
             // Assess if the critical path occurs timing violation in the DCC deployment
-            double slack = this->UpdatePathTiming( path, false ) ;
+            double slack = this->UpdatePathTiming( path, true, true, true ) ;
+            
             if( slack < 0 )
             {
                 endflag = 0;
                 for( auto const& node: redun_leader )
                     if( node.second->getIfPlaceHeader() )
+                    {
+                        node.second->setVTAType(0);
                         redun_leader.erase(node.first);
+                    }
                 // Reserve the DCC locate in the clock path of endpoint
                 for(auto const& node: path->getEndPonitClkPath())
                 {
                     leaderitr = redun_leader.find(node->getGateData()->getGateName());
-                    if(( leaderitr != redun_leader.end()) && !leaderitr->second->ifPlacedDcc())
+                    if(( leaderitr != redun_leader.end()) && !leaderitr->second->getIfPlaceHeader())
                     {
                         leaderitr->second->setIfPlaceHeader(1);
+                        leaderitr->second->setVTAType(0);
                         findstartpath = 0;
                     }
                 }
@@ -407,8 +408,10 @@ void ClockTree::minimizeLeader(void)
                     for(auto const& node: path->getStartPonitClkPath())
                     {
                         leaderitr = redun_leader.find(node->getGateData()->getGateName());
-                        if((leaderitr != redun_leader.end()) && !leaderitr->second->ifPlacedDcc())
+                        if((leaderitr != redun_leader.end()) && !leaderitr->second->getIfPlaceHeader()){
                             leaderitr->second->setIfPlaceHeader(1);
+                            leaderitr->second->setVTAType(0);
+                        }
                     }
                 }
                 break;
@@ -416,6 +419,7 @@ void ClockTree::minimizeLeader(void)
         }
         if( endflag ) break;
     }
+    
     for(auto const& node: this->_VTAlist )
     {
         if( !node.second->getIfPlaceHeader())
@@ -548,7 +552,11 @@ bool ClockTree::SolveCNFbyMiniSAT( double tc, bool ifDeploy )
                 this->_mostcriticalpath = path;
                 minslack = min( slack, minslack );
             }
+            if( slack < 0 )
+                printf( RED"[Error] path(%ld) slk = %f \n", path->getPathNum(), path->getSlack() );
         }
+        
+        
         return true ;
     }//elif SAT
     return false;
@@ -590,16 +598,26 @@ void ClockTree::EncodeDccLeader( double tc )
 void ClockTree::minimizeLeader2( double tc )
 {
     if( tc == 0 ) tc = this->_besttc ;
-    long least_HTV_buf_ctr = 9999999 ;
-    long HTV_buf_ctr = 0 ;
-    long Bad_Result_ctr = 0 ;
-    long refine_ctr = 1;
+    bool nosol = true ;
+    long least_HTV_buf_ctr = 9999999, least_DCC_ctr = 999999, HTV_buf_ctr = 0, Bad_Result_ctr = 0, refine_ctr = 1 ;
     
+    //---- Print original DCC/Leader deployment without minimization -----------------
+    cout << "---------------------------------------------------------------------------\n";
+    printf( YELLOW"[---Results without Refinement---] \n" RST );
+    printf(    GRN"[1.DCC Deployment] " RST"\n" );
+    for( auto const& node: this->_dcclist )
+    {
+        ClockTreeNode* buf = node.second ;
+        printf("\t%s(%ld):%2.1f\n", node.first.c_str(), buf->getNodeNumber(), buf->getDccType());
+    }
+    calVTABufferCount(true);
+    
+    //---- Begin minimization ----------------------------------------------------------
     while( true )
     {
         EncodeDccLeader( tc );
         
-        if( !SolveCNFbyMiniSAT( this->_besttc, false ) || Bad_Result_ctr > 300 ) break;
+        if( !SolveCNFbyMiniSAT( this->_besttc, false ) || Bad_Result_ctr > 100 ) break;
         else
         {
             SolveCNFbyMiniSAT( this->_besttc, true );
@@ -611,15 +629,16 @@ void ClockTree::minimizeLeader2( double tc )
                 least_HTV_buf_ctr = calVTABufferCount();
                 cout << "---------------------------------------------------------------------------\n";
                 printf( YELLOW"[---Refinement---] " RST"%ld st CNF Reversion\n", refine_ctr );
-                printf( GRN"[1.DCC Deployment] " RST"\n" );
+                printf(    GRN"[1.DCC Deployment] " RST"\n" );
                 for( auto const& node: this->_buflist )
                 {
                     ClockTreeNode* buf = node.second ;
                     if( buf->ifPlacedDcc() )    printf("\t%s(%ld):%2.1f\n", node.first.c_str(), buf->getNodeNumber(), buf->getDccType());
-                    if( buf->ifPlacedDcc() || buf->getIfPlaceHeader()  )    this->_DccLeaderset.insert( tuple<ClockTreeNode*,double,int>(buf,buf->getDccType(),buf->getVTAType()));
+                    if( buf->ifPlacedDcc() || buf->getIfPlaceHeader() )    this->_DccLeaderset.insert( tuple<ClockTreeNode*,double,int>(buf,buf->getDccType(),buf->getVTAType()));
                 }
                 printf("\t==> DCC Ctr = " RED"%ld" RST"\n", this->_dcclist.size() );
                 calVTABufferCount(true);//print Leader
+                nosol = false;
             }
             else
                 Bad_Result_ctr++ ;
@@ -629,6 +648,7 @@ void ClockTree::minimizeLeader2( double tc )
     
     //Recover the DCC/Leader deployment to the best one
     //Init
+    if( nosol ) return ;
     this->_dcclist.clear();
     this->_VTAlist.clear();
     for( auto const& node: this->_buflist )
@@ -659,8 +679,78 @@ void ClockTree::minimizeLeader2( double tc )
     }
 }
 
+void ClockTree::printFinalResult()
+{
+    chrono::system_clock::time_point nowtime = chrono::system_clock::now();
+    time_t tt = chrono::system_clock::to_time_t(nowtime);
+    cout << "---------------------------------------------------------------------------\n";
+    cout << "\t*** Time                           : " << ctime(&tt);
+    cout << "\t*** Timing report                  : " << this->getTimingReportFileName()                              << "\n";
+    cout << "\t*** Timing report location         : " << this->getTimingReportLocation()                              << "\n";
+    cout << "\t*** Timing report design           : " << this->getTimingReportDesign()                                << "\n";
+    cout << "\t*** Tc in timing report (Origin)   : " << this->getOriginTc()                                          << "\n";
+    cout << "\t*** Total critical paths           : " << this->getTotalPathNumber()                                   << "\n";
+    cout << "\t*** # of critical paths in used    : " << this->getPathUsedNumber()                                    << "\n";
+    cout << "\t*** # of PI to FF paths            : " << this->getPiToFFNumber()                                      << "\n";
+    cout << "\t*** # of FF to PO paths            : " << this->getFFToPoNumber()                                      << "\n";
+    cout << "\t*** # of FF to FF paths            : " << this->getFFToFFNumber()                                      << "\n";
+    cout << "\t*** Clock tree level (max)         : " << this->getMaxTreeLevel()                                      << "\n";
+    cout << "\t*** Total clock tree nodes         : " << this->getTotalNodeNumber()                                   << "\n";
+    cout << "\t*** Total # of FF nodes            : " << this->getTotalFFNumber()                                     << "\n";
+    cout << "\t*** Total # of clock buffer nodes  : " << this->getTotalBufferNumber()                                 << "\n";
+    cout << "\t*** # of FF nodes in used          : " << this->getFFUsedNumber()                                      << "\n";
+    cout << "\t*** # of clock buffer nodes in used: " << this->getBufferUsedNumber()                                  << "\n";
+    cout << "\t*** No. last same parent           : " << this->getFirstChildrenNode()->getGateData()->getGateName();
+    cout << " ("                                      << this->getFirstChildrenNode()->getNodeNumber()                << ")\n";
+    cout << "\t*** # of clock gating cells        : " << this->getTotalClockGatingNumber()                            << "\n";
+    this->printClockGatingList();
+    cout << "---------------------------------------------------------------------------\n";
+    cout << "\t*** # of most critical path        : " << this->getMostCriticalPath()->getPathNum();
+    cout << " (" ;
+    this->getMostCriticalPath()->coutPathType();
+    cout << ", " << this->getMostCriticalPath()->getStartPointName();
+    cout << " -> " << this->getMostCriticalPath()->getEndPointName() << ")\n";
+    cout << "\t*** Minimal slack                  : " << this->getMostCriticalPath()->getSlack() << "\n";
+    cout << "\t*** Optimal tc                     : \033[36m" << this->getBestTc() << "\033[0m\n";
+    if(this->ifPlaceDcc())
+    {
+        cout << "\t*** # of minisat executions        : " << this->getMinisatExecuteNumber() << "\n";
+        cout << "\t*** # of DCC condidates            : " << this->getTotalBufferNumber() - this->getNonPlacedDccBufferNumber() << "\n";
+    }
+    this->printDccList();
+    this->printBufferInsertedList();
+    this->printVTAList();
+    this->printClauseCount();
+}
 
-
+bool compare( CriticalPath* A, CriticalPath*B )
+{
+    if( A->getSlack() > B->getSlack() ) return false ;
+    else                                return true  ;
+}
+void ClockTree::printPathCriticality()
+{
+    cout << "---------------------------------------------------------------------------\n";
+    printf( YELLOW"[Path's Slack Rank]" RST" Consider the impact of DCC/Leader deployment\n" );
+    for( auto const& path: this->_pathlist ){
+        if( (path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF) ) continue;
+        UpdatePathTiming( path, true, true, true );
+    }
+    sort( this->getPathList().begin(), this->getPathList().end(), compare );
+    for( int i = 0; i <= 10; i++ ){
+        printf("%2d. slk = %f, path ID: %3ld \n", i, getPathList().at(i)->getSlack(), getPathList().at(i)->getPathNum() );
+    }
+    
+    printf( YELLOW"[Path's Slack Rank]" RST" Ignore the impact of DCC/Leader deployment\n" );
+    for( auto const& path: this->_pathlist ){
+        if( (path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF) ) continue;
+        UpdatePathTiming( path, true, false, true );
+    }
+    sort( this->getPathList().begin(), this->getPathList().end(), compare );
+    for( int i = 0; i <= 10; i++ ){
+        printf("%2d. slk = %f, path ID: %3ld \n", i, getPathList().at(i)->getSlack(), getPathList().at(i)->getPathNum() );
+    }
+}
 
 
 
