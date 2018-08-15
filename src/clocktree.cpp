@@ -479,6 +479,7 @@ void ClockTree::readParameter()
     while( getline(file, line) )
     {
         if( line.find("#")                      != string::npos ) continue ;//Comment->Ignore
+        if( line.find("REFINE")                 != string::npos ) this->refine_time = atoi(line.c_str() + 6 )   ;
         if( line.find("FIN_CONVERGENT_YEAR")    != string::npos ) this->setFinYear( atoi(line.c_str() + 19 ))    ;
         if( line.find("BASE_VTH")               != string::npos ) this->setBaseVthOffset( atof(line.c_str() + 8 ))    ;
         if( line.find("EXP")               != string::npos )
@@ -4634,6 +4635,8 @@ void ClockTree::printClkNodeFeature( ClockTreeNode *clknode, bool doDCCVTA )
 
 void ClockTree::InitClkTree()
 {
+    this->_dcclist.clear();
+    this->_VTAlist.clear();
     for( auto clknode: this->_buflist )
     {
         clknode.second->setIfPlaceDcc(false)    ;

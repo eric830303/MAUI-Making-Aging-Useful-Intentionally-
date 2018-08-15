@@ -599,17 +599,13 @@ void ClockTree::minimizeLeader2( double tc )
 {
     if( tc == 0 ) tc = this->_besttc ;
     bool nosol = true ;
-    long least_HTV_buf_ctr = 9999999, least_DCC_ctr = 999999, HTV_buf_ctr = 0, Bad_Result_ctr = 0, refine_ctr = 1 ;
+    long least_HTV_buf_ctr = 9999999, HTV_buf_ctr = 0, refine_ctr = 1 ;
     
     //---- Print original DCC/Leader deployment without minimization -----------------
     cout << "---------------------------------------------------------------------------\n";
     printf( YELLOW"[---Results without Refinement---] \n" RST );
     printf(    GRN"[1.DCC Deployment] " RST"\n" );
-    for( auto const& node: this->_dcclist )
-    {
-        ClockTreeNode* buf = node.second ;
-        printf("\t%s(%ld):%2.1f\n", node.first.c_str(), buf->getNodeNumber(), buf->getDccType());
-    }
+    printDCCList();
     calVTABufferCount(true);
     
     //---- Begin minimization ----------------------------------------------------------
@@ -617,47 +613,34 @@ void ClockTree::minimizeLeader2( double tc )
     {
         EncodeDccLeader( tc );
         
-        if( !SolveCNFbyMiniSAT( this->_besttc, false ) || Bad_Result_ctr > 1000 ) break;
+        if( !SolveCNFbyMiniSAT( this->_besttc, true ) || refine_ctr > this->refine_time ) break;
         else
         {
-            SolveCNFbyMiniSAT( this->_besttc, true );
-            HTV_buf_ctr = calVTABufferCount();
+            cout << "---------------------------------------------------------------------------\n";
+            printf( YELLOW"[---Refinement---] " RST"%ld st CNF Reversion\n", refine_ctr );
+            printDCCList();
+            HTV_buf_ctr = calVTABufferCount(true);
+            
             if( HTV_buf_ctr < least_HTV_buf_ctr )
             {
                 this->_DccLeaderset.clear() ;
                 this->minimizeLeader();
-                least_HTV_buf_ctr = calVTABufferCount();
-                cout << "---------------------------------------------------------------------------\n";
-                printf( YELLOW"[---Refinement---] " RST"%ld st CNF Reversion\n", refine_ctr );
-                printf(    GRN"[1.DCC Deployment] " RST"\n" );
                 for( auto const& node: this->_buflist )
                 {
                     ClockTreeNode* buf = node.second ;
-                    if( buf->ifPlacedDcc() )    printf("\t%s(%ld):%2.1f\n", node.first.c_str(), buf->getNodeNumber(), buf->getDccType());
-                    if( buf->ifPlacedDcc() || buf->getIfPlaceHeader() )    this->_DccLeaderset.insert( tuple<ClockTreeNode*,double,int>(buf,buf->getDccType(),buf->getVTAType()));
+                    if( buf->ifPlacedDcc() || buf->getIfPlaceHeader() )
+                        this->_DccLeaderset.insert( tuple<ClockTreeNode*,double,int>(buf,buf->getDccType(),buf->getVTAType()));
                 }
-                printf("\t==> DCC Ctr = " RED"%ld" RST"\n", this->_dcclist.size() );
-                calVTABufferCount(true);//print Leader
+                least_HTV_buf_ctr = HTV_buf_ctr;
                 nosol = false;
             }
-            else
-                Bad_Result_ctr++ ;
         }
         refine_ctr++;
     }//while
     
-    //Recover the DCC/Leader deployment to the best one
-    //Init
     if( nosol ) return ;
-    this->_dcclist.clear();
-    this->_VTAlist.clear();
-    for( auto const& node: this->_buflist )
-    {
-        node.second->setIfPlaceDcc(0)   ;
-        node.second->setDccType(0) ;
-        node.second->setIfPlaceHeader(0);
-        node.second->setVTAType(-1);
-    }
+    
+    InitClkTree();
     
     for( auto const& node: this->_DccLeaderset )
     {
@@ -677,6 +660,10 @@ void ClockTree::minimizeLeader2( double tc )
             this->_VTAlist.insert(pair<string, ClockTreeNode *> (buf->getGateData()->getGateName(), buf));
         }
     }
+    cout << "---------------------------------------------------------------------------\n";
+    printf( YELLOW"[Optimized reuslts]\n" RST);
+    printDCCList();
+    calVTABufferCount(true);
 }
 
 void ClockTree::printFinalResult()
@@ -752,7 +739,16 @@ void ClockTree::printPathCriticality()
     }
 }
 
-
+void ClockTree::printDCCList()
+{
+    printf(    GRN"[1.DCC Deployment] " RST"\n" );
+    for( auto const& node: this->_buflist )
+    {
+        ClockTreeNode* buf = node.second ;
+        if( buf->ifPlacedDcc() )    printf("\t%s(%ld):%2.1f\n", node.first.c_str(), buf->getNodeNumber(), buf->getDccType());
+    }
+    printf("\t==> DCC Ctr = " RED"%ld" RST"\n", this->_dcclist.size() );
+}
 
 
 

@@ -113,6 +113,7 @@ private:
 public:
     FILE *fptr ;
     string clauseFileName ;
+    long refine_time ;
     //-Constructor-----------------------------------------------------------------
 	ClockTree(void)
 			 : _pathselect(0), _bufinsert(0), _placedcc(1), _doVTA(1), _VTH_LIB_cnt(0), _FIN_CONV_Year(100) ,_aging(1), _mindccplace(0), _tcrecheck(0), _clkgating(0),
@@ -124,7 +125,7 @@ public:
 			   _clktreeroot(nullptr), _firstchildrennode(nullptr), _mostcriticalpath(nullptr),
 			   _timingreport(""), _timingreportfilename(""), _timingreportloc(""), _timingreportdesign(""),_dumpCNF(false), _checkCNF(false), _checkfile(false),
 			   _cgfilename(""), _outputdir(""), _tcAfterAdjust(0), _printClause(false), _baseVthOffset(0), _exp(0.2),  _usingSeniorAging(false),
-               _printClkNode(false), _calVTA(false), _dcc_leader(false), _dc_formulation(false), Max_timing_count(0) {}
+               _printClkNode(false), _calVTA(false), _dcc_leader(false), _dc_formulation(false), Max_timing_count(0), refine_time(100) {}
 	//-Destructor------------------------------------------------------------------
     ~ClockTree(void);
 	
@@ -336,6 +337,7 @@ public:
     void    EncodeDccLeader( double tc );
     void    printFinalResult();
     void    printPathCriticality();
+    void    printDCCList();
     ClockTreeNode *searchClockTreeNode(string);
     ClockTreeNode *searchClockTreeNode(long);
     vector<CriticalPath *> searchCriticalPath(char, string);
