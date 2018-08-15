@@ -40,14 +40,13 @@ int main(int argc, char **argv)
 			cout << "      -nonaging              Don't consider any aging in clock tree. (default disable)\n";
             cout << "      -nonVTA                Don't do Vth assignment\n";
             cout << "      -dcc_leader            Leader is in the downstream part of dcc\n";
-            cout << "      -dump=SAT_CNF          Decode other CNF files and dump its DCC/VTA Deployment\n";
+            cout << "      -dump=SAT_CNF          Decode other CNF files and dump its DCC/Leader Deployment/Selection\n";
             cout << "      -print=path            Print the pipeline\n";
-            cout << "      -dc_for                formulat the situation that dcc impacted by leader\n";
-            cout << "      -checkCNF              Check the DCC deployment with given CNF output file\n";
-            cout << "      -checkFile             Check the DCC deployment with given DccVTA.txt \n";
             cout << "      -print=Clause          Dump clauses while execution\n";
-            cout << "      -checkCNF              Check the DCC deployment with given DccVTA.txt \n";
-            cout << "      -calVTA                Check the DCC deployment with given DccVTA.txt \n";
+            cout << "      -dc_for                formulat the situation that dcc impacted by leader\n";
+            cout << "      -checkCNF              Check the DCC/Leader deployment/Selection, based on given CNF output file\n";
+            cout << "      -checkFile             Check the DCC/Leader deployment/Selection, based on given DccVTA.txt \n";
+            cout << "      -calVTA                Calculate HTV Buffer # of associated Leader, based on given DccVTA.txt \n";
             cout << "      -aging=Senior           \n";
 			cout << "      -mindcc                Minimize the number of DCCs placed in clock tree. (default disable)\n";
 			cout << "                               Enable when \'-nondcc\' option enable.\n";
@@ -125,7 +124,7 @@ int main(int argc, char **argv)
         circuit.CheckTiming_givFile() ;
         return 0 ;
     }
-    //-------- Dump Unsat CNF as DCC/VTA ------------------------------
+    //-------- Dump SAT CNF as DCC/VTA ------------------------------
     if( circuit.ifDumpCNF() ){
         circuit.dumpCNF() ;
         return 0 ;

@@ -613,7 +613,7 @@ int ClockTree::checkParameter(int argc, char **argv, string *message)
 			this->_tcrecheck = 1;								// Recheck Tc
         else if(strcmp(argv[loop], "-print=path") == 0)
             this->_printpath = 1;
-        else if(strcmp(argv[loop], "-dump=UNSAT_CNF") == 0)
+        else if(strcmp(argv[loop], "-dump=SAT_CNF") == 0)
             this->_dumpCNF   = 1;
         else if(strcmp(argv[loop], "-dc_for") == 0)
             this->_dc_formulation = 1;
@@ -3969,8 +3969,10 @@ void ClockTree::printPath( int pathid )
     printf("==> Duty Cycle: 0.2, 0.4, 0.5, 0.8 \n" );
     printf("==> Vth type  : -1(Nominal), 0(VTA) \n" );
     readDCCVTAFile() ;
+    printf("From DccVTA.txt\n" );
     printPath_givFile( path, true  /*DCC/VTA*/, true  /*Aging*/, true  /*Tc from file*/ ) ;
     readDCCVTAFile2() ;
+    printf("From DccVTA2.txt\n" );
     printPath_givFile( path, true  /*DCC/VTA*/, true  /*Aging*/, true  /*Tc from file*/ ) ;
 }
 
@@ -4680,14 +4682,8 @@ void ClockTree::dumpCNF()
     for( long loop = 0; ; loop += 3 /*2*/ )
     {
         //-- End of CNF -----------------------------------------------------------
-        if( strspl[loop] == ""  ){
-            printf("Break space\n");
-            break ;
-        }
-        if( stoi( strspl[loop] ) == 0 ){
-            printf("Break 0\n");
-            break ;
-        }
+        if( stoi( strspl[loop] ) == 0 ) break ;
+        
         //-- No DCC/VTA Clknode ----------------------------------------------------
         if( !( stoi(strspl.at(loop+2)) > 0 || stoi(strspl.at(loop)) > 0 || stoi(strspl.at(loop + 1)) > 0 ) ) continue ;
         else

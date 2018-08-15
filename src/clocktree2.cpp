@@ -284,7 +284,7 @@ void ClockTree::calVTABufferCountByFile()
     }
     fDCCVTA.close();
     
-    calVTABufferCount() ;
+    calVTABufferCount(true) ;
 }
 
 long ClockTree::calVTABufferCount(bool print)
@@ -617,7 +617,7 @@ void ClockTree::minimizeLeader2( double tc )
     {
         EncodeDccLeader( tc );
         
-        if( !SolveCNFbyMiniSAT( this->_besttc, false ) || Bad_Result_ctr > 100 ) break;
+        if( !SolveCNFbyMiniSAT( this->_besttc, false ) || Bad_Result_ctr > 1000 ) break;
         else
         {
             SolveCNFbyMiniSAT( this->_besttc, true );
