@@ -13,6 +13,7 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <cinttypes>
 
 #define RED     "\x1b[31m"
 #define GREEN   "\x1b[32m"
@@ -90,12 +91,13 @@ int main(int argc, char **argv)
 	
 	// Parameters storing execution time of each part of framework
 	chrono::steady_clock::time_point starttime, endtime, midtime;
-	chrono::duration<double> totaltime, preprocesstime, DccVTAconstrainttime, timingconstrainttime, sattime, sattime2, minitime, bufinstime;
+	chrono::duration<double> totaltime, preprocesstime, DccVTAconstrainttime, timingconstrainttime1, timingconstrainttime2, sattime, sattime2, minitime, bufinstime;
 	
     printf( YELLOW"[Parser]" RST" Reading timing report...\n" );
 	starttime = chrono::steady_clock::now();
 	//---- Parse *.rpt -----------------------------------------------
 	circuit.parseTimingReport();
+    
     
 	//---- CLK Gating ------------------------------------------------
     //1. Replace some buffers in the clock tree to clock gating cells
@@ -161,40 +163,44 @@ int main(int argc, char **argv)
 	circuit.genDccPlacementCandidate();
 	
     
+    FILE *fPtr;
+    string filename = "./setting/log.txt";
+    fPtr = fopen( filename.c_str(), "w" );
     
     
     
-    //-------- Binary Search -------------------------
+    //-------- Binary Search ----------------------------------------------------------------
 	printf( YELLOW"[Binary Search for Tc]" RST" Analyzing Timing Constraint and Searching Optimal Tc...\033[0m\n" );
 	double pretc = 0, prepretc = 0;
+    long   clause_ctr = 0 ;
 	while( 1 )
 	{
 		cout << CYAN"Tc " << RESET "= " << circuit.getTc() << "\033[0m\n";
-    
+        
 		midtime = chrono::steady_clock::now();
-		//---- Timing constraint method (Clauses)--------
-		circuit.timingConstraint();
-		//---- Generate CNF file ------------------------
+		//---- Timing constraint method (Clauses)--------------------------------------------
+		clause_ctr = circuit.timingConstraint();
+		//---- Generate CNF file ------------------------------------------------------------
 		circuit.dumpClauseToCnfFile();
 		endtime = chrono::steady_clock::now();
-        //---- Constraint Time --------------------------
-		timingconstrainttime += chrono::duration_cast<chrono::duration<double>>(endtime - midtime);
-		
+        //---- Constraint Time --------------------------------------------------------------
+        timingconstrainttime1 = chrono::duration_cast<chrono::duration<double>>(endtime - midtime);
+        timingconstrainttime2 += timingconstrainttime1;
+		printf( YELLOW"\t[--Clause (time)--] " RST"runtime: %f (only CNF generation)\n", timingconstrainttime1.count());
         prepretc = pretc; pretc = circuit.getTc();
-		midtime = chrono::steady_clock::now();
-		//---- MiniSat ----------------------------------
+		//---- MiniSat ----------------------------------------------------------------------
+        midtime = chrono::steady_clock::now();
 		circuit.execMinisat();
-		//---- Set UB/LB Tc -----------------------------
-		circuit.tcBinarySearch();
-        //---- MiniSat Time -----------------------------
-		endtime = chrono::steady_clock::now();
+        endtime = chrono::steady_clock::now();
         sattime2 = chrono::duration_cast<chrono::duration<double>>(endtime - midtime);
         sattime += sattime2;
-        cout<< YELLOW"\t[-MiniSAT (time)--] " << RESET"runtime: " << sattime2.count() << endl ;
+        fprintf( fPtr, "%f %ld %f %f\n", circuit.getTc(), clause_ctr, timingconstrainttime1.count(), sattime2.count() );
+        printf( YELLOW"\t[-MiniSAT (time)--] " RST"runtime: %f (only MiniSAT)\n", sattime2.count());
+		//---- Set UB/LB Tc -----------------------------------------------------------------
+		circuit.tcBinarySearch();
         
 		
-		if( prepretc == circuit.getTc() )
-			break;
+		if( prepretc == circuit.getTc() ) break;
 	}
 	
     //4. Update the timing of each critical path with given "Optimal tc"
@@ -202,7 +208,7 @@ int main(int argc, char **argv)
 	circuit.updateAllPathTiming();
     
     
-    //5. Minimize DCC deploymentwhere
+    //---------- Minimize DCC deployment -----------------------------------------------------
     midtime = chrono::steady_clock::now();
     printf( YELLOW"[Overhead Minimization]" RST"Minimize DCC # and HTV buf #\n" );
 	circuit.minimizeDccPlacement();
@@ -227,12 +233,13 @@ int main(int argc, char **argv)
     cout << " \tTotal                 : " << totaltime.count() << "\n";
     cout << " \tParser & Preprocessing: " << preprocesstime.count() << "\n";
     cout << " \tDCC & VTA constraint  : " << DccVTAconstrainttime.count() << "\n";
-    cout << " \tTiming constraint     : " << timingconstrainttime.count() << "\n";
+    cout << " \tTiming constraint     : " << timingconstrainttime2.count() << "\n";
     cout << " \tMiniSAT & Search      : " << sattime.count() << "\n";
     cout << " \tOverhead reduction    : " << minitime.count() << "\n";
     cout << " \tBuffer insertion      : " << bufinstime.count() << "\n";
     circuit.dumpDccVTALeaderToFile() ;//circuit.dumpToFile();
     circuit.printPathCriticality();
+    fclose(fPtr);
 	//circuit.~ClockTree();
 	
 	exit(0);

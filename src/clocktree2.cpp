@@ -39,14 +39,14 @@ void ClockTree::printClockNode()
             node =  searchClockTreeNode( nodeID ) ;
             if( node == NULL )
                 cerr << RED"[ERROR]" RESET<< "The node ID " << nodeID << " is not identified\n" ;
-            else{
+            else
+            {
                 printf("------------------------- " CYAN"Topology " RESET"-------------------------------\n");
                 printf("Following is the topology whose root is %d\n\n\n", nodeID );
                 printClockNode( node, 0 ) ;
-                
             }
         }
-    }
+    }//while
 }
 void ClockTree::printClockNode( ClockTreeNode*node, int layer )
 {
@@ -165,9 +165,9 @@ void ClockTree::checkCNF()
         return                ;
     }
         
-    
-    bool *bolarray = new bool [ _totalnodenum + 5000 ]   ;
-    for( int i = 0 ; i <= _totalnodenum; i++ ) bolarray[i] = false;
+    long nodenum = _totalnodenum*3;
+    bool *bolarray = new bool [ nodenum + 1000 ]   ;
+    for( int i = 0 ; i <= nodenum; i++ ) bolarray[i] = false;
     //-- Read DCC/VTA Deployment ------------------------------------------------------
     getline( fDCCVTA, line )        ;
     string          tc              ;
@@ -567,7 +567,8 @@ void ClockTree::EncodeDccLeader( double tc )
     fstream cnffile ;
     string cnfinput = this->_outputdir + "cnfinput_" + to_string( tc );
     if( !isDirectoryExist(this->_outputdir) )
-        mkdir(this->_outputdir.c_str(), 0775);
+        cerr << RED"\t[Error]: No such directory named " << _outputdir << RESET << endl ;
+    
     if( isFileExist(cnfinput) )
     {
         cnffile.open(cnfinput, ios::out | fstream::app );
@@ -604,7 +605,6 @@ void ClockTree::minimizeLeader2( double tc )
     //---- Print original DCC/Leader deployment without minimization -----------------
     cout << "---------------------------------------------------------------------------\n";
     printf( YELLOW"[---Results without Refinement---] \n" RST );
-    printf(    GRN"[1.DCC Deployment] " RST"\n" );
     printDCCList();
     calVTABufferCount(true);
     
@@ -717,37 +717,45 @@ bool compare( CriticalPath* A, CriticalPath*B )
 }
 void ClockTree::printPathCriticality()
 {
+    CriticalPath *pptr = NULL ;
     cout << "---------------------------------------------------------------------------\n";
     printf( YELLOW"[Path's Slack Rank]" RST" Consider the impact of DCC/Leader deployment\n" );
-    for( auto const& path: this->_pathlist ){
+    for( auto const& path: this->_pathlist )
+    {
         if( (path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF) ) continue;
         UpdatePathTiming( path, true, true, true );
     }
     sort( this->getPathList().begin(), this->getPathList().end(), compare );
-    for( int i = 0; i <= 10; i++ ){
-        printf("%2d. slk = %f, path ID: %3ld \n", i, getPathList().at(i)->getSlack(), getPathList().at(i)->getPathNum() );
+    for( int i = 0; i <= 10; i++ )
+    {
+        pptr = getPathList().at(i) ;
+        printf("%2d. slk = %f, path ID: %3ld \n", i, pptr->getSlack(), pptr->getPathNum() );
     }
     
     printf( YELLOW"[Path's Slack Rank]" RST" Ignore the impact of DCC/Leader deployment\n" );
-    for( auto const& path: this->_pathlist ){
+    for( auto const& path: this->_pathlist )
+    {
         if( (path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF) ) continue;
         UpdatePathTiming( path, true, false, true );
     }
     sort( this->getPathList().begin(), this->getPathList().end(), compare );
-    for( int i = 0; i <= 10; i++ ){
-        printf("%2d. slk = %f, path ID: %3ld \n", i, getPathList().at(i)->getSlack(), getPathList().at(i)->getPathNum() );
+    for( int i = 0; i <= 10; i++ )
+    {
+        pptr = getPathList().at(i) ;
+        printf("%2d. slk = %f, path ID: %3ld \n", i, pptr->getSlack(), pptr->getPathNum() );
     }
 }
 
 void ClockTree::printDCCList()
 {
-    printf(    GRN"[1.DCC Deployment] " RST"\n" );
+    ClockTreeNode* buf = NULL ;
+    printf( GRN"[1.DCC Deployment] " RST"\n" );
     for( auto const& node: this->_buflist )
     {
-        ClockTreeNode* buf = node.second ;
+        buf = node.second ;
         if( buf->ifPlacedDcc() )    printf("\t%s(%ld):%2.1f\n", node.first.c_str(), buf->getNodeNumber(), buf->getDccType());
     }
-    printf("\t==> DCC Ctr = " RED"%ld" RST"\n", this->_dcclist.size() );
+    printf( "\t==> DCC Ctr = " RED"%ld" RST"\n", this->_dcclist.size() );
 }
 
 

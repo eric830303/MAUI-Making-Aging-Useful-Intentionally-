@@ -66,7 +66,7 @@ private:
     bool    _usingSeniorAging, _printClkNode ;
 	long    _pathusednum, _pitoffnum, _fftoffnum, _fftoponum, _nonplacedccbufnum;
 	long    _totalnodenum, _ffusednum, _bufferusednum, _dccatlastbufnum;
-	long    _masklevel, _maxlevel, _insertbufnum;
+	long    _masklevel, _maxlevel, _insertbufnum, _dcc_constraint_ctr, _leader_constraint_ctr ;
 	double  _maskleng, _cgpercent;
     double _tcAfterAdjust ;
     //Timing-related attribute
@@ -125,7 +125,7 @@ public:
 			   _clktreeroot(nullptr), _firstchildrennode(nullptr), _mostcriticalpath(nullptr),
 			   _timingreport(""), _timingreportfilename(""), _timingreportloc(""), _timingreportdesign(""),_dumpCNF(false), _checkCNF(false), _checkfile(false),
 			   _cgfilename(""), _outputdir(""), _tcAfterAdjust(0), _printClause(false), _baseVthOffset(0), _exp(0.2),  _usingSeniorAging(false),
-               _printClkNode(false), _calVTA(false), _dcc_leader(false), _dc_formulation(false), Max_timing_count(0), refine_time(100) {}
+               _printClkNode(false), _calVTA(false), _dcc_leader(false), _dc_formulation(false), Max_timing_count(0), refine_time(100), _dcc_constraint_ctr(0), _leader_constraint_ctr(0) {}
 	//-Destructor------------------------------------------------------------------
     ~ClockTree(void);
 	
@@ -167,6 +167,8 @@ public:
 	long    getMaskByLevel(void)                    { return _masklevel         ; }
 	long    getMaxTreeLevel(void)                   { return _maxlevel          ; }
 	long    getBufferInsertionNumber(void)          { return _insertbufnum      ; }
+    long    getDCCConstraintCtr(void)               { return _dcc_constraint_ctr; }
+    long    getHTVConstraintCtr(void)               { return _leader_constraint_ctr; }
 	double  getMaskByLength(void)                   { return _maskleng          ; }
 	double  getClockGatingPercent(void)             { return _cgpercent         ; }
 	double  getTcqAgingRate(void)                   { return _agingtcq          ; }
@@ -249,7 +251,7 @@ public:
 	void    genDccPlacementCandidate(void);
     
     //---Timing Constraint---------------------------------------------------------
-	double  timingConstraint(void);//A
+	long  timingConstraint(void);//A
     void    timingConstraint_doDCC_ndoVTA (CriticalPath*, bool update = false );//A-B-1, Not Done
     void    timingConstraint_doDCC_doVTA  (CriticalPath*, bool update = false );//A-B-2, Done
     void    timingConstraint_ndoDCC_doVTA (CriticalPath*, bool update = false );//A-B-3,
@@ -318,8 +320,7 @@ public:
     int     calBufChildSize( ClockTreeNode *buffer );
     bool    checkDCCVTAConstraint(void);
     bool    checkDCCVTAConstraint_givPath(CriticalPath*);
-    void    readDCCVTAFile(void);
-    void    readDCCVTAFile2(void);
+    void    readDCCVTAFile( string filename = "./setting/DccVTA.txt" );
     void    CheckTiming_givCNF();
     void    CheckTiming_givFile();
     void    removeCNFFile(void);
