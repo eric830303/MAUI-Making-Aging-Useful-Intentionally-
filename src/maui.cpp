@@ -162,9 +162,9 @@ int main(int argc, char **argv)
 	//-------- Generate all kinds of DCC deployment ----------------------------------------
 	circuit.genDccPlacementCandidate();
 	
-    
+    string Sat = "";
     FILE *fPtr;
-    string filename = "./setting/log.txt";
+    string filename = "./setting/BS_log.txt";
     fPtr = fopen( filename.c_str(), "w" );
     
     
@@ -194,10 +194,10 @@ int main(int argc, char **argv)
         endtime = chrono::steady_clock::now();
         sattime2 = chrono::duration_cast<chrono::duration<double>>(endtime - midtime);
         sattime += sattime2;
-        fprintf( fPtr, "%f %ld %f %f\n", circuit.getTc(), clause_ctr, timingconstrainttime1.count(), sattime2.count() );
         printf( YELLOW"\t[-MiniSAT (time)--] " RST"runtime: %f (only MiniSAT)\n", sattime2.count());
 		//---- Set UB/LB Tc -----------------------------------------------------------------
-		circuit.tcBinarySearch();
+        Sat = ( circuit.tcBinarySearch())?("SAT"):("UNSAT");
+        fprintf( fPtr, "Tc=%f, C#=%ld, T_tc=%f, T_solver=%f, %s\n", circuit.getTc(), clause_ctr, timingconstrainttime1.count(), sattime2.count(), Sat.c_str() );
         
 		
 		if( prepretc == circuit.getTc() ) break;

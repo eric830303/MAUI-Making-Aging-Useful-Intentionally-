@@ -325,7 +325,7 @@ public:
     void    CheckTiming_givFile();
     void    removeCNFFile(void);
     void    execMinisat(void);
-    void    tcBinarySearch(void);
+    bool    tcBinarySearch(void);
     void    printNodeLayerSpacel(int);
     void    printNodeLayerSpace(int);
     void    printClockNode(void);

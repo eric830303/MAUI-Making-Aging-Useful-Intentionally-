@@ -78,25 +78,25 @@ public:
 	~ClockTreeNode() {}
 	
 	//-- Setter methods ----------------------------------------------------------------------
-    void    setVTACtr(bool b)                          { this->_ifVTACtr       = b   ; }
-	void    setDccType(int, int) ;
-    void    setDC(double DC)                           { this->_DC             = DC    ; }//only used in -print=path mode
-    void    setVthType(int Lib)                        { this->_VthType        = Lib   ; }//only used in -print=path mode
-	void    setDccType(double type)                    { this->_dcctype        = type  ; }
-    void    setVTAType(int Lib)                        { this->_LibIndex       = Lib   ; }
-	void    setIfUsed(int used)                        { this->_ifused         = used  ; }
-	void    setIfLook(bool look)                       { this->_iflook         = look  ; }
-	void    setIfPlaceDcc(bool place)                  { this->_ifplacedcc     = place ; }
-    void    setIfPlaceHeader(bool place)               { this->_ifplaceHeader  = place ; }
-	void    setIfInsertBuffer(bool insert)             { this->_ifinsertbuf    = insert; }
-	void    setInsertBufferDelay(double delay)         { this->_insbufdelay    = delay ; }
-	void    setIfClockGating(bool gating)              { this->_ifclkgating    = gating; }
-	void    setGatingProbability(double probability)   { this->_gatingprobability = probability; }
-	void    setParent(ClockTreeNode *parent)           { this->_parent         = parent; }
-	void    setNodeNumber(long number)                 { this->_nodenum        = number; }
-	void    setDepth(long depth)                       { this->_depth          = depth ; }
-    void    setBufTime(double b)                       { this->_buftime        = b     ; }//only used in -print=path mode
-    void    setifMasked(bool b)                        { this->_ifMasked       = b     ; }
+    ClockTreeNode & setVTACtr(bool b)                           { this->_ifVTACtr       = b     ; return *this ;}
+	ClockTreeNode & setDccType(int, int) ;
+    ClockTreeNode & setDC(double DC)                            { this->_DC             = DC    ; return *this ;}//only used in -print=path mode
+    ClockTreeNode & setVthType(int Lib)                         { this->_VthType        = Lib   ; return *this ;}//only used in -print=path mode
+    ClockTreeNode & setDccType(double type)                     { this->_dcctype        = type  ; return *this ;}
+    ClockTreeNode & setVTAType(int Lib)                         { this->_LibIndex       = Lib   ; return *this ;}
+	ClockTreeNode & setIfUsed(int used)                         { this->_ifused         = used  ; return *this ;}
+	ClockTreeNode & setIfLook(bool look)                        { this->_iflook         = look  ; return *this ;}
+	ClockTreeNode & setIfPlaceDcc(bool place)                   { this->_ifplacedcc     = place ; return *this ;}
+    ClockTreeNode & setIfPlaceHeader(bool place)                { this->_ifplaceHeader  = place ; return *this ;}
+	ClockTreeNode & setIfInsertBuffer(bool insert)              { this->_ifinsertbuf    = insert; return *this ;}
+	ClockTreeNode & setInsertBufferDelay(double delay)          { this->_insbufdelay    = delay ; return *this ;}
+	ClockTreeNode & setIfClockGating(bool gating)               { this->_ifclkgating    = gating; return *this ;}
+	ClockTreeNode & setGatingProbability(double probability)    { this->_gatingprobability = probability; return *this ;}
+	ClockTreeNode & setParent(ClockTreeNode *parent)            { this->_parent         = parent; return *this ;}
+	ClockTreeNode & setNodeNumber(long number)                  { this->_nodenum        = number; return *this ;}
+	ClockTreeNode & setDepth(long depth)                        { this->_depth          = depth ; return *this ;}
+    ClockTreeNode & setBufTime(double b)                        { this->_buftime        = b     ; return *this ;}//only used in -print=path mode
+    ClockTreeNode & setifMasked(bool b)                         { this->_ifMasked       = b     ; return *this ;}
 	//-- Getter methods ---------------------------------------------------------------------
     bool    ifMasked(void)                             { return _ifMasked   ; }
     double  getDC(void)                                { return _DC         ; }//only used in -print=path mode

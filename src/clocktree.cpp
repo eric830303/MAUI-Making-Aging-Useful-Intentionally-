@@ -2817,7 +2817,7 @@ void ClockTree::execMinisat(void)
 // Change the boundary of Binary search and search for the optimal Tc
 //
 /////////////////////////////////////////////////////////////////////
-void ClockTree::tcBinarySearch( )
+bool ClockTree::tcBinarySearch( )
 //void ClockTree::tcBinarySearch(double slack)
 {
     // Place DCCs
@@ -2825,14 +2825,13 @@ void ClockTree::tcBinarySearch( )
     {
         fstream cnffile;
         string line, cnfoutput = this->_outputdir + "cnfoutput_" + to_string(this->_tc);//Minisat results
-        if( !isFileExist(cnfoutput) )
-            return;
+        if( !isFileExist(cnfoutput) )   return false;
         cnffile.open(cnfoutput, ios::in);
         if( !cnffile.is_open() )
         {
             cerr << RED"\t[Error]: Cannot open " << cnfoutput << "\033[0m\n";
             cnffile.close();
-            return;
+            return false ;
         }
         getline(cnffile, line);
         // Change the lower boundary
@@ -2842,6 +2841,7 @@ void ClockTree::tcBinarySearch( )
             this->_tc = ceilNPrecision((this->_tcupbound + this->_tclowbound) / 2, PRECISION);
             printf( YELLOW"\t[----MiniSAT------] " RESET "Return: " RED"UNSAT \033[0m\n" ) ;
             printf( YELLOW"\t[--Binary Search--] " RESET "Next Tc range: %f - %f \033[0m\n", _tclowbound, _tcupbound ) ;
+            return false;
         }
         // Change the upper boundary
         else if((line.size() == 3) && (line.find("SAT") != string::npos))
@@ -2851,6 +2851,7 @@ void ClockTree::tcBinarySearch( )
             this->_tc = floorNPrecision((this->_tcupbound + this->_tclowbound) / 2, PRECISION);
             printf( YELLOW"\t[----MiniSAT------] " RESET "Return: " GREEN"SAT \033[0m\n" ) ;
             printf( YELLOW"\t[--Binary Search--] " RESET"Next Tc range: %f - %f \033[0m\n", _tclowbound, _tcupbound ) ;
+            return true;
         }
         cnffile.close();
     }
@@ -2887,6 +2888,7 @@ void ClockTree::tcBinarySearch( )
             printf( YELLOW"\t[Binary Search] " RESET"Next Tc range: %f - %f \033[0m\n", _tclowbound, _tcupbound ) ;
         }
     }
+    return false;
 }
 
 
@@ -4097,9 +4099,7 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
         req_time        += buftime ;
             
         //---- Set --------------------------------------------------------
-        clknode->setBufTime(buftime);
-        clknode->setDC(DC_Com);
-        clknode->setVthType(LibIndex_Com);
+        clknode->setBufTime(buftime).setDC(DC_Com).setVthType(LibIndex_Com);
     }
     
     //-- Right Branch (only cal)-------------------------------------------------------
@@ -4161,9 +4161,7 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
         buftime     *= agr     ;
         req_time    += buftime ;
         //---- Set --------------------------------------------------------
-        clknode->setBufTime(buftime);
-        clknode->setDC(DC_right);
-        clknode->setVthType(LibIndex_right);
+        clknode->setBufTime(buftime).setDC(DC_right).setVthType(LibIndex_right);
     }
 
     //-- Right Part (Only Print) ---------------------------------------------
