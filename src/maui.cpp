@@ -163,6 +163,8 @@ int main(int argc, char **argv)
 	circuit.genDccPlacementCandidate();
 	
     string Sat = "";
+    int    itr_ctr = 1 ;
+    double Tc  = 0 ;
     FILE *fPtr;
     string filename = "./setting/BS_log.txt";
     fPtr = fopen( filename.c_str(), "w" );
@@ -175,7 +177,9 @@ int main(int argc, char **argv)
     long   clause_ctr = 0 ;
 	while( 1 )
 	{
-		cout << CYAN"Tc " << RESET "= " << circuit.getTc() << "\033[0m\n";
+        Tc = circuit.getTc();
+        printf( RST"\n\t" YELLOW"[" CYAN"%3d" YELLOW" th of Binary Search for Tc]\n", itr_ctr );
+        printf( YELLOW"\t[--Clock Period---] " RST"Tc = %f \n", Tc );
         
 		midtime = chrono::steady_clock::now();
 		//---- Timing constraint method (Clauses)--------------------------------------------
@@ -197,9 +201,9 @@ int main(int argc, char **argv)
         printf( YELLOW"\t[-MiniSAT (time)--] " RST"runtime: %f (only MiniSAT)\n", sattime2.count());
 		//---- Set UB/LB Tc -----------------------------------------------------------------
         Sat = ( circuit.tcBinarySearch())?("SAT"):("UNSAT");
-        fprintf( fPtr, "Tc=%f, C#=%ld, T_tc=%f, T_solver=%f, %s\n", circuit.getTc(), clause_ctr, timingconstrainttime1.count(), sattime2.count(), Sat.c_str() );
+        fprintf( fPtr, "%d. Tc=%f, C#=%ld, T_tc=%f, T_solver=%f, %s\n", itr_ctr, Tc, clause_ctr, timingconstrainttime1.count(), sattime2.count(), Sat.c_str() );
         
-		
+        itr_ctr++ ;
 		if( prepretc == circuit.getTc() ) break;
 	}
 	
