@@ -164,7 +164,7 @@ int main(int argc, char **argv)
 	
     string Sat = "";
     int    itr_ctr = 1 ;
-    double Tc  = 0 ;
+    double Tc  = 0, Tc_L = 0, Tc_U =  0;
     FILE *fPtr;
     string filename = "./setting/BS_log.txt";
     fPtr = fopen( filename.c_str(), "w" );
@@ -200,8 +200,9 @@ int main(int argc, char **argv)
         sattime += sattime2;
         printf( YELLOW"\t[-MiniSAT (time)--] " RST"runtime: %f (only MiniSAT)\n", sattime2.count());
 		//---- Set UB/LB Tc -----------------------------------------------------------------
+        Tc_L = circuit.getTcLowerBound(); Tc_U = circuit.getTcUpperBound();
         Sat = ( circuit.tcBinarySearch())?("SAT"):("UNSAT");
-        fprintf( fPtr, "%d. Tc=%f, C#=%ld, T_tc=%f, T_solver=%f, %s\n", itr_ctr, Tc, clause_ctr, timingconstrainttime1.count(), sattime2.count(), Sat.c_str() );
+        fprintf( fPtr, "%d. Cl#=%ld, Tc_U=%f, Tc_L=%f,T_m=%f, T_tim_c=%f, T_solver=%f, %s\n", itr_ctr, clause_ctr, Tc_U, Tc_L, Tc, timingconstrainttime1.count(), sattime2.count(), Sat.c_str() );
         
         itr_ctr++ ;
 		if( prepretc == circuit.getTc() ) break;
