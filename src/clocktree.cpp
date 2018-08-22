@@ -1690,9 +1690,12 @@ void ClockTree::VTAConstraintFFtoFF( CriticalPath *path )
         //Each pairs of nodes in stClkPath
     for( int L1 = 0 ; L1 < stClkPath.size()-2; L1++ )
     {
+        Node1 = stClkPath.at(L1) ;
+        if( Node1->ifMasked() ) continue;
         for( int L2 = L1 + 1 ; L2 < stClkPath.size()-1; L2++ )
         {
-            Node1 = stClkPath.at(L1) ; Node2 = stClkPath.at(L2) ;
+            Node2 = stClkPath.at(L2) ;
+            if( Node2->ifMasked() ) continue;
             clause = to_string( (Node1->getNodeNumber()+2) * -1 ) + " " + to_string( (Node2->getNodeNumber()+2) * -1 )+ " 0" ;
             
             if( _VTAconstraintlist.find(clause) == _VTAconstraintlist.end() )
@@ -1711,9 +1714,12 @@ void ClockTree::VTAConstraintFFtoFF( CriticalPath *path )
     //L2 range: right child of common parent <-> right end
     for( int L1 = 0 ; L1 <= idCommonParent; L1++ )
     {
+        Node1 = edClkPath.at(L1) ;
+        if( Node1->ifMasked() ) continue;
         for( int L2 = idCommonParent + 1 ; L2 < edClkPath.size()-1; L2++ )
         {
-            Node1 = edClkPath.at(L1) ; Node2 = edClkPath.at(L2) ;
+            Node2 = edClkPath.at(L2) ;
+            if( Node2->ifMasked() ) continue;
             clause = to_string( (Node1->getNodeNumber()+2) * -1 ) + " " + to_string( (Node2->getNodeNumber()+2) * -1 )+ " 0" ;
             
             if( _VTAconstraintlist.find(clause) == _VTAconstraintlist.end() )
@@ -1727,9 +1733,12 @@ void ClockTree::VTAConstraintFFtoFF( CriticalPath *path )
         //Each pairs of nodes in edClkPath
     for( int L1 = idCommonParent + 1 ; L1 < edClkPath.size()-2; L1++ )
     {
+        Node1 = edClkPath.at(L1) ;
+        if( Node1->ifMasked() ) continue;
         for( int L2 = L1 + 1 ; L2 < edClkPath.size()-1; L2++ )
         {
-            Node1 = edClkPath.at(L1) ; Node2 = edClkPath.at(L2) ;
+            Node2 = edClkPath.at(L2) ;
+            if( Node2->ifMasked() ) continue;
             clause = to_string( (Node1->getNodeNumber()+2) * -1 ) + " " + to_string( (Node2->getNodeNumber()+2) * -1 )+ " 0" ;
             
             if( _VTAconstraintlist.find(clause) == _VTAconstraintlist.end() )
@@ -1752,9 +1761,12 @@ void ClockTree::VTAConstraintPItoFF( CriticalPath *path )
     
     for( int L1 = 0 ; L1 < edClkPath.size()-2; L1++ )
     {
+        Node1 = edClkPath.at(L1);
+        if( Node1->ifMasked() ) continue;
         for( int L2 = L1 + 1 ; L2 < edClkPath.size()-1; L2++ )
         {
-            Node1 = edClkPath.at(L1); Node2 = edClkPath.at(L2);
+            Node2 = edClkPath.at(L2);
+            if( Node2->ifMasked() ) continue;
             clause = to_string( (Node1->getNodeNumber()+2) * -1 ) + " " + to_string( (Node2->getNodeNumber()+2) * -1 )+ " 0" ;
             
             if( _VTAconstraintlist.find(clause) == _VTAconstraintlist.end() )
@@ -1775,9 +1787,12 @@ void ClockTree::VTAConstraintFFtoPO( CriticalPath *path )
     ClockTreeNode *Node1 = NULL, *Node2 = NULL ;
     for( int L1 = 0 ; L1 < stClkPath.size()-2; L1++ )
     {
+        Node1 = stClkPath.at(L1);
+        if( Node1->ifMasked() ) continue;
         for( int L2 = L1 + 1 ; L2 < stClkPath.size()-1; L2++ )
         {
-            Node1 = stClkPath.at(L1); Node2 = stClkPath.at(L2);
+            Node2 = stClkPath.at(L2);
+            if( Node2->ifMasked() ) continue;
             clause = to_string( (Node1->getNodeNumber()+2) * -1 ) + " " + to_string( (Node2->getNodeNumber()+2) * -1 )+ " 0" ;
             
             if( _VTAconstraintlist.find(clause) == _VTAconstraintlist.end() )
