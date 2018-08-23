@@ -710,6 +710,7 @@ void ClockTree::printFinalResult()
 
 bool compare( CriticalPath* A, CriticalPath*B )
 {
+    if( A == NULL || B == NULL ) cerr << "[Error] Null pointer for CriticalPath*\n";
     if( A->getSlack() > B->getSlack() ) return false ;
     else                                return true  ;
 }
@@ -727,20 +728,25 @@ void ClockTree::printPathCriticality()
     for( int i = 0; i <= 10; i++ )
     {
         pptr = getPathList().at(i) ;
-        printf("%2d. slk = %f, path ID: %3ld \n", i, pptr->getSlack(), pptr->getPathNum() );
+        printf("%2d. slk = %f, path ID: %3ld ", i, pptr->getSlack(), pptr->getPathNum() );
+        printAssociatedDCCLeaderofPath( pptr );
     }
     
     printf( YELLOW"[Path's Slack Rank]" RST" Ignore the impact of DCC/Leader deployment\n" );
+    this->_tc = this->_origintc;
     for( auto const& path: this->_pathlist )
     {
         if( (path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF) ) continue;
         UpdatePathTiming( path, true, false, true );
     }
+    
     sort( this->getPathList().begin(), this->getPathList().end(), compare );
+    
     for( int i = 0; i <= 10; i++ )
     {
         pptr = getPathList().at(i) ;
-        printf("%2d. slk = %f, path ID: %3ld \n", i, pptr->getSlack(), pptr->getPathNum() );
+        printf("%2d. slk = %f, path ID: %3ld ", i, pptr->getSlack(), pptr->getPathNum() );
+        printAssociatedDCCLeaderofPath( pptr );
     }
 }
 
@@ -755,6 +761,29 @@ void ClockTree::printDCCList()
     }
     printf( "\t==> DCC Ctr = " RED"%ld" RST"\n", this->_dcclist.size() );
 }
+
+
+ void ClockTree::printAssociatedDCCLeaderofPath( CriticalPath * path )
+ {
+     if( path == NULL ) return ;
+     vector<ClockTreeNode *> stpath = path->getStartPonitClkPath() ;
+     vector<ClockTreeNode *> edpath = path->getEndPonitClkPath() ;
+ 
+     if( stpath.size() != 0 || path->getPathType() == FFtoFF || path->getPathType() == FFtoPO )
+     {
+         printf("     Ci: ");
+         for( auto const& node: stpath )
+             if( node->ifPlacedDcc() || node->getIfPlaceHeader() )   printf(" (%4ld, %2.1f, %d)", node->getNodeNumber(), node->getDccType(), node->getVTAType() );
+     }
+     if( edpath.size() != 0 || path->getPathType() == FFtoFF || path->getPathType() == PItoFF )
+     {
+         printf("     Cj: ");
+         for( auto const& node: edpath )
+             if( node->ifPlacedDcc() || node->getIfPlaceHeader() )   printf(" (%4ld, %2.1f, %d)", node->getNodeNumber(), node->getDccType(), node->getVTAType() );
+     }
+     printf("\n");
+ }
+
 
 
 

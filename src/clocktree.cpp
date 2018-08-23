@@ -609,6 +609,8 @@ int ClockTree::checkParameter(int argc, char **argv, string *message)
 			this->_placedcc = 0;								// Do not insert DCC
         else if(strcmp(argv[loop], "-nonVTA") == 0)
             this->_doVTA = 0;
+        else if(strcmp(argv[loop], "-print=CP") == 0)
+            this->_printCP = 1;
 		else if(strcmp(argv[loop], "-nonaging") == 0)
 			this->_aging = 0;									// Non-aging
         else if(strcmp(argv[loop], "-dcc_leader") == 0)

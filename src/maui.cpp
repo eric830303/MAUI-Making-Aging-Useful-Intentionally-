@@ -44,6 +44,7 @@ int main(int argc, char **argv)
             cout << "      -dump=SAT_CNF          Decode other CNF files and dump its DCC/Leader Deployment/Selection\n";
             cout << "      -print=path            Print the pipeline\n";
             cout << "      -print=Clause          Dump clauses while execution\n";
+            cout << "      -print=CP              print associated DCC/Leader deployment of top 10 CP\n";
             cout << "      -dc_for                formulat the situation that dcc impacted by leader\n";
             cout << "      -checkCNF              Check the DCC/Leader deployment/Selection, based on given CNF output file\n";
             cout << "      -checkFile             Check the DCC/Leader deployment/Selection, based on given DccVTA.txt \n";
@@ -111,6 +112,14 @@ int main(int argc, char **argv)
     
     //---- Mask -------------------------------------------------------
     circuit.dccPlacementByMasked();
+    
+    //-------- print DCC ------------------------------------------------
+    if( circuit.ifprintCP() ){
+        circuit.InitClkTree() ;
+        circuit.readDCCVTAFile();
+        circuit.printPathCriticality();
+        return 0 ;
+    }
     //-------- cal VTA ------------------------------------------------
     if( circuit.ifCalVTA() ){
         circuit.calVTABufferCountByFile() ;
