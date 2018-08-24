@@ -718,21 +718,25 @@ void ClockTree::printPathCriticality()
 {
     CriticalPath *pptr = NULL ;
     cout << "---------------------------------------------------------------------------\n";
-    printf( YELLOW"[Path's Slack Rank]" RST" Consider the impact of DCC/Leader deployment\n" );
+    printf( YELLOW"[----Path's Slack Rank----]" RST"\nTop 20 CPs " RED"after " RST"optimization \n" );
     for( auto const& path: this->_pathlist )
     {
         if( (path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF) ) continue;
         UpdatePathTiming( path, true, true, true );
     }
     sort( this->getPathList().begin(), this->getPathList().end(), compare );
-    for( int i = 0; i <= 10; i++ )
+    
+    int i = 0;
+    for( auto const& pptr: this->_pathlist )
     {
-        pptr = getPathList().at(i) ;
-        printf("%2d. slk = %f, path ID: %3ld ", i, pptr->getSlack(), pptr->getPathNum() );
+        if( i == 20 ) break;
+        if( (pptr->getPathType() != PItoFF) && (pptr->getPathType() != FFtoPO) && (pptr->getPathType() != FFtoFF) ) continue;
+        printf("%2d. P(%3ld) ", i, pptr->getPathNum() );
         printAssociatedDCCLeaderofPath( pptr );
+        i++;
     }
     
-    printf( YELLOW"[Path's Slack Rank]" RST" Ignore the impact of DCC/Leader deployment\n" );
+    printf( RST"\nTop 20 CPs " RED"before " RST"optimization (using original Tc )\n" );
     this->_tc = this->_origintc;
     for( auto const& path: this->_pathlist )
     {
@@ -742,11 +746,14 @@ void ClockTree::printPathCriticality()
     
     sort( this->getPathList().begin(), this->getPathList().end(), compare );
     
-    for( int i = 0; i <= 10; i++ )
+    i = 0;
+    for( auto const& pptr: this->_pathlist )
     {
-        pptr = getPathList().at(i) ;
-        printf("%2d. slk = %f, path ID: %3ld ", i, pptr->getSlack(), pptr->getPathNum() );
+        if( i == 20 ) break;
+        if( (pptr->getPathType() != PItoFF) && (pptr->getPathType() != FFtoPO) && (pptr->getPathType() != FFtoFF) ) continue;
+        printf("%2d. P(%3ld) ", i, pptr->getPathNum() );
         printAssociatedDCCLeaderofPath( pptr );
+        i++;
     }
 }
 
@@ -768,18 +775,39 @@ void ClockTree::printDCCList()
      if( path == NULL ) return ;
      vector<ClockTreeNode *> stpath = path->getStartPonitClkPath() ;
      vector<ClockTreeNode *> edpath = path->getEndPonitClkPath() ;
- 
-     if( stpath.size() != 0 || path->getPathType() == FFtoFF || path->getPathType() == FFtoPO )
+     
+     string NodeType = "";
+     if     ( path->getPathType() == FFtoFF) { printf(" FFtoFF:"); NodeType = YELLOW"C"; }
+     else if( path->getPathType() == PItoFF) { printf(" PItoFF:"); NodeType =    GRN"R"; }
+     else if( path->getPathType() == FFtoPO) { printf(" FFtoPO:"); NodeType =   CYAN"L"; }
+     else if( path->getPathType() == NONE  ) { printf("   NONE:\n"); return; }
+     
+     
+     ClockTreeNode * comnode = path->findLastSameParentNode();
+     long comID = path->nodeLocationInClockPath('s', path->findLastSameParentNode() );
+     
+     long idL = 0 ;
+     
+     if( stpath.size() > 1  )
      {
-         printf("     Ci: ");
          for( auto const& node: stpath )
-             if( node->ifPlacedDcc() || node->getIfPlaceHeader() )   printf(" (%4ld, %2.1f, %d)", node->getNodeNumber(), node->getDccType(), node->getVTAType() );
+         {
+             if( node->ifPlacedDcc() || node->getIfPlaceHeader() )
+                 printf(" %4ld( %s%ld" RST", %2.1f, %2d)", node->getNodeNumber(), NodeType.c_str(), idL, node->getDccType(), node->getVTAType() );
+             if( node == comnode && comnode ) NodeType = CYAN"L";
+             idL++;
+         }
      }
-     if( edpath.size() != 0 || path->getPathType() == FFtoFF || path->getPathType() == PItoFF )
+     if( edpath.size() > 1  )
      {
-         printf("     Cj: ");
-         for( auto const& node: edpath )
-             if( node->ifPlacedDcc() || node->getIfPlaceHeader() )   printf(" (%4ld, %2.1f, %d)", node->getNodeNumber(), node->getDccType(), node->getVTAType() );
+        long j = 0 ;
+        if( path->getPathType() == FFtoFF ) j = comID + 1;
+        NodeType = GRN"R";
+        for( ; j < edpath.size()-1; j++)
+        {
+            if( edpath.at(j)->ifPlacedDcc() || edpath.at(j)->getIfPlaceHeader() )
+                printf(" %4ld( %s%ld" RST", %2.1f, %2d)", edpath.at(j)->getNodeNumber(), NodeType.c_str(), j, edpath.at(j)->getDccType(), edpath.at(j)->getVTAType() );
+        }
      }
      printf("\n");
  }
