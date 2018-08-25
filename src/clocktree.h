@@ -62,7 +62,7 @@ class ClockTree
 {
 private:
 	int     _pathselect, _bufinsert, _gpupbound, _gplowbound, _minisatexecnum;
-	bool    _placedcc, _aging, _mindccplace, _tcrecheck, _clkgating, _dumpdcc, _dumpcg, _dumpbufins, _doVTA, _printpath, _dumpCNF, _checkCNF, _checkfile, _printClause, _calVTA, _dcc_leader, _dc_formulation, _printCP ;
+	bool    _placedcc, _aging, _mindccplace, _tcrecheck, _clkgating, _dumpdcc, _dumpcg, _dumpbufins, _doVTA, _printpath, _dumpCNF, _checkCNF, _checkfile, _printClause, _calVTA, _dcc_leader, _dc_formulation, _printCP, _compare ;
     bool    _usingSeniorAging, _printClkNode ;
 	long    _pathusednum, _pitoffnum, _fftoffnum, _fftoponum, _nonplacedccbufnum;
 	long    _totalnodenum, _ffusednum, _bufferusednum, _dccatlastbufnum;
@@ -192,6 +192,7 @@ public:
     set< pair<ClockTreeNode*,ClockTreeNode*> >& getVTASet(void) { return _setVTALeader ; }
     set< pair<int,int> >& getDCCSet(void) { return _setDCC ; }
 	//-- Bool Attr Access -------------------------------------------------------
+    bool ifcompare(void)                            { return _compare           ; }
     bool ifprintCP(void)                            { return _printCP           ; }
     bool ifCalVTA(void)                             { return _calVTA            ; }
     bool ifdccleader(void)                          { return _dcc_leader        ; }
@@ -341,6 +342,10 @@ public:
     void    printPathCriticality();
     void    printDCCList();
     void    printAssociatedDCCLeaderofPath( CriticalPath * path );
+    void    Compare();
+    void    SortCPbySlack(bool);
+    void    DisplayDCCinSet( set<ClockTreeNode*> );
+    void    FindDCCLeaderInPathVector( set<ClockTreeNode*>&, vector<CriticalPath*>&, bool display=false);
     ClockTreeNode *searchClockTreeNode(string);
     ClockTreeNode *searchClockTreeNode(long);
     vector<CriticalPath *> searchCriticalPath(char, string);

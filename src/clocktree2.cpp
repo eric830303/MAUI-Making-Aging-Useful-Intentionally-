@@ -714,42 +714,40 @@ bool compare( CriticalPath* A, CriticalPath*B )
     if( A->getSlack() > B->getSlack() ) return false ;
     else                                return true  ;
 }
-void ClockTree::printPathCriticality()
+
+void ClockTree::SortCPbySlack( bool DCCHTV )
 {
-    CriticalPath *pptr = NULL ;
-    cout << "---------------------------------------------------------------------------\n";
-    printf( YELLOW"[----Path's Slack Rank----]" RST"\nTop 20 CPs " RED"after " RST"optimization \n" );
     for( auto const& path: this->_pathlist )
     {
         if( (path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF) ) continue;
-        UpdatePathTiming( path, true, true, true );
+        UpdatePathTiming( path, true, DCCHTV, true );
     }
     sort( this->getPathList().begin(), this->getPathList().end(), compare );
+    
+}
+void ClockTree::printPathCriticality()
+{
+    cout << "---------------------------------------------------------------------------\n";
+    printf( YELLOW"[----Path's Slack Rank----]" RST"\nTop 20 CPs " RED"after " RST"optimization \n" );
+    SortCPbySlack(true);
     
     int i = 0;
     for( auto const& pptr: this->_pathlist )
     {
-        if( i == 20 ) break;
+        if( i == 100 ) break;
         if( (pptr->getPathType() != PItoFF) && (pptr->getPathType() != FFtoPO) && (pptr->getPathType() != FFtoFF) ) continue;
         printf("%2d. P(%3ld) ", i, pptr->getPathNum() );
         printAssociatedDCCLeaderofPath( pptr );
         i++;
     }
-    
     printf( RST"\nTop 20 CPs " RED"before " RST"optimization (using original Tc )\n" );
     this->_tc = this->_origintc;
-    for( auto const& path: this->_pathlist )
-    {
-        if( (path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF) ) continue;
-        UpdatePathTiming( path, true, false, true );
-    }
-    
-    sort( this->getPathList().begin(), this->getPathList().end(), compare );
+    SortCPbySlack(false);
     
     i = 0;
     for( auto const& pptr: this->_pathlist )
     {
-        if( i == 20 ) break;
+        if( i == 100 ) break;
         if( (pptr->getPathType() != PItoFF) && (pptr->getPathType() != FFtoPO) && (pptr->getPathType() != FFtoFF) ) continue;
         printf("%2d. P(%3ld) ", i, pptr->getPathNum() );
         printAssociatedDCCLeaderofPath( pptr );
@@ -813,9 +811,117 @@ void ClockTree::printDCCList()
  }
 
 
+void ClockTree::Compare()
+{
+    vector<CriticalPath*>   vCP         ;
+    vector<CriticalPath*>   vCP2        ;
+    set<ClockTreeNode*>     DCCLeader   ;
+    set<ClockTreeNode*>     DCCLeader2  ;
+    readDCCVTAFile("./setting/DccOnly.txt");
+    SortCPbySlack(true);
+    
+    //--- Find CPs, which are not placed DCCs/Leaders on their associated clock network--------
+    int rank = 0 ;
+    for( auto const& path: this->_pathlist )
+    {
+        if( (path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF) ) continue;
+        bool placed = false;
+        vector<ClockTreeNode *> stpath = path->getStartPonitClkPath() ;
+        vector<ClockTreeNode *> edpath = path->getEndPonitClkPath() ;
+        if( stpath.size() > 1  )
+            for( auto const& node: stpath )
+                if( node->ifPlacedDcc() || node->getIfPlaceHeader() ) placed = true;
+        if( edpath.size() > 1  )
+            for( auto const& node: edpath )
+                if( node->ifPlacedDcc() || node->getIfPlaceHeader() ) placed = true;
+        
+        if( !placed ) vCP.push_back( path );
+        else          vCP2.push_back( path);
+        rank++;
+        if( rank == 1000 ) break;
+    }
+    readDCCVTAFile("./setting/DccVTA.txt");
+    FindDCCLeaderInPathVector( DCCLeader, vCP );
+    
+    printf("---------- DCCs deployed on original non-deployed CPs  --------------\n");
+    DisplayDCCinSet( DCCLeader );
+    
+    for( auto const & path: vCP2 )
+    {
+        vector<ClockTreeNode *> stpath = path->getStartPonitClkPath() ;
+        vector<ClockTreeNode *> edpath = path->getEndPonitClkPath() ;
+        if( stpath.size() > 1  )
+            for( auto const& node: stpath )
+                if( DCCLeader.find(node) != DCCLeader.end() )   DCCLeader.erase(node);
+        
+        if( edpath.size() > 1  )
+            for( auto const& node: edpath )
+                if( DCCLeader.find(node) != DCCLeader.end() )   DCCLeader.erase(node);
+            
+    }
+    printf("---------- DCCs deployed on original non-deployed CPs (exclusive)  --------------\n");
+    DisplayDCCinSet( DCCLeader );
+    FindDCCLeaderInPathVector( DCCLeader2, vCP2 );
+    
+    printf("---------- DCCs deployed on original deployed CPs  --------------\n");
+    DisplayDCCinSet( DCCLeader2 );
+    
+    //printCP_before_after();
+    
+}
+void ClockTree::DisplayDCCinSet( set<ClockTreeNode *>DCCLeader )
+{
+    long k = 1;
+    for( auto const & node: DCCLeader )
+        if( node->ifPlacedDcc() ){ printf( "%2ld. %4ld(%2.1f)\n", k, node->getNodeNumber(), node->getDccType() ); k++; }
+}
 
-
-
+void ClockTree::FindDCCLeaderInPathVector(set<ClockTreeNode *> &DCCLeader, vector<CriticalPath *> &vCP, bool display)
+{
+    int rank = 0;
+    for( auto const& path: vCP )
+    {
+        vector<ClockTreeNode *> stpath = path->getStartPonitClkPath() ;
+        vector<ClockTreeNode *> edpath = path->getEndPonitClkPath() ;
+        string NodeType = "";
+        if( display )printf("%2d. P(%3ld) ", rank, path->getPathNum() );
+        if     ( path->getPathType() == FFtoFF && display ) { printf(" FFtoFF:"); NodeType = YELLOW"C"; }
+        else if( path->getPathType() == PItoFF && display ) { printf(" PItoFF:"); NodeType =    GRN"R"; }
+        else if( path->getPathType() == FFtoPO && display ) { printf(" FFtoPO:"); NodeType =   CYAN"L"; }
+        else if( path->getPathType() == NONE   && display ) { printf("   NONE:\n"); return; }
+        ClockTreeNode * comnode = path->findLastSameParentNode();
+        long comID = path->nodeLocationInClockPath('s', path->findLastSameParentNode() );
+        
+        long idL = 0 ;
+        if( stpath.size() > 1  )
+            for( auto const& node: stpath )
+            {
+                if( node->ifPlacedDcc() || node->getIfPlaceHeader() )
+                {
+                    if( display ) printf("%4ld( %s%ld" RST", %2.1f, %2d)", node->getNodeNumber(), NodeType.c_str(), idL, node->getDccType(), node->getVTAType());
+                    DCCLeader.insert(node);
+                }
+                if( node == comnode && comnode ) NodeType = CYAN"L";
+                idL++;
+            }
+        if( edpath.size() > 1  )
+        {
+            long j = 0 ;
+            if( path->getPathType() == FFtoFF ) j = comID + 1;
+            NodeType = GRN"R";
+            for( ; j < edpath.size()-1; j++)
+            {
+                if( edpath.at(j)->ifPlacedDcc() || edpath.at(j)->getIfPlaceHeader() )
+                {
+                    if( display ) printf(" %4ld( %s%ld" RST", %2.1f, %2d)", edpath.at(j)->getNodeNumber(), NodeType.c_str(), j, edpath.at(j)->getDccType(), edpath.at(j)->getVTAType() );
+                    DCCLeader.insert(edpath.at(j));
+                }
+            }
+        }
+        if( display ) printf("\n");
+        rank++;
+    }
+}
 
 
 

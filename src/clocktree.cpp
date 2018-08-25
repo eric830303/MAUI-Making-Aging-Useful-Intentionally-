@@ -531,6 +531,7 @@ void ClockTree::readParameter()
                     this->getLibList().push_back( ptrTech ) ;
                     
                     //double bof = this->getBaseVthOffset() ;
+                    
                     double tof = ptrTech->_VTH_OFFSET     ;
                     printf( GREEN"[Info] Reading ./setting/Parameter.txt..\n" );
                     printf( CYAN"\t[Setting] " RESET"Fin convergent Year    = %4d years \n", this->getFinYear() );
@@ -576,6 +577,7 @@ void ClockTree::readParameter()
                     
                     printf( CYAN"\t8x %%, H-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( DC_80DCC,  0, true )               - 1 )*100 );
                     printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_80DCC,  0 ) - 2*(tof) - 1 )*100 );
+                    
                 }
             }
         }
@@ -606,7 +608,9 @@ int ClockTree::checkParameter(int argc, char **argv, string *message)
 			return -1;
 		}
 		else if(strcmp(argv[loop], "-nondcc") == 0)
-			this->_placedcc = 0;								// Do not insert DCC
+			this->_placedcc = 0;
+        else if(strcmp(argv[loop], "-compare") == 0)
+            this->_compare = 1;        
         else if(strcmp(argv[loop], "-nonVTA") == 0)
             this->_doVTA = 0;
         else if(strcmp(argv[loop], "-print=CP") == 0)
@@ -3046,7 +3050,7 @@ void ClockTree::updateAllPathTiming(void)
 /////////////////////////////////////////////////////////////////////
 void ClockTree::minimizeDccPlacement(void)
 {
-	if(!this->_mindccplace || !this->_placedcc || (this->_besttc == 0))
+	if( !this->_placedcc || (this->_besttc == 0))
 		return;
 	cout << "\033[32m[Info]: Minimizing DCC Placement...\033[0m\n";
 	cout << "\033[32m    Before DCC Placement Minimization\033[0m\n";
@@ -3993,7 +3997,7 @@ void ClockTree::printPath( int pathid )
     readDCCVTAFile( "./setting/DccVTA.txt" ) ;
     printf("From DccVTA.txt\n" );
     printPath_givFile( path, true  /*DCC/VTA*/, true  /*Aging*/, true  /*Tc from file*/ ) ;
-    readDCCVTAFile( "./setting/DccVTA.txt" ) ;
+    readDCCVTAFile( "./setting/DccVTA2.txt" ) ;
     printf("From DccVTA2.txt\n" );
     printPath_givFile( path, true  /*DCC/VTA*/, true  /*Aging*/, true  /*Tc from file*/ ) ;
 }

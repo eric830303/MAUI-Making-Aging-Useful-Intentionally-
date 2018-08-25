@@ -113,9 +113,13 @@ int main(int argc, char **argv)
     //---- Mask -------------------------------------------------------
     circuit.dccPlacementByMasked();
     
+    if( circuit.ifcompare() )
+    {
+        circuit.Compare();
+        return 0 ;
+    }
     //-------- print DCC ------------------------------------------------
     if( circuit.ifprintCP() ){
-        circuit.InitClkTree() ;
         circuit.readDCCVTAFile();
         circuit.printPathCriticality();
         return 0 ;
@@ -226,7 +230,7 @@ int main(int argc, char **argv)
     midtime = chrono::steady_clock::now();
     printf( YELLOW"[Overhead Minimization]" RST"Minimize DCC # and HTV buf #\n" );
 	circuit.minimizeDccPlacement();
-    circuit.minimizeLeader2(0);
+    //circuit.minimizeLeader2(0);
 	endtime = chrono::steady_clock::now();
 	minitime = chrono::duration_cast<chrono::duration<double>>(endtime - midtime);
 	
