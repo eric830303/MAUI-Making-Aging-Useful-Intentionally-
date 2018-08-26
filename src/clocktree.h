@@ -344,8 +344,11 @@ public:
     void    printAssociatedDCCLeaderofPath( CriticalPath * path );
     void    Compare();
     void    SortCPbySlack(bool);
-    void    DisplayDCCinSet( set<ClockTreeNode*> );
-    void    FindDCCLeaderInPathVector( set<ClockTreeNode*>&, vector<CriticalPath*>&, bool display=false);
+    void    DisplayDCCinSet( set<ClockTreeNode*> & );
+    void    DisplayDCCinVec( vector<ClockTreeNode*>& );
+    void    FindDCCLeaderInPathVector( set<ClockTreeNode*>&, CriticalPath*, int mode = 0);
+    pair<int,int>    FindDCCLeaderInPathVector( vector<ClockTreeNode*>&, CriticalPath*, int mode = 0);
+    int     printCP_before_After( CriticalPath*, vector<ClockTreeNode*>& );
     ClockTreeNode *searchClockTreeNode(string);
     ClockTreeNode *searchClockTreeNode(long);
     vector<CriticalPath *> searchCriticalPath(char, string);
