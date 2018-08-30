@@ -309,8 +309,7 @@ public:
     void    printPath(CriticalPath*, int Mode );
     void    printPath_givFile(   CriticalPath*, bool doDCCVTA, bool aging = true, bool givTc = true );
     void    printFFtoFF_givFile( CriticalPath*, bool doDCCVTA, bool aging = true );
-    void    printPItoFF_givFile( CriticalPath*, bool doDCCVTA, bool aging = true );
-    void    printFFtoPO_givFile( CriticalPath*, bool doDCCVTA, bool aging = true );
+    void    printPI_PO_givFile( CriticalPath*, bool doDCCVTA, bool aging = true );
     void    printPathSlackTiming(CriticalPath*, double ci, double cj, bool aging = true );
     void    printAssociatedCriticalPathAtEndPoint( CriticalPath* path  , bool doDCCVTA = true, bool aging = true );
     void    printAssociatedCriticalPathAtStartPoint( CriticalPath* path, bool doDCCVTA = true, bool aging = true  );
@@ -351,6 +350,7 @@ public:
     int     printCP_before_After( CriticalPath*, vector<ClockTreeNode*>& );
     ClockTreeNode *searchClockTreeNode(string);
     ClockTreeNode *searchClockTreeNode(long);
+    bool NodeExistInVec( ClockTreeNode*node, vector<ClockTreeNode*> &vDeploy );
     vector<CriticalPath *> searchCriticalPath(char, string);
     vector<ClockTreeNode *> getFFChildren(ClockTreeNode *);
 };
