@@ -31,6 +31,9 @@
 #define PATHMASKPERCENT (1.0)	    // Mask how many percentage of critical path (0~1)
 #define TenYear_Sec     (315360000)
 #define COF_A           (0.0039/2)
+#define CTN             ClockTreeNode
+#define CP              CriticalPath
+#define CT              ClockTree
 
 using namespace std;
 
@@ -62,40 +65,61 @@ class ClockTree
 {
 private:
 	int     _pathselect, _bufinsert, _gpupbound, _gplowbound, _minisatexecnum;
-	bool    _placedcc, _aging, _mindccplace, _tcrecheck, _clkgating, _dumpdcc, _dumpcg, _dumpbufins, _doVTA, _printpath, _dumpCNF, _checkCNF, _checkfile, _printClause, _calVTA, _dcc_leader, _dc_formulation, _printCP, _compare ;
+    bool    _placedcc, _aging, _mindccplace, _tcrecheck, _clkgating, _dumpdcc, _dumpcg, _dumpbufins, _doVTA;
     bool    _usingSeniorAging, _printClkNode ;
 	long    _pathusednum, _pitoffnum, _fftoffnum, _fftoponum, _nonplacedccbufnum;
 	long    _totalnodenum, _ffusednum, _bufferusednum, _dccatlastbufnum;
 	long    _masklevel, _maxlevel, _insertbufnum, _dcc_constraint_ctr, _leader_constraint_ctr ;
 	double  _maskleng, _cgpercent;
-    double _tcAfterAdjust ;
-    //Timing-related attribute
-    double _origintc, _besttc, _tc, _tcupbound, _tclowbound, _agingtcq, _agingdij, _agingtsu;
+    double  _tcAfterAdjust ;
     
-    //filename-related attribute
+    //--- Control of function ----------------------------------------------------------
+    bool    _printpath, _dumpCNF, _checkCNF, _checkfile ;
+    bool    _printClause, _calVTA, _dcc_leader          ;
+    bool    _dc_formulation, _printCP, _compare         ;
+    
+    //--- Timing-related ----------------------------------------------------------------
+    double  _origintc, _besttc, _tc         ;
+    double  _tcupbound, _tclowbound         ;
+    double  _agingtcq, _agingdij, _agingtsu ;
+    
+    //--- FileName-Related --------------------------------------------------------------
 	string _timingreport, _timingreportfilename, _timingreportloc, _timingreportdesign;
 	string _cgfilename, _outputdir;
     
-    //circuit-related attribute
-	ClockTreeNode   *_clktreeroot, *_firstchildrennode;
-	CriticalPath    *_mostcriticalpath;
-	vector<CriticalPath *> _pathlist;
-	map<string, ClockTreeNode *> _ffsink, _buflist, _cglist, _dcclist, _VTAlist ;
-    set< tuple<ClockTreeNode*,double,int>  > _DccLeaderset;
-    set< pair<ClockTreeNode*,ClockTreeNode*> > _setVTALeader ;
-    set< pair<int,int> > _setDCC ;
+    //--- Benchmark-Related --------------------------------------------------------------
+	CTN *_clktreeroot, *_firstchildrennode;
+	CP  *_mostcriticalpath;
     
-	set<string> _VTAconstraintlist, _dccconstraintlist, _timingconstraintlist;
+    //-- Vec-Container ------------------------------------------------------------------
+	vector< CP* > _pathlist;
+    
+    //-- Map-Container ------------------------------------------------------------------
+	map   < string, CTN* > _ffsink     ;
+    map   < string, CTN* > _buflist    ;
+    map   < string, CTN* > _cglist     ;
+    map   < string, CTN* > _dcclist    ;
+    map   < string, CTN* > _VTAlist    ;
+    
+    //-- Set-Container ------------------------------------------------------------------
+    set   < tuple< CTN*, double, int > >    _DccLeaderset ;
+    set   < pair< CTN*, CTN* >  >           _setVTALeader ;
+    set   < pair< int, int >    >           _setDCC       ;
+	set   < string >  _VTAconstraintlist    ;
+    set   < string >  _dccconstraintlist    ;
+    set   < string >  _timingconstraintlist ;
 	
-    //VTA-related attribute
+    //-- HTV ---------------------------------------------------------------------------
     int     _VTH_LIB_cnt    ;
     int     _FIN_CONV_Year  ;
-    long long int Max_timing_count;
     double  _baseVthOffset  ;
     vector< VTH_TECH* > _VthTechList ;
     double  _exp            ;
     double  _nominal_agr[8] ;
     double  _HTV_agr[8]     ;
+    
+    
+    long long int Max_timing_count;
 	bool ifSkipLine(string)                 ;
     bool AnotherSolution(void)              ;
 	void pathTypeChecking(void)             ;
@@ -103,7 +127,7 @@ private:
 	void checkFirstChildrenFormRoot(void)   ;
 	void initTcBound(void)                  ;
 	void genDccConstraintClause(vector<vector<long> > *);
-	void genClauseByDccVTA(ClockTreeNode *, string *, double, int);
+	void genClauseByDccVTA(CTN*, string *, double, int);
 	void deleteClockTree(void)              ;
     //-- Dumper ------------------------------------------------------------------
 	void dumpDccListToFile(void)            ;
@@ -187,9 +211,9 @@ public:
 	string  getOutputDirectoryPath(void)            { return this->_outputdir   ; }
 	ClockTreeNode   *getFirstChildrenNode(void)     { return _firstchildrennode ; }
 	CriticalPath    *getMostCriticalPath(void)      { return _mostcriticalpath  ; }
-	vector<CriticalPath *>& getPathList(void)       { return _pathlist          ; }
+	vector<CP*>& getPathList(void)       { return _pathlist          ; }
     vector<VTH_TECH*>&      getLibList(void)        { return _VthTechList       ; }
-    set< pair<ClockTreeNode*,ClockTreeNode*> >& getVTASet(void) { return _setVTALeader ; }
+    set< pair<CTN*,CTN*> >& getVTASet(void) { return _setVTALeader ; }
     set< pair<int,int> >& getDCCSet(void) { return _setDCC ; }
 	//-- Bool Attr Access -------------------------------------------------------
     bool ifcompare(void)                            { return _compare           ; }
@@ -237,122 +261,119 @@ public:
     //---Leader Constraint ---------------------------------------------------------
     //Constraint: At most 1 leader exist along a clock path
     void    VTAConstraint(void);
-    void    VTAConstraintFFtoFF( CriticalPath* );
-    void    VTAConstraintPItoFF( CriticalPath* );
-    void    VTAConstraintFFtoPO( CriticalPath* );
+    void    VTAConstraintFFtoFF( CP* );
+    void    VTAConstraintPItoFF( CP* );
+    void    VTAConstraintFFtoPO( CP* );
     
     //---DCC-Leader Constraint ----------------------------------------------------
     //Constraints: Leader must be put in the downstream of dcc
     void    DCCLeaderConstraint(void);
-    void    DCCLeaderConstraintFFtoFF( CriticalPath* );
-    void    DCCLeaderConstraintPItoFF( CriticalPath* );
-    void    DCCLeaderConstraintFFtoPO( CriticalPath* );
+    void    DCCLeaderConstraintFFtoFF( CP* );
+    void    DCCLeaderConstraintPItoFF( CP* );
+    void    DCCLeaderConstraintFFtoPO( CP* );
     
     
     
 	void    genDccPlacementCandidate(void);
     
     //---Timing Constraint---------------------------------------------------------
-	long  timingConstraint(void);//A
-    void    timingConstraint_doDCC_ndoVTA (CriticalPath*, bool update = false );//A-B-1, Not Done
-    void    timingConstraint_doDCC_doVTA  (CriticalPath*, bool update = false );//A-B-2, Done
-    void    timingConstraint_ndoDCC_doVTA (CriticalPath*, bool update = false );//A-B-3,
-    double  timingConstraint_ndoDCC_ndoVTA(CriticalPath*, bool update = false, bool genclause = 1 );//A-B-4, Done
+	long    timingConstraint( void );
+    void    timingConstraint_doDCC_ndoVTA ( CP*, bool update = false );
+    void    timingConstraint_doDCC_doVTA  ( CP*, bool update = false );
+    void    timingConstraint_ndoDCC_doVTA ( CP*, bool update = false );
+    double  timingConstraint_ndoDCC_ndoVTA( CP*, bool update = false, bool genclause = 1 );
 	
 
-    double  timingConstraint_givDCC_givVTA(CriticalPath *,
-                                           double stDCCType , double edDCCType,
-                                           ClockTreeNode *n1, ClockTreeNode *n2,
-                                           int stLibIndex   , int edLibIndex ,
-                                           ClockTreeNode *stHeader, ClockTreeNode *edHeader
-                                            );//A-B-2-C-D   Done
-    void    timingConstraint_givDCC_doVTA(  CriticalPath *,
-                                            double stDCCType  , double edDCCType,
-                                            ClockTreeNode *n1, ClockTreeNode *n2
-                                         );//A-B-2-C    Done
-    void    timingConstraint_givDCC_ndoVTA( CriticalPath *,
-                                            double stDCCType  , double edDCCType,
-                                            ClockTreeNode *n1, ClockTreeNode *n2
-                                           );//A-B-1-C
-    double  timingConstraint_ndoDCC_givVTA( );//Not Done
+    double  timingConstraint_givDCC_givVTA( CP*, double, double, CTN*, CTN*, int, int,CTN*, CTN*ed);
+    void    timingConstraint_givDCC_doVTA(  CP*, double, double, CTN*, CTN*);
+    void    timingConstraint_givDCC_ndoVTA( CP*, double, double, CTN*, CTN*);
+    double  timingConstraint_ndoDCC_givVTA( void );
     //---Clause ------------------------------------------------------------------
-    void    writeClause_givDCC( string &clause, ClockTreeNode* node, double DCCType  );
-    void    writeClause_givVTA( string &clause, ClockTreeNode* node, int    LibIndex );
+    void    writeClause_givDCC( string &clause, CTN* node, double DCCType  );
+    void    writeClause_givVTA( string &clause, CTN* node, int    LibIndex );
     //---VTA-related -------------------------------------------------------------
     double  getAgingRate_givDC_givVth( double DC, int LibIndex, bool initial = false ) ;
     //---Timing-related ----------------------------------------------------------
-    void    adjustOriginTc(void)        ;
-    void    updateAllPathTiming(void)   ;
-    void    tcRecheck(void)             ;
-    double  calClkLaten_givDcc_givVTA   (vector<ClockTreeNode*>clkpath, double DCCType, ClockTreeNode* DCCLoc, int LibIndex, ClockTreeNode* Header );
+    void    adjustOriginTc( void )        ;
+    void    updateAllPathTiming( void )   ;
+    void    tcRecheck( void )             ;
+    double  calClkLaten_givDcc_givVTA   (vector<CTN*> path, double DC, CTN* Loc1, int Lib, CTN* Loc2 );
     
     //---Dumper ------------------------------------------------------------------
 	void    dumpClauseToCnfFile(void)      ;
     void    dumpCNF(void)                  ;
     void    dumpToFile(void)               ;
     void    dumpDccVTALeaderToFile(void)   ;
-    double  UpdatePathTiming(CriticalPath*,bool update = true, bool DCCVTA = true, bool aging = true );
+    double  UpdatePathTiming(CP*,bool update = true, bool DCCVTA = true, bool aging = true );
+    
 	//---Printer --------------------------------------------------------------------
-	void    printClockTree(void);
-	void    printSingleCriticalPath(long, bool verbose = 1);
-	void    printSingleCriticalPath(char, string, bool verbose = 1);
-	void    printAllCriticalPath(void);
-	void    printDccList(void);
-    void    printVTAList(void);
-	void    printClockGatingList(void);
+	void    printDccList(void)          ;
+    void    printVTAList(void)          ;
+	void    printClockGatingList(void)  ;
 	void    printBufferInsertedList(void);
-    void    printSpace(long common);
-    void    printClauseCount();
-    //---Printer 2 ------------------------------------------------------------------
+    void    printSpace(long common)     ;
+    void    printClauseCount(void)      ;
+    
+    //--- "-print=path" ------------------------------------------------------------------
     void    printPath(void);
     void    printPath(int);
-    void    printPath(CriticalPath*, int Mode );
-    void    printPath_givFile(   CriticalPath*, bool doDCCVTA, bool aging = true, bool givTc = true );
-    void    printFFtoFF_givFile( CriticalPath*, bool doDCCVTA, bool aging = true );
-    void    printPI_PO_givFile( CriticalPath*, bool doDCCVTA, bool aging = true );
-    void    printPathSlackTiming(CriticalPath*, double ci, double cj, bool aging = true );
-    void    printAssociatedCriticalPathAtEndPoint( CriticalPath* path  , bool doDCCVTA = true, bool aging = true );
-    void    printAssociatedCriticalPathAtStartPoint( CriticalPath* path, bool doDCCVTA = true, bool aging = true  );
-    void    printClkNodeFeature( ClockTreeNode*,bool ) ;
+    void    printPath(CP*, int Mode );
+    void    printPath_givFile(   CP*, bool doDCCVTA, bool aging = true, bool givTc = true );
+    void    printFFtoFF_givFile( CP*, bool doDCCVTA, bool aging = true );
+    void    printPI_PO_givFile(  CP*, bool doDCCVTA, bool aging = true );
+    void    printPathSlackTiming(CP*, double ci, double cj, bool aging = true );
+    void    printAssociatedCriticalPathAtEndPoint(   CP* path, bool doDCCVTA = true, bool aging = true );
+    void    printAssociatedCriticalPathAtStartPoint( CP* path, bool doDCCVTA = true, bool aging = true  );
+    void    printClkNodeFeature( CTN*, bool ) ;
     //---Vth Lib --------------------------------------------------------------------
     double  calConvergentVth( double dc , double Exp = 0.2 ) ;
     double  calSv( double dc, double VthOffset, double VthFin ) ;
     //---Other ----------------------------------------------------------------------
-    int     calBufChildSize( ClockTreeNode *buffer );
-    bool    checkDCCVTAConstraint(void);
-    bool    checkDCCVTAConstraint_givPath(CriticalPath*);
-    void    readDCCVTAFile( string filename = "./setting/DccVTA.txt" );
-    void    CheckTiming_givCNF();
-    void    CheckTiming_givFile();
-    void    removeCNFFile(void);
-    void    execMinisat(void);
-    bool    tcBinarySearch(void);
-    void    printNodeLayerSpacel(int);
-    void    printNodeLayerSpace(int);
-    void    printClockNode(void);
-    void    printClockNode(ClockTreeNode*, int layer = 0 );
-    void    checkCNF(void);
-    long    calVTABufferCount(bool print=false);
-    void    calVTABufferCountByFile();
+    void    readDCCVTAFile( string="./setting/DccVTA.txt" );
+    int     calBufChildSize( CTN* )             ;
+    bool    checkDCCVTAConstraint( void )       ;
+    bool    checkDCCVTAConstraint_givPath( CP* );
+    void    removeCNFFile(void)                 ;
+    bool    DoOtherFunction( void )             ;
+    void    execMinisat( void )                 ;
+    bool    tcBinarySearch( void )              ;
+    void    printFinalResult( void )            ;
+    long    calVTABufferCount(       bool=0 )   ;
+    void    calVTABufferCountByFile( void   )   ;
+    bool    SolveCNFbyMiniSAT( double, bool=0 ) ;
+    void    EncodeDccLeader( double )           ;
+    CTN*    searchClockTreeNode( string )       ;
+    CTN*    searchClockTreeNode( long   )       ;
+    vector<CP*>     searchCriticalPath( char, string );
+    vector<CTN*>    getFFChildren(CTN*)         ;
+    
+    //---- "-checkFile" ------------------------------------------------------------------
+    void    CheckTiming_givFile(void)           ;
+    
+    //---- "-print=Node" ----------------------------------------------------------------
+    void    printNodeLayerSpacel( int )         ;
+    void    printNodeLayerSpace(  int )         ;
+    void    printClockNode( void )              ;
+    void    printClockNode( CTN*, int=0 )       ;
+    
+    //---- "-checkCNF" ------------------------------------------------------------------
+    void    checkCNF(void)                      ;
     bool    clauseJudgement( vector<string>&, bool * );
-    bool    SolveCNFbyMiniSAT( double tc, bool ifDeploy=false );
-    void    EncodeDccLeader( double tc );
-    void    printFinalResult();
-    void    printPathCriticality();
-    void    printDCCList();
-    void    printAssociatedDCCLeaderofPath( CriticalPath * path );
-    void    Compare();
+
+    //---- "-print=CP" ------------------------------------------------------------------
+    void    printPathCriticality(void);
+    void    printDCCList(void);
+    void    printAssociatedDCCLeaderofPath( CP* path );
+    //---- "-Compare" -------------------------------------------------------------------
+    pair<int,int> FindDCCLeaderInPathVector( vector<CTN*>&, CP*, int= 0 );
+    void          FindDCCLeaderInPathVector(    set<CTN*>&, CP*, int= 0 );
+    void    Compare(void);
     void    SortCPbySlack(bool);
-    void    DisplayDCCinSet( set<ClockTreeNode*> & );
-    void    DisplayDCCinVec( vector<ClockTreeNode*>& );
-    void    FindDCCLeaderInPathVector( set<ClockTreeNode*>&, CriticalPath*, int mode = 0);
-    pair<int,int>    FindDCCLeaderInPathVector( vector<ClockTreeNode*>&, CriticalPath*, int mode = 0);
-    int     printCP_before_After( CriticalPath*, vector<ClockTreeNode*>& );
-    ClockTreeNode *searchClockTreeNode(string);
-    ClockTreeNode *searchClockTreeNode(long);
-    bool NodeExistInVec( ClockTreeNode*node, vector<ClockTreeNode*> &vDeploy );
-    vector<CriticalPath *> searchCriticalPath(char, string);
-    vector<ClockTreeNode *> getFFChildren(ClockTreeNode *);
+    void    DisplayDCCinSet(              set<CTN*>& );
+    void    DisplayDCCinVec(           vector<CTN*>& );
+    void    RemoveDCCandSeeResult(     vector<CTN*>& );
+    int     printCP_before_After( CP*, vector<CTN*>& );
+    bool    NodeExistInVec(      CTN*, vector<CTN*>& );
 };
 
 inline double getAgingRateByDutyCycle(double dc)

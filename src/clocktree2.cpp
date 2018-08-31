@@ -8,6 +8,58 @@
 
 #include "clocktree2.hpp"
 
+bool ClockTree::DoOtherFunction()
+{
+    if( this->ifcompare() )
+    {
+        this->Compare();
+        return 0 ;
+    }
+    //-------- print DCC ------------------------------------------------
+    if( this->ifprintCP() )
+    {
+        this->readDCCVTAFile();
+        this->printPathCriticality();
+        return 0 ;
+    }
+    //-------- cal VTA ------------------------------------------------
+    if( this->ifCalVTA() )
+    {
+        this->calVTABufferCountByFile() ;
+        return 0 ;
+    }
+    //-------- Check CNF/DccVTA.txt -----------------------------------
+    if( this->ifCheckCNF() )
+    {
+        this->checkCNF() ;
+        return 0 ;
+    }
+    //-------- Check Timing with given DccVTA.txt ---------------------
+    if( this->ifCheckFile() )
+    {
+        this->CheckTiming_givFile() ;
+        return 0 ;
+    }
+    //-------- Dump SAT CNF as DCC/VTA ------------------------------
+    if( this->ifDumpCNF() )
+    {
+        this->dumpCNF() ;
+        return 0 ;
+    }
+    //-------- print pipeline -----------------------------------------
+    if( this->ifprintPath() )
+    {
+        this->printPath();
+        return 0;
+    }
+    //-------- print Node----------------------------------------------
+    if( this->ifprintNode())
+    {
+        this->printClockNode();
+        return 0;
+    }
+    return 1;
+}
 /*----------------------------------------------------------------------------------
  Func:
     PrintClockNode
@@ -18,7 +70,7 @@ void ClockTree::printClockNode()
 {
     //---- Iteration ----------------------------------------------------------------
     int nodeID = 0 ;
-    ClockTreeNode *node = NULL ;
+    CTN *node = NULL ;
     readDCCVTAFile() ;
     while( true )
     {
@@ -37,8 +89,7 @@ void ClockTree::printClockNode()
         else
         {
             node =  searchClockTreeNode( nodeID ) ;
-            if( node == NULL )
-                cerr << RED"[ERROR]" RESET<< "The node ID " << nodeID << " is not identified\n" ;
+            if( node == NULL )  fprintf( stderr, RED"[ERROR]" RST "The node ID %d is not identified\n", nodeID );
             else
             {
                 printf("------------------------- " CYAN"Topology " RESET"-------------------------------\n");
@@ -48,7 +99,7 @@ void ClockTree::printClockNode()
         }
     }//while
 }
-void ClockTree::printClockNode( ClockTreeNode*node, int layer )
+void ClockTree::printClockNode( CTN*node, int layer )
 {
     if( node == NULL ) return ;
     else
@@ -181,7 +232,7 @@ void ClockTree::checkCNF()
         double  BufDCC      = 0.5 ;
         istringstream   token( line )     ;
         token >> BufID >> BufVthLib >> BufDCC ;
-        ClockTreeNode *buffer = searchClockTreeNode( BufID ) ;
+        CTN *buffer = searchClockTreeNode( BufID ) ;
         if( buffer == NULL )
         {
             printf( RED"[Error] " RESET"Can't find clock node with id = %ld\n", BufID ) ;
@@ -267,7 +318,7 @@ void ClockTree::calVTABufferCountByFile()
         double  BufDCC      = 0.5 ;
         istringstream   token( line )     ;
         token >> BufID >> BufVthLib >> BufDCC ;
-        ClockTreeNode *buffer = searchClockTreeNode( BufID ) ;
+        CTN *buffer = searchClockTreeNode( BufID ) ;
         if( buffer == NULL )
         {
             printf( RED"[Error] " RESET"Can't find clock node with id = %ld\n", BufID ) ;
@@ -289,7 +340,7 @@ void ClockTree::calVTABufferCountByFile()
 
 long ClockTree::calVTABufferCount(bool print)
 {
-    vector<ClockTreeNode *> stClkPath, edClkPath ;
+    vector<CTN *> stClkPath, edClkPath ;
     long HTV_ctr = 0 ;
     long HTV_ctr_2 = 0 ;
     
@@ -305,7 +356,7 @@ long ClockTree::calVTABufferCount(bool print)
     return HTV_ctr ;
 }
 
-int ClockTree::calBufChildSize( ClockTreeNode *buffer )
+int ClockTree::calBufChildSize( CTN *buffer )
 {
     if( buffer == NULL ) return 0 ;
     
@@ -337,13 +388,13 @@ void ClockTree::minimizeLeader(void)
 {
     if( this->ifdoVTA() == false ) return;
     
-    map<string, ClockTreeNode *> redun_leader = this->_VTAlist;//Initialize the list of redundant leader
-    map<string, ClockTreeNode *>::iterator leaderitr;
+    map<string, CTN *> redun_leader = this->_VTAlist;//Initialize the list of redundant leader
+    map<string, CTN *>::iterator leaderitr;
     
     //Remove necessary leaders from the list of redundant leader.
     for(auto const& path: this->_pathlist)
     {
-        ClockTreeNode *st_leader = nullptr, *ed_leader = nullptr;
+        CTN *st_leader = nullptr, *ed_leader = nullptr;
         // If DCC locate in the clock path of startpoint
         st_leader = path->findVTAInClockPath('s');
         // If DCC locate in the clock path of endpoint
@@ -512,13 +563,13 @@ bool ClockTree::SolveCNFbyMiniSAT( double tc, bool ifDeploy )
             //-- Put DCC --------------------------------------------------------------
             if( ( stoi(strspl.at(loop)) > 0) || (stoi(strspl.at(loop + 1)) > 0)  )
             {
-                ClockTreeNode *findnode = this->searchClockTreeNode(abs(stoi(strspl.at(loop))));
+                CTN *findnode = this->searchClockTreeNode(abs(stoi(strspl.at(loop))));
                     
                 if( findnode != nullptr )
                 {
                     findnode->setIfPlaceDcc(1)      ;
                     findnode->setDccType(stoi(strspl.at(loop)), stoi(strspl.at(loop + 1)));
-                    this->_dcclist.insert(pair<string, ClockTreeNode *> (findnode->getGateData()->getGateName(), findnode));
+                    this->_dcclist.insert(pair<string, CTN *> (findnode->getGateData()->getGateName(), findnode));
                 }
                 else
                     cerr << "[Error] Clock node mismatch, when decoing DCC and Solution exist!\n" ;
@@ -526,13 +577,13 @@ bool ClockTree::SolveCNFbyMiniSAT( double tc, bool ifDeploy )
             //-- Put Header ------------------------------------------------------------
             if( stoi(strspl.at(loop+2)) > 0 )
             {
-                ClockTreeNode *findnode = this->searchClockTreeNode(abs(stoi(strspl.at(loop))));
+                CTN *findnode = this->searchClockTreeNode(abs(stoi(strspl.at(loop))));
                     
                 if( findnode != nullptr )
                 {
                     findnode->setIfPlaceHeader(1);
                     findnode->setVTAType(0);
-                    this->_VTAlist.insert(pair<string, ClockTreeNode *> (findnode->getGateData()->getGateName(), findnode));
+                    this->_VTAlist.insert(pair<string, CTN *> (findnode->getGateData()->getGateName(), findnode));
                 }
                 else
                     cerr << "[Error] Clock node mismatch, when decoing VTA and Solution exist!\n" ;
@@ -627,7 +678,7 @@ void ClockTree::minimizeLeader2( double tc )
                 this->minimizeLeader();
                 for( auto const& node: this->_buflist )
                 {
-                    ClockTreeNode* buf = node.second ;
+                    CTN* buf = node.second ;
                     if( buf->ifPlacedDcc() || buf->getIfPlaceHeader() )
                         this->_DccLeaderset.insert( make_tuple( buf, buf->getDccType(), buf->getVTAType() ) );
                 }
@@ -644,7 +695,7 @@ void ClockTree::minimizeLeader2( double tc )
     
     for( auto const& node: this->_DccLeaderset )
     {
-        ClockTreeNode *buf = get<0>(node);
+        CTN *buf = get<0>(node);
         double     Dcctype = get<1>(node);
         int        HTVtype = get<2>(node);
         if( Dcctype != 0 && Dcctype != 0.5 )
@@ -708,9 +759,9 @@ void ClockTree::printFinalResult()
     this->printClauseCount();
 }
 
-bool compare( CriticalPath* A, CriticalPath*B )
+bool compare( CP* A, CP*B )
 {
-    if( A == NULL || B == NULL ) cerr << "[Error] Null pointer for CriticalPath*\n";
+    if( A == NULL || B == NULL ) cerr << "[Error] Null pointer for CP*\n";
     if( A->getSlack() > B->getSlack() ) return false ;
     else                                return true  ;
 }
@@ -757,7 +808,7 @@ void ClockTree::printPathCriticality()
 
 void ClockTree::printDCCList()
 {
-    ClockTreeNode* buf = NULL ;
+    CTN* buf = NULL ;
     printf( GRN"[1.DCC Deployment] " RST"\n" );
     for( auto const& node: this->_buflist )
     {
@@ -768,11 +819,11 @@ void ClockTree::printDCCList()
 }
 
 
- void ClockTree::printAssociatedDCCLeaderofPath( CriticalPath * path )
+ void ClockTree::printAssociatedDCCLeaderofPath( CP* path )
  {
      if( path == NULL ) return ;
-     vector<ClockTreeNode *> stpath = path->getStartPonitClkPath() ;
-     vector<ClockTreeNode *> edpath = path->getEndPonitClkPath() ;
+     vector<CTN *> stpath = path->getStartPonitClkPath() ;
+     vector<CTN *> edpath = path->getEndPonitClkPath() ;
      
      string NodeType = "";
      if     ( path->getPathType() == FFtoFF) { printf(" FFtoFF:"); NodeType = YELLOW"C"; }
@@ -781,7 +832,7 @@ void ClockTree::printDCCList()
      else if( path->getPathType() == NONE  ) { printf("   NONE:\n"); return; }
      
      
-     ClockTreeNode * comnode = path->findLastSameParentNode();
+     CTN * comnode = path->findLastSameParentNode();
      long comID = path->nodeLocationInClockPath('s', path->findLastSameParentNode() );
      
      long idL = 0 ;
@@ -813,9 +864,9 @@ void ClockTree::printDCCList()
 
 void ClockTree::Compare()
 {
-    vector<CriticalPath*>   vCP1, vCP2         ;//CPs without inserted DCCs
-    vector<ClockTreeNode*>  vDeploy1(300),vDeploy2(300), vDeploy3(300), vDeploy4 ;
-    set   <ClockTreeNode*>  sDeploy1, sDeploy2 ;//DCC/Leader deployment for CP1, CP2
+    vector<CP*>   vCP1, vCP2         ;//CPs without inserted DCCs
+    vector<CTN*>  vDeploy1(300),vDeploy2(300), vDeploy3(300), vDeploy4 ;
+    set   <CTN*>  sDeploy1, sDeploy2 ;//DCC/Leader deployment for CP1, CP2
     
     readDCCVTAFile("./setting/DccOnly.txt");
     SortCPbySlack(true);
@@ -847,26 +898,30 @@ void ClockTree::Compare()
     DisplayDCCinVec( vDeploy1 );
     DisplayDCCinVec( vDeploy2 );
     DisplayDCCinVec( vDeploy3 );
-    DisplayDCCinVec( vDeploy4 );
+    DisplayDCCinVec( vDeploy4 );//All DCCs
     
     
     for( long rank = 0; rank < getPathList().size(); rank++ )
     {
-        CriticalPath * path = getPathList().at(rank);
+        CP* path = getPathList().at(rank);
         if( (path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF) ) continue;
         printCP_before_After( path, vDeploy3 );
         if( rank == 30 ) break;
     }
-    
+    RemoveDCCandSeeResult( vDeploy4 );
+}
+
+void ClockTree::RemoveDCCandSeeResult( vector<CTN*> &vDeploy )
+{
     //---- Remove each of DCC and see results --------
     double init_DCCType = 0.0, slack = 0.0 ;
-    ClockTreeNode* node = NULL;
-    CriticalPath * pptr = NULL;
+    CTN* node = NULL;
+    CP* pptr = NULL;
     string         Type = ""  ;
     string         Side = "R" ;
-    for( long n = 0; n < vDeploy4.size(); n++ )
+    for( long n = 0; n < vDeploy.size(); n++ )
     {
-        node = vDeploy4.at(n);
+        node = vDeploy.at(n);
         if( !node->ifPlacedDcc() ) continue;//The node is a leader
         
         init_DCCType = node->getDccType() ;
@@ -891,15 +946,16 @@ void ClockTree::Compare()
                 }
                 if( pptr->getPathType() == PItoFF ) Side =  GRN"R";
                 if( pptr->getPathType() == FFtoPO ) Side = CYAN"L";
-            
+                
                 printf("\t%3ld(%s%ld" RST") in failing path ", node->getNodeNumber(), Side.c_str(), node->getDepth() );
-                FindDCCLeaderInPathVector(vDeploy4, pptr, 1 );
+                FindDCCLeaderInPathVector(vDeploy, pptr, 1 );
             }
         }//for-path
         node->setIfPlaceDcc(true);
     }
+    
 }
-void ClockTree::DisplayDCCinVec( vector<ClockTreeNode *> &vDeploy )
+void ClockTree::DisplayDCCinVec( vector<CTN *> &vDeploy )
 {
     if( vDeploy.size() == 0 ) return ;
     printf("--------------------------------------------------\n");
@@ -907,13 +963,13 @@ void ClockTree::DisplayDCCinVec( vector<ClockTreeNode *> &vDeploy )
     for( auto const & node: vDeploy )
         if( node->ifPlacedDcc() ){ printf( "%2ld. %4ld(%2.1f)\n", k, node->getNodeNumber(), node->getDccType() ); k++; }
 }
-void ClockTree::DisplayDCCinSet( set<ClockTreeNode *> &sDeployment )
+void ClockTree::DisplayDCCinSet( set<CTN *> &sDeployment )
 {
     long k = 1;
     for( auto const & node: sDeployment )
         if( node->ifPlacedDcc() ){ printf( "%2ld. %4ld(%2.1f)\n", k, node->getNodeNumber(), node->getDccType() ); k++; }
 }
-bool ClockTree::NodeExistInVec( ClockTreeNode*node, vector<ClockTreeNode*> &vDeploy )
+bool ClockTree::NodeExistInVec( CTN*node, vector<CTN*> &vDeploy )
 {
     if( !node ) return false;
     for( auto const &n: vDeploy )
@@ -921,24 +977,23 @@ bool ClockTree::NodeExistInVec( ClockTreeNode*node, vector<ClockTreeNode*> &vDep
     return false;
 }
 
-pair<int,int> ClockTree::FindDCCLeaderInPathVector( vector<ClockTreeNode *> &vDeploy, CriticalPath *path, int mode )
+pair<int,int> ClockTree::FindDCCLeaderInPathVector( vector<CTN *> &vDeploy, CP* path, int mode )
 {
     
-    vector<ClockTreeNode *> stpath = path->getStartPonitClkPath() ;
-    vector<ClockTreeNode *> edpath = path->getEndPonitClkPath() ;
+    vector<CTN *> stpath = path->getStartPonitClkPath() ;
+    vector<CTN *> edpath = path->getEndPonitClkPath() ;
     string NodeType = "";
-    int DCC_ctr    = 0;
-    int Leader_ctr = 0;
+    int  DCC_ctr    = 0;
+    int  Leader_ctr = 0;
     
     if( mode > 0 )printf("P(%3ld) ", path->getPathNum() );
     if     ( path->getPathType() == FFtoFF && mode > 0 ) { printf(" FFtoFF:"); NodeType = YELLOW"C"; }
     else if( path->getPathType() == PItoFF && mode > 0 ) { printf(" PItoFF:"); NodeType =    GRN"R"; }
     else if( path->getPathType() == FFtoPO && mode > 0 ) { printf(" FFtoPO:"); NodeType =   CYAN"L"; }
     else if( path->getPathType() == NONE   && mode > 0 ) { printf("   NONE:\n"); return make_pair(0,0) ; }
-    ClockTreeNode * comnode = path->findLastSameParentNode();
-    long comID = path->nodeLocationInClockPath('s', path->findLastSameParentNode() );
-        
-    long idL = 0 ;
+    CTN* comnode = path->findLastSameParentNode();
+    long comID   = path->nodeLocationInClockPath('s', path->findLastSameParentNode() );
+    
     string DC  = "XX", HTV = "X",  Color  = RST"";
 
     if( stpath.size() > 1  )
@@ -951,14 +1006,13 @@ pair<int,int> ClockTree::FindDCCLeaderInPathVector( vector<ClockTreeNode *> &vDe
                 if( NodeExistInVec(node,vDeploy) ) Color = MAGENTA;
                 else                               Color = RST    ;
                 
-                if( mode ) printf( "%s%4ld" RST"( %s%ld" RST", %s, %s)", Color.c_str(), node->getNodeNumber(), NodeType.c_str(), idL, DC.c_str(), HTV.c_str());
+                if( mode ) printf( "%s%4ld" RST"( %s%ld" RST", %s, %s)", Color.c_str(), node->getNodeNumber(), NodeType.c_str(), node->getDepth(), DC.c_str(), HTV.c_str());
                 
 
                 if( node->ifPlacedDcc() )       DCC_ctr++;
                 if( node->getIfPlaceHeader() )  Leader_ctr++;
             }
             if( node == comnode && comnode ) NodeType = CYAN"L";
-            idL++;
         }
     if( edpath.size() > 1  )
     {
@@ -969,7 +1023,7 @@ pair<int,int> ClockTree::FindDCCLeaderInPathVector( vector<ClockTreeNode *> &vDe
         {
             if( edpath.at(j)->ifPlacedDcc() || edpath.at(j)->getIfPlaceHeader() )
             {
-                ClockTreeNode * node = edpath.at(j);
+                CTN * node = edpath.at(j);
                 DC  = (node->getDccType() == 0.5)?("XX"):(to_string((int)(node->getDccType()*100)));
                 HTV = (node->getVTAType() == -1) ?("X"):("H");
                 if( NodeExistInVec(node,vDeploy) && node->ifPlacedDcc() ) Color = MAGENTA;
@@ -986,7 +1040,7 @@ pair<int,int> ClockTree::FindDCCLeaderInPathVector( vector<ClockTreeNode *> &vDe
     return make_pair(DCC_ctr, Leader_ctr );
 }
 
-int ClockTree::printCP_before_After( CriticalPath *path, vector<ClockTreeNode*>& vDeploy )
+int ClockTree::printCP_before_After( CP *path, vector<CTN*>& vDeploy )
 {
     printf("------------------------------------------\n");
     readDCCVTAFile("./setting/DccOnly.txt");
@@ -1005,11 +1059,11 @@ int ClockTree::printCP_before_After( CriticalPath *path, vector<ClockTreeNode*>&
     return pAfter.first - pBefore.first;
 }
 
-void ClockTree::FindDCCLeaderInPathVector(set<ClockTreeNode *> &DCCLeader, CriticalPath *path, int mode )
+void ClockTree::FindDCCLeaderInPathVector( set<CTN*> &DCCLeader, CP *path, int mode )
 {
     if( path->getPathType() == NONE ) return ;
-    vector<ClockTreeNode *> stpath = path->getStartPonitClkPath() ;
-    vector<ClockTreeNode *> edpath = path->getEndPonitClkPath() ;
+    vector<CTN *> stpath = path->getStartPonitClkPath() ;
+    vector<CTN *> edpath = path->getEndPonitClkPath() ;
     
     long comID = path->nodeLocationInClockPath('s', path->findLastSameParentNode() );
     

@@ -113,48 +113,8 @@ int main(int argc, char **argv)
     //---- Mask -------------------------------------------------------
     circuit.dccPlacementByMasked();
     
-    if( circuit.ifcompare() )
-    {
-        circuit.Compare();
-        return 0 ;
-    }
-    //-------- print DCC ------------------------------------------------
-    if( circuit.ifprintCP() ){
-        circuit.readDCCVTAFile();
-        circuit.printPathCriticality();
-        return 0 ;
-    }
-    //-------- cal VTA ------------------------------------------------
-    if( circuit.ifCalVTA() ){
-        circuit.calVTABufferCountByFile() ;
-        return 0 ;
-    }
-    //-------- Check CNF/DccVTA.txt -----------------------------------
-    if( circuit.ifCheckCNF() ){
-        circuit.checkCNF() ;
-        return 0 ;
-}
-    //-------- Check Timing with given DccVTA.txt ---------------------
-    if( circuit.ifCheckFile() ){
-        circuit.CheckTiming_givFile() ;
-        return 0 ;
-    }
-    //-------- Dump SAT CNF as DCC/VTA ------------------------------
-    if( circuit.ifDumpCNF() ){
-        circuit.dumpCNF() ;
-        return 0 ;
-    }
-    //-------- print pipeline -----------------------------------------
-    if( circuit.ifprintPath()){
-        circuit.printPath();
-        return 0;
-    }
-    //-------- print Node----------------------------------------------
-    if( circuit.ifprintNode()){
-        circuit.printClockNode();
-        return 0;
-    }
-    
+    //---- Do other Fuction --------------------------------------------
+    if( !circuit.DoOtherFunction() ) return 0;
     
 	cout << "---------------------------------------------------------------------------\n";
     //-------- Remove CNF file ------------------------------------------------------------
