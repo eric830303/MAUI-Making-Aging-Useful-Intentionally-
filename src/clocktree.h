@@ -65,13 +65,13 @@ class ClockTree
 {
 private:
 	int     _pathselect, _bufinsert, _gpupbound, _gplowbound, _minisatexecnum;
-    bool    _placedcc, _aging, _mindccplace, _tcrecheck, _clkgating, _dumpdcc, _dumpcg, _dumpbufins, _doVTA;
-    bool    _usingSeniorAging, _printClkNode ;
+	bool    _placedcc, _aging, _mindccplace, _tcrecheck, _clkgating, _dumpdcc, _dumpcg, _dumpbufins, _doVTA;
+	bool    _usingSeniorAging, _printClkNode ;
 	long    _pathusednum, _pitoffnum, _fftoffnum, _fftoponum, _nonplacedccbufnum;
 	long    _totalnodenum, _ffusednum, _bufferusednum, _dccatlastbufnum;
 	long    _masklevel, _maxlevel, _insertbufnum, _dcc_constraint_ctr, _leader_constraint_ctr ;
 	double  _maskleng, _cgpercent;
-    double  _tcAfterAdjust ;
+	double  _tcAfterAdjust ;
     
     //--- Control of function ----------------------------------------------------------
     bool    _printpath, _dumpCNF, _checkCNF, _checkfile ;
@@ -121,7 +121,7 @@ private:
     
     long long int Max_timing_count;
 	bool ifSkipLine(string)                 ;
-    bool AnotherSolution(void)              ;
+	bool AnotherSolution(void)              ;
 	void pathTypeChecking(void)             ;
 	void recordClockPath(char)              ;
 	void checkFirstChildrenFormRoot(void)   ;
@@ -129,7 +129,7 @@ private:
 	void genDccConstraintClause(vector<vector<long> > *);
 	void genClauseByDccVTA(CTN*, string *, double, int);
 	void deleteClockTree(void)              ;
-    //-- Dumper ------------------------------------------------------------------
+	//-- Dumper ------------------------------------------------------------------
 	void dumpDccListToFile(void)            ;
 	void dumpClockGatingListToFile(void)    ;
 	void dumpBufferInsertionToFile(void)    ;
@@ -369,9 +369,9 @@ public:
     void          FindDCCLeaderInPathVector(    set<CTN*>&, CP*, int= 0 );
     void    Compare(void);
     void    SortCPbySlack(bool);
-    void    DisplayDCCinSet(              set<CTN*>& );
-    void    DisplayDCCinVec(           vector<CTN*>& );
-    void    RemoveDCCandSeeResult(     vector<CTN*>& );
+    void    DisplayDCCLeaderinSet(        set<CTN*>&, int=1 );
+    void    DisplayDCCLeaderinVec(     vector<CTN*>&, int=1 );
+    void    RemoveDCCandSeeResult(     vector<CTN*>&, int=1 );
     int     printCP_before_After( CP*, vector<CTN*>& );
     bool    NodeExistInVec(      CTN*, vector<CTN*>& );
 };
