@@ -609,8 +609,8 @@ int ClockTree::checkParameter(int argc, char **argv, string *message)
 		}
 		else if(strcmp(argv[loop], "-nondcc") == 0)
 			this->_placedcc = 0;
-        else if(strcmp(argv[loop], "-compare") == 0)
-            this->_compare = 1;        
+        else if(strcmp(argv[loop], "-analysis") == 0)
+            this->_analysis = 1;        
         else if(strcmp(argv[loop], "-nonVTA") == 0)
             this->_doVTA = 0;
         else if(strcmp(argv[loop], "-print=CP") == 0)

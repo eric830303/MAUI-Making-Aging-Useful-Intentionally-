@@ -76,7 +76,7 @@ private:
     //--- Control of function ----------------------------------------------------------
     bool    _printpath, _dumpCNF, _checkCNF, _checkfile ;
     bool    _printClause, _calVTA, _dcc_leader          ;
-    bool    _dc_formulation, _printCP, _compare         ;
+    bool    _dc_formulation, _printCP, _analysis         ;
     
     //--- Timing-related ----------------------------------------------------------------
     double  _origintc, _besttc, _tc         ;
@@ -216,7 +216,7 @@ public:
     set< pair<CTN*,CTN*> >& getVTASet(void) { return _setVTALeader ; }
     set< pair<int,int> >& getDCCSet(void) { return _setDCC ; }
 	//-- Bool Attr Access -------------------------------------------------------
-    bool ifcompare(void)                            { return _compare           ; }
+    bool ifanalysis(void)                           { return _analysis          ; }
     bool ifprintCP(void)                            { return _printCP           ; }
     bool ifCalVTA(void)                             { return _calVTA            ; }
     bool ifdccleader(void)                          { return _dcc_leader        ; }
@@ -364,10 +364,10 @@ public:
     void    printPathCriticality(void);
     void    printDCCList(void);
     void    printAssociatedDCCLeaderofPath( CP* path );
-    //---- "-Compare" -------------------------------------------------------------------
+    //---- "-analysis" -------------------------------------------------------------------
     pair<int,int> FindDCCLeaderInPathVector( vector<CTN*>&, CP*, int= 0 );
     void          FindDCCLeaderInPathVector(    set<CTN*>&, CP*, int= 0 );
-    void    Compare(void);
+    void    Analysis(void);
     void    SortCPbySlack(bool);
     void    DisplayDCCLeaderinSet(        set<CTN*>&, int=1 );
     void    DisplayDCCLeaderinVec(     vector<CTN*>&, int=1 );

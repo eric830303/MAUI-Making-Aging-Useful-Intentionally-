@@ -10,9 +10,9 @@
 
 bool ClockTree::DoOtherFunction()
 {
-    if( this->ifcompare() )
+    if( this->ifanalysis() )
     {
-        this->Compare();
+        this->Analysis();
         return 0 ;
     }
     //-------- print DCC ------------------------------------------------
@@ -862,7 +862,7 @@ void ClockTree::printDCCList()
  }
 
 
-void ClockTree::Compare()
+void ClockTree::Analysis()
 {
     vector<CP*>   vCP1, vCP2         ;//CPs without inserted DCCs
     vector<CTN*>  vDeploy1(300),vDeploy2(300), vDeploy3(300), vDeploy4, vDeploy5 ;
@@ -896,22 +896,48 @@ void ClockTree::Compare()
     for( auto const &n: this->_dcclist ) vDeploy4.push_back( n.second );
 	for( auto const &n: this->_VTAlist ) vDeploy5.push_back( n.second );
     
-    DisplayDCCLeaderinVec( vDeploy1, 1 );
-    DisplayDCCLeaderinVec( vDeploy2, 1 );
-    DisplayDCCLeaderinVec( vDeploy3, 1 );
-    DisplayDCCLeaderinVec( vDeploy4, 1 );//All DCCs
-	DisplayDCCLeaderinVec( vDeploy5, 2 );//All DCCs
-    
-    
-    for( long rank = 0; rank < getPathList().size(); rank++ )
+    int mode = 0;
+    while( true )
     {
-        CP* path = getPathList().at(rank);
-        if( (path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF) ) continue;
-        printCP_before_After( path, vDeploy3 );
-        if( rank == 30 ) break;
+        system("clear");
+        printf("In -\"analysis\", please type the mode number\n" );
+        printf("mode <= 0: Leaving the program\n" );
+        printf("mode  = 1: See DCCs classification depending on DccOnly.txt and DccVTA.txt \n" );
+        printf("mode  = 2: See the variation of top X CPs before and after applying the framework\n" );
+        printf("mode  = 3: Remove each    DCC and see corresponding influence on path timing\n" );
+        printf("mode  = 4: Remove each Leader and see corresponding influence on path timing\n" );
+        printf("Your mode is:" );
+        cin >> mode ;
+        
+        if( mode <= 0 ) return;
+        else if( mode == 1 )
+        {
+            DisplayDCCLeaderinVec( vDeploy1, 1 );
+            DisplayDCCLeaderinVec( vDeploy2, 1 );
+            DisplayDCCLeaderinVec( vDeploy3, 1 );
+            DisplayDCCLeaderinVec( vDeploy4, 1 );//All DCCs
+            DisplayDCCLeaderinVec( vDeploy5, 2 );//All DCCs
+        }
+        else if( mode == 2 )
+        {
+            int CP_ctr = 0;
+            printf("How many Top CPs do you wanna see\n" );
+            printf("The order depending on the DCC deployment in DccOnly.txt\n" );
+            printf("Quantity of CPs:" );
+            cin >> CP_ctr ;
+            for( long rank = 0; rank < getPathList().size(); rank++ )
+            {
+                CP* path = getPathList().at(rank);
+                if( (path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF) ) continue;
+                printCP_before_After( path, vDeploy3 );
+                if( rank == CP_ctr ) break;
+            }
+        }
+        else if( mode == 3 )
+            RemoveDCCandSeeResult( vDeploy4, 1 );
+        else if( mode == 4 )
+            RemoveDCCandSeeResult( vDeploy5, 2 );
     }
-    RemoveDCCandSeeResult( vDeploy4, 1 );
-	RemoveDCCandSeeResult( vDeploy5, 2 );
 }
 
 void ClockTree::RemoveDCCandSeeResult( vector<CTN*> &vDeploy, int mode )
