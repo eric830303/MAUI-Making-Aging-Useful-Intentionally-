@@ -10,10 +10,10 @@
 void ClockTree::getPathType( string &PathType, CP* pptr )
 {
 	if( pptr == NULL ) return;
-	if( pptr->getPathType() == PItoFF ) PathType = "(PItoFF)";
-	if( pptr->getPathType() == FFtoFF ) PathType = "(FFtoFF)";
-	if( pptr->getPathType() == FFtoPO ) PathType = "(FFtoPO)";
-	if( pptr->getPathType() == NONE   ) PathType = "(NONE)"  ;
+	if( pptr->getPathType() == PItoFF ) PathType = "[PItoFF]";
+	if( pptr->getPathType() == FFtoFF ) PathType = "[FFtoFF]";
+	if( pptr->getPathType() == FFtoPO ) PathType = "[FFtoPO]";
+	if( pptr->getPathType() == NONE   ) PathType = "[NONE]"  ;
 }
 bool ClockTree::PathReasonable( CP* pptr)
 {

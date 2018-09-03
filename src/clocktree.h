@@ -366,8 +366,9 @@ public:
     void    printDCCList(void);
     void    printAssociatedDCCLeaderofPath( CP* path );
     //---- "-analysis" -------------------------------------------------------------------
-    pair<int,int> FindDCCLeaderInPathVector( vector<CTN*>&, CP*, int= 0 );
-    void          FindDCCLeaderInPathVector(    set<CTN*>&, CP* );
+    pair<int,int> FindDCCLeaderInPathVector( CP* );
+    void          FindDCCLeaderInPathVector( set<CTN*>&, CP* );
+	void          RemoveDCCandSeeResult2( CTN*, int=1);
     void    Analysis(void);
     void    SortCPbySlack(bool);
     CT&     DisplayDCCLeaderinSet(        set<CTN*>&, int=1 );
