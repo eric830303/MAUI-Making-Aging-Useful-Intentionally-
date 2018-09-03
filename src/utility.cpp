@@ -167,3 +167,4 @@ void updateCombinationList(vector<long> *path, vector<vector<long> > *comblist)
 		for(long  loop2 = 0;loop2 < comblist->at(loop1).size();loop2++)
 			comblist->at(loop1).at(loop2) = path->at(comblist->at(loop1).at(loop2));
 }
+

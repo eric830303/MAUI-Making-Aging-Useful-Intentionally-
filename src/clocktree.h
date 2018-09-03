@@ -13,6 +13,7 @@
 
 #include "criticalpath.h"
 #include "clocktree2.hpp"
+#include "clocktree3.hpp"
 #include <assert.h>
 #include "utility.h"
 #include <map>
@@ -366,14 +367,21 @@ public:
     void    printAssociatedDCCLeaderofPath( CP* path );
     //---- "-analysis" -------------------------------------------------------------------
     pair<int,int> FindDCCLeaderInPathVector( vector<CTN*>&, CP*, int= 0 );
-    void          FindDCCLeaderInPathVector(    set<CTN*>&, CP*, int= 0 );
+    void          FindDCCLeaderInPathVector(    set<CTN*>&, CP* );
     void    Analysis(void);
     void    SortCPbySlack(bool);
-    void    DisplayDCCLeaderinSet(        set<CTN*>&, int=1 );
-    void    DisplayDCCLeaderinVec(     vector<CTN*>&, int=1 );
+    CT&     DisplayDCCLeaderinSet(        set<CTN*>&, int=1 );
+    CT&     DisplayDCCLeaderinVec(     vector<CTN*>&, int=1 );
     void    RemoveDCCandSeeResult(     vector<CTN*>&, int=1 );
     int     printCP_before_After( CP*, vector<CTN*>& );
     bool    NodeExistInVec(      CTN*, vector<CTN*>& );
+	void    PathFailReasonAnalysis( );
+	void    PathFailReasonAnalysis( CP* );
+	bool    PathIsPlacedDCCorLeader(    CP*, int=1);
+	void    getPathType( string &PathType, CP* pptr );
+	bool    PathReasonable( CP* pptr);
+	void    getNodeSide( string &Side, CTN*node, CP* pptr );
+	
 };
 
 inline double getAgingRateByDutyCycle(double dc)

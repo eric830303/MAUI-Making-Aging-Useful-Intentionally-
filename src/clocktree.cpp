@@ -4222,7 +4222,7 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
 void ClockTree::printPI_PO_givFile(CriticalPath *path, bool doDCCVTA, bool aging )
 {
     //-- Check ---------------------------------------------------------------
-    if( path == NULL || path->getPathType() != PItoFF || path->getPathType() != FFtoPO ) return ;
+    if( path == NULL || path->getPathType() == NONE || path->getPathType() == FFtoFF ) return ;
     
     //-- Declaratio -----------------------------------------------------------
     vector<ClockTreeNode*> vClkPath     ;
@@ -4235,7 +4235,7 @@ void ClockTree::printPI_PO_givFile(CriticalPath *path, bool doDCCVTA, bool aging
     
     //-- Preprocess -----------------------------------------------------------
     if( path->getPathType() == PItoFF ) printf("PathType: " YELLOW"PItoFF\n" RESET );
-    if( path->getPathType() == FFtoPO ) printf("PathType: " YELLOW"PItoFF\n" RESET );
+    if( path->getPathType() == FFtoPO ) printf("PathType: " YELLOW"FFtoPO\n" RESET );
     bool    MeetDCC_right  = false  ;
     bool    MeetVTA_right  = false  ;
     double  DC_right       = 0.5    ;

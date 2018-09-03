@@ -8,6 +8,9 @@
 
 #include "clocktree2.hpp"
 
+
+
+
 bool ClockTree::DoOtherFunction()
 {
     if( this->ifanalysis() )
@@ -872,23 +875,21 @@ void ClockTree::Analysis()
     SortCPbySlack(true);
     
     //--- Find CPs, which are not placed DCCs/Leaders on their associated clock network--------
-    int rank = 0, placed = 0 ;
+    int placed = 0 ;
     for( auto const& path: this->_pathlist )
     {
-        if( (path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF) ) continue;
+        if( !PathReasonable(path) ) continue;
         placed = 0;
         
         for( auto const& node: path->getStartPonitClkPath() )   if( node->ifPlacedDcc() ) placed = 1;
         for( auto const& node: path->getEndPonitClkPath()   )   if( node->ifPlacedDcc() ) placed = 1;
         if( !placed ) vCP1.push_back( path );
         else          vCP2.push_back( path );
-        rank++;
-        if( rank == 1000 ) break;
     }
     readDCCVTAFile("./setting/DccVTA.txt");
     
-    for( auto const& path: vCP1 ) FindDCCLeaderInPathVector( sDeploy1, path, 0 );
-    for( auto const& path: vCP2 ) FindDCCLeaderInPathVector( sDeploy2, path, 0 );
+    for( auto const& path: vCP1 ) FindDCCLeaderInPathVector( sDeploy1, path );
+    for( auto const& path: vCP2 ) FindDCCLeaderInPathVector( sDeploy2, path );
     
     auto itr1 = set_difference(   sDeploy1.begin(), sDeploy1.end(), sDeploy2.begin(), sDeploy2.end(), vDeploy1.begin() ); vDeploy1.resize(itr1-vDeploy1.begin());
     auto itr2 = set_intersection( sDeploy1.begin(), sDeploy1.end(), sDeploy2.begin(), sDeploy2.end(), vDeploy2.begin() ); vDeploy2.resize(itr2-vDeploy2.begin());
@@ -896,47 +897,64 @@ void ClockTree::Analysis()
     for( auto const &n: this->_dcclist ) vDeploy4.push_back( n.second );
 	for( auto const &n: this->_VTAlist ) vDeploy5.push_back( n.second );
     
-    int mode = 0;
+    int mode = 0, CP_ctr = 0;
     while( true )
     {
-        system("clear");
-        printf("In -\"analysis\", please type the mode number\n" );
+		printf("\n\n\n\n\n\n-------------------------------------------------\n" );
+        printf("In \"-analysis\", please type the mode number\n" );
         printf("mode <= 0: Leaving the program\n" );
-        printf("mode  = 1: See DCCs classification depending on DccOnly.txt and DccVTA.txt \n" );
-        printf("mode  = 2: See the variation of top X CPs before and after applying the framework\n" );
-        printf("mode  = 3: Remove each    DCC and see corresponding influence on path timing\n" );
-        printf("mode  = 4: Remove each Leader and see corresponding influence on path timing\n" );
+        printf("mode  = 1: See " GRN"DCCs classification " RST"depending on " GRN"DccOnly.txt" RST" and " GRN"DccVTA.txt" RST" \n" );
+        printf("mode  = 2: See the variation of top X CPs " GRN"before and after " RST"applying the framework\n" );
+        printf("mode  = 3: " GRN"Remove each    " RST"DCC and see corresponding influence on path timing\n" );
+        printf("mode  = 4: " GRN"Remove each " RST"Leader and see corresponding influence on path timing\n" );
+		printf("mode  = 5: Similar to mode 3/4, but it's from the angle of CPs\n" );
+		printf("mode  = 6: Sorting CPs based on DccOnly.txt\n" );
+		printf("mode  = 7: Sorting CPs based on  DccVTA.txt\n" );
         printf("Your mode is:" );
         cin >> mode ;
-        
+        system("clear");
+		
         if( mode <= 0 ) return;
-        else if( mode == 1 )
-        {
-            DisplayDCCLeaderinVec( vDeploy1, 1 );
-            DisplayDCCLeaderinVec( vDeploy2, 1 );
-            DisplayDCCLeaderinVec( vDeploy3, 1 );
-            DisplayDCCLeaderinVec( vDeploy4, 1 );//All DCCs
-            DisplayDCCLeaderinVec( vDeploy5, 2 );//All DCCs
-        }
-        else if( mode == 2 )
-        {
-            int CP_ctr = 0;
-            printf("How many Top CPs do you wanna see\n" );
-            printf("The order depending on the DCC deployment in DccOnly.txt\n" );
-            printf("Quantity of CPs:" );
-            cin >> CP_ctr ;
-            for( long rank = 0; rank < getPathList().size(); rank++ )
-            {
-                CP* path = getPathList().at(rank);
-                if( (path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF) ) continue;
-                printCP_before_After( path, vDeploy3 );
-                if( rank == CP_ctr ) break;
-            }
-        }
-        else if( mode == 3 )
-            RemoveDCCandSeeResult( vDeploy4, 1 );
-        else if( mode == 4 )
-            RemoveDCCandSeeResult( vDeploy5, 2 );
+		switch( mode )
+		{
+			case 1:
+				DisplayDCCLeaderinVec( vDeploy1, 1 ).DisplayDCCLeaderinVec( vDeploy2, 1 ).DisplayDCCLeaderinVec( vDeploy3, 1 );
+				DisplayDCCLeaderinVec( vDeploy4, 1 ).DisplayDCCLeaderinVec( vDeploy5, 2 );
+				break;
+			case 2:
+				printf("How many Top CPs do you wanna see\n" );
+				printf("The order depending on the DCC deployment in DccOnly.txt\n" );
+				printf("Quantity of CPs:" );
+				cin >> CP_ctr ;
+				for( long rank = 0; rank < getPathList().size(); rank++ )
+				{
+					CP* path = getPathList().at(rank);
+					if( !PathReasonable(path) ) continue;
+					printCP_before_After( path, vDeploy3 );
+					if( rank == CP_ctr ) break;
+				}
+				break;
+			case 3:
+				RemoveDCCandSeeResult( vDeploy4, 1 );
+				break;
+			case 4:
+				RemoveDCCandSeeResult( vDeploy5, 2 );
+				break;
+			case 5:
+				PathFailReasonAnalysis();
+				break;
+			case 6:
+				readDCCVTAFile("./setting/DccOnly.txt");
+				SortCPbySlack(true);
+				readDCCVTAFile("./setting/DccVTA.txt");
+				break;
+			case 7:
+				readDCCVTAFile("./setting/DccVTA.txt");
+				SortCPbySlack(true);
+				break;
+			default:
+				break;
+		}
     }
 }
 
@@ -961,8 +979,8 @@ void ClockTree::RemoveDCCandSeeResult( vector<CTN*> &vDeploy, int mode )
 		if( mode == 1 ){ node->setIfPlaceDcc(0)		; node->setDccType(0.5); }
 		if( mode == 2 ){ node->setIfPlaceHeader(0)	; node->setVTAType(-1) ; }
         
-        if( mode == 1 ) printf("\n(%2ld) If %3ld(%2.1f) is removed:\n", n, node->getNodeNumber(), init_DCCType );
-		if( mode == 2 ) printf(    "\n(%2ld) If %3ld(H) is removed:\n", n, node->getNodeNumber() );
+        if( mode == 1 ) printf("\n(%2ld) If %4ld(%2.1f) is removed:\n", n, node->getNodeNumber(), init_DCCType );
+		if( mode == 2 ) printf(    "\n(%2ld) If %4ld(H) is removed:\n", n, node->getNodeNumber() );
         for( long p = 0; p < getPathList().size(); p++ )
         {
             pptr = getPathList().at(p);
@@ -982,8 +1000,8 @@ void ClockTree::RemoveDCCandSeeResult( vector<CTN*> &vDeploy, int mode )
                 if( pptr->getPathType() == PItoFF ) Side =  GRN"R";
                 if( pptr->getPathType() == FFtoPO ) Side = CYAN"L";
                 
-                if( mode == 1 ) printf("\t%3ld(%s%ld" RST") in failing path ", node->getNodeNumber(), Side.c_str(), node->getDepth() );
-				if( mode == 2 ) printf("\t%3ld(%s%ld" RST") in failing path ", node->getNodeNumber(), Side.c_str(), node->getDepth() );
+                if( mode == 1 ) printf("\t%4ld(%s%ld" RST") in failing path ", node->getNodeNumber(), Side.c_str(), node->getDepth() );
+				if( mode == 2 ) printf("\t%4ld(%s%ld" RST") in failing path ", node->getNodeNumber(), Side.c_str(), node->getDepth() );
                 FindDCCLeaderInPathVector(vDeploy, pptr, 1 );
             }
         }//for-path
@@ -992,9 +1010,9 @@ void ClockTree::RemoveDCCandSeeResult( vector<CTN*> &vDeploy, int mode )
     }
     
 }
-void ClockTree::DisplayDCCLeaderinVec( vector<CTN *> &vDeploy, int mode )
+CT& ClockTree::DisplayDCCLeaderinVec( vector<CTN *> &vDeploy, int mode )
 {
-    if( vDeploy.size() == 0 ) return ;
+    if( vDeploy.size() == 0 ) return *this ;
     printf("--------------------------------------------------\n");
     long k = 1;
     for( auto const & node: vDeploy )
@@ -1002,8 +1020,9 @@ void ClockTree::DisplayDCCLeaderinVec( vector<CTN *> &vDeploy, int mode )
         if( node->ifPlacedDcc()      && mode == 1 ){ printf( "%2ld. %4ld(%2.1f)\n", k, node->getNodeNumber(), node->getDccType() ); k++; }
 		if( node->getIfPlaceHeader() && mode == 2 ){ printf( "%2ld. %4ld(H)\n"    , k, node->getNodeNumber() )                    ; k++; }
 	}
+	return *this;
 }
-void ClockTree::DisplayDCCLeaderinSet( set<CTN *> &sDeployment, int mode )
+CT& ClockTree::DisplayDCCLeaderinSet( set<CTN *> &sDeployment, int mode )
 {
     long k = 1;
     for( auto const & node: sDeployment )
@@ -1011,6 +1030,7 @@ void ClockTree::DisplayDCCLeaderinSet( set<CTN *> &sDeployment, int mode )
 		if( node->ifPlacedDcc()      && mode == 1 ){ printf( "%2ld. %4ld(%2.1f)\n", k, node->getNodeNumber(), node->getDccType() ); k++; }
 		if( node->getIfPlaceHeader() && mode == 2 ){ printf( "%2ld. %4ld(H)\n"    , k, node->getNodeNumber() )                    ; k++; }
 	}
+	return *this;
 }
 bool ClockTree::NodeExistInVec( CTN*node, vector<CTN*> &vDeploy )
 {
@@ -1022,19 +1042,16 @@ bool ClockTree::NodeExistInVec( CTN*node, vector<CTN*> &vDeploy )
 
 pair<int,int> ClockTree::FindDCCLeaderInPathVector( vector<CTN *> &vDeploy, CP* path, int mode )
 {
-    
+	if( path == NULL ) return make_pair(0,0);
     vector<CTN *> stpath = path->getStartPonitClkPath() ;
     vector<CTN *> edpath = path->getEndPonitClkPath() ;
-    string NodeType = "";
-    int  DCC_ctr    = 0;
-    int  Leader_ctr = 0;
-    
-    if( mode > 0 )printf("P(%3ld) ", path->getPathNum() );
-    if     ( path->getPathType() == FFtoFF && mode > 0 ) { printf(" FFtoFF:"); NodeType = YELLOW"C"; }
-    else if( path->getPathType() == PItoFF && mode > 0 ) { printf(" PItoFF:"); NodeType =    GRN"R"; }
-    else if( path->getPathType() == FFtoPO && mode > 0 ) { printf(" FFtoPO:"); NodeType =   CYAN"L"; }
-    else if( path->getPathType() == NONE   && mode > 0 ) { printf("   NONE:\n"); return make_pair(0,0) ; }
-    CTN* comnode = path->findLastSameParentNode();
+    string NodeSide   = "";
+	string PathType   = "";
+    int    DCC_ctr    =  0;
+    int    Leader_ctr =  0;
+    getPathType( PathType, path );
+    if( mode ) printf("P(%4ld) %s", path->getPathNum(), PathType.c_str() );
+	
     long comID   = path->nodeLocationInClockPath('s', path->findLastSameParentNode() );
     
     string DC  = "XX", HTV = "X";
@@ -1046,20 +1063,19 @@ pair<int,int> ClockTree::FindDCCLeaderInPathVector( vector<CTN *> &vDeploy, CP* 
             {
                 DC  = (node->getDccType() == 0.5)?("XX"):(to_string((int)(node->getDccType()*100)));
                 HTV = (node->getVTAType() == -1) ?("X"):("H");
-                
-                if( mode ) printf( "%4ld" RST"( %s%ld" RST", %s, %s)", node->getNodeNumber(), NodeType.c_str(), node->getDepth(), DC.c_str(), HTV.c_str());
+				getNodeSide( NodeSide, node, path );
+                if( mode ) printf( "%4ld( %s, %s, %s)", node->getNodeNumber(), NodeSide.c_str(), DC.c_str(), HTV.c_str());
                 
 
                 if( node->ifPlacedDcc() )       DCC_ctr++;
                 if( node->getIfPlaceHeader() )  Leader_ctr++;
             }
-            if( node == comnode && comnode ) NodeType = CYAN"L";
         }
     if( edpath.size() > 1  )
     {
         long j = 0 ;
         if( path->getPathType() == FFtoFF ) j = comID + 1;
-        NodeType = GRN"R";
+		
         for( ; j < edpath.size()-1; j++)
         {
             if( edpath.at(j)->ifPlacedDcc() || edpath.at(j)->getIfPlaceHeader() )
@@ -1067,15 +1083,15 @@ pair<int,int> ClockTree::FindDCCLeaderInPathVector( vector<CTN *> &vDeploy, CP* 
                 CTN * node = edpath.at(j);
                 DC  = (node->getDccType() == 0.5)?("XX"):(to_string((int)(node->getDccType()*100)));
                 HTV = (node->getVTAType() == -1) ?("X"):("H");
-                
-                if( mode ) printf( "%4ld" RST"( %s%ld" RST", %s, %s)", node->getNodeNumber(), NodeType.c_str(), j, DC.c_str(), HTV.c_str());
+                getNodeSide( NodeSide, node, path );
+                if( mode ) printf( "%4ld( %s, %s, %s)", node->getNodeNumber(), NodeSide.c_str(), DC.c_str(), HTV.c_str());
                 
                 if( node->ifPlacedDcc() )       DCC_ctr++;
                 if( node->getIfPlaceHeader() )  Leader_ctr++;
             }
         }
     }
-    if( mode > 0 ) printf("\n");
+    if( mode ) printf("\n");
     return make_pair(DCC_ctr, Leader_ctr );
 }
 
@@ -1098,27 +1114,24 @@ int ClockTree::printCP_before_After( CP *path, vector<CTN*>& vDeploy )
     return pAfter.first - pBefore.first;
 }
 
-void ClockTree::FindDCCLeaderInPathVector( set<CTN*> &DCCLeader, CP *path, int mode )
+void ClockTree::FindDCCLeaderInPathVector( set<CTN*> &DCCLeader, CP *path )
 {
-    if( path->getPathType() == NONE ) return ;
     vector<CTN *> stpath = path->getStartPonitClkPath() ;
     vector<CTN *> edpath = path->getEndPonitClkPath() ;
-    
-    long comID = path->nodeLocationInClockPath('s', path->findLastSameParentNode() );
-    
     if( stpath.size() > 1  )
         for( auto const& node: stpath )
             if( node->ifPlacedDcc() || node->getIfPlaceHeader() ) DCCLeader.insert(node);
         
     if( edpath.size() > 1  )
-    {
-        long j = 0 ;
-        if( path->getPathType() == FFtoFF ) j = comID + 1;
-        for( ; j < edpath.size()-1; j++)
-            if( edpath.at(j)->ifPlacedDcc() || edpath.at(j)->getIfPlaceHeader() ) DCCLeader.insert(edpath.at(j));
-    }
-    if( mode > 0 ) printf("\n");
+		for( auto const& node: edpath )
+			if( node->ifPlacedDcc() || node->getIfPlaceHeader() ) DCCLeader.insert(node);
 }
+
+
+
+
+
+
 
 
 
