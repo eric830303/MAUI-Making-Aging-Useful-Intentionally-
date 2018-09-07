@@ -10,9 +10,9 @@ CXXFLAGS = -std=c++11 -g -w
 OBJDIR	:= obj
 BINDIR	:= bin
 SRCDIR	:= src
-SRC		:= $(wildcard $(SRCDIR)/*.cpp)
-INC		:= $(wildcard $(SRCDIR/*.cpp))
-OBJ		:= $(SRC:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)
+SRC		:= $(wildcard $(SRCDIR)/*.cc)
+INC		:= $(wildcard $(SRCDIR/*.cc))
+OBJ		:= $(SRC:$(SRCDIR)/%.cc=$(OBJDIR)/%.o)
 #CXXFLAGS += -Wall -g 
 
 
@@ -29,7 +29,7 @@ all: info $(EXE)
 $(EXE): $(OBJ)
 	@$(CXX) $(CXXFLAGS) -o $(EXE) $^
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(INC)
+$(OBJDIR)/%.o: $(SRCDIR)/%.cc $(INC)
 	@$(CXX) $(CXXFLAGS) -c $< -o $@
 
 #----------------- CLEAN --------------------------------------	

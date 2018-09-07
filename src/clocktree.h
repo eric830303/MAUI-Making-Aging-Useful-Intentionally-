@@ -12,8 +12,8 @@
 #define CLOCKTREE_H
 
 #include "criticalpath.h"
-#include "clocktree2.hpp"
-#include "clocktree3.hpp"
+#include "clocktree2.h"
+#include "clocktree3.h"
 #include <assert.h>
 #include "utility.h"
 #include <map>

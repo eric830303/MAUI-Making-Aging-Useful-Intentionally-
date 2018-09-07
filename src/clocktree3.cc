@@ -6,7 +6,7 @@
 //  Copyright © 2018年 Eric Tseng. All rights reserved.
 //
 
-#include "clocktree3.hpp"
+#include "clocktree3.h"
 void ClockTree::getPathType( string &PathType, CP* pptr )
 {
 	if( pptr == NULL ) return;
