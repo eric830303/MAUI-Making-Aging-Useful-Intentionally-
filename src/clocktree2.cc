@@ -868,7 +868,7 @@ void ClockTree::printDCCList()
 void ClockTree::Analysis()
 {
     vector<CP*>   vCP1, vCP2         ;//CPs without inserted DCCs
-    vector<CTN*>  vDeploy1(300),vDeploy2(300), vDeploy3(300), vDeploy4, vDeploy5 ;
+    vector<CTN*>  vDeploy1(300),vDeploy2(300), vDeploy3(300), vDeploy4, vDeploy5, vDeploy6 ;
     set   <CTN*>  sDeploy1, sDeploy2 ;//DCC/Leader deployment for CP1, CP2
     
     readDCCVTAFile("./setting/DccOnly.txt");
@@ -886,6 +886,7 @@ void ClockTree::Analysis()
         if( !placed ) vCP1.push_back( path );
         else          vCP2.push_back( path );
     }
+	for( auto const &n: this->_dcclist ) vDeploy6.push_back( n.second );
     readDCCVTAFile("./setting/DccVTA.txt");
     
     for( auto const& path: vCP1 ) FindDCCLeaderInPathVector( sDeploy1, path );
@@ -905,11 +906,12 @@ void ClockTree::Analysis()
         printf("mode <= 0: Leaving the program\n" );
         printf("mode  = 1: See " GRN"DCCs classification " RST"depending on " GRN"DccOnly.txt" RST" and " GRN"DccVTA.txt" RST" \n" );
         printf("mode  = 2: See the variation of top X CPs " GRN"before and after " RST"applying the framework\n" );
-        printf("mode  = 3: " GRN"Remove each    " RST"DCC and see corresponding influence on path timing\n" );
-        printf("mode  = 4: " GRN"Remove each " RST"Leader and see corresponding influence on path timing\n" );
-		printf("mode  = 5: Similar to mode 3/4, but it's from the angle of CPs\n" );
-		printf("mode  = 6: Sorting CPs based on DccOnly.txt\n" );
-		printf("mode  = 7: Sorting CPs based on  DccVTA.txt\n" );
+        printf("mode  = 3: " GRN"Remove each    " RST"DCC (from DccVTA.txt)  and see corresponding influence on path timing\n" );
+        printf("mode  = 4: " GRN"Remove each " RST"Leader (from DccVTA.txt)  and see corresponding influence on path timing\n" );
+		printf("mode  = 5: " GRN"Remove each    " RST"DCC (from DccOnly.txt) and see corresponding influence on path timing\n" );
+		printf("mode  = 6: Similar to mode 3/4, but it's from the angle of CPs\n" );
+		printf("mode  = 7: Sorting CPs based on DccOnly.txt\n" );
+		printf("mode  = 8: Sorting CPs based on  DccVTA.txt\n" );
         printf("Your mode is:" );
         cin >> mode ;
         system("clear");
@@ -941,14 +943,19 @@ void ClockTree::Analysis()
 				RemoveDCCandSeeResult( vDeploy5, 2 );
 				break;
 			case 5:
-				PathFailReasonAnalysis();
+				readDCCVTAFile("./setting/DccOnly.txt");
+				RemoveDCCandSeeResult( vDeploy6, 1 );
+				readDCCVTAFile("./setting/DccVTA.txt");
 				break;
 			case 6:
+				PathFailReasonAnalysis();
+				break;
+			case 7:
 				readDCCVTAFile("./setting/DccOnly.txt");
 				SortCPbySlack(true);
 				readDCCVTAFile("./setting/DccVTA.txt");
 				break;
-			case 7:
+			case 8:
 				readDCCVTAFile("./setting/DccVTA.txt");
 				SortCPbySlack(true);
 				break;
