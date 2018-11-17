@@ -356,7 +356,7 @@ public:
     void    printNodeLayerSpace(  int )         ;
     void    printClockNode( void )              ;
     void    printClockNode( CTN*, int=0 )       ;
-    
+	void    printLeaderLayer()                  ;
     //---- "-checkCNF" ------------------------------------------------------------------
     void    checkCNF(void)                      ;
     bool    clauseJudgement( vector<string>&, bool * );

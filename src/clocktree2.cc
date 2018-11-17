@@ -75,6 +75,9 @@ void ClockTree::printClockNode()
     int nodeID = 0 ;
     CTN *node = NULL ;
     readDCCVTAFile() ;
+	
+	this->printLeaderLayer();
+	
     while( true )
     {
         printf( "---------------------- " CYAN"Print Topology " RESET"----------------------------\n" );
@@ -788,7 +791,7 @@ void ClockTree::printPathCriticality()
     int i = 0;
     for( auto const& pptr: this->_pathlist )
     {
-        if( i == 100 ) break;
+        if( i == 60 ) break;
         if( (pptr->getPathType() != PItoFF) && (pptr->getPathType() != FFtoPO) && (pptr->getPathType() != FFtoFF) ) continue;
         printf("%2d. P(%3ld) ", i, pptr->getPathNum() );
         printAssociatedDCCLeaderofPath( pptr );
@@ -801,7 +804,7 @@ void ClockTree::printPathCriticality()
     i = 0;
     for( auto const& pptr: this->_pathlist )
     {
-        if( i == 300 ) break;
+        if( i == 60 ) break;
         if( (pptr->getPathType() != PItoFF) && (pptr->getPathType() != FFtoPO) && (pptr->getPathType() != FFtoFF) ) continue;
         printf("%2d. P(%3ld) ", i, pptr->getPathNum() );
         printAssociatedDCCLeaderofPath( pptr );
@@ -982,12 +985,12 @@ void ClockTree::RemoveDCCandSeeResult2( CTN*node, int mode )
 	if( mode == 1 )
 	{
 		node->setIfPlaceDcc(0).setDccType(0.5)   ;
-		printf("If %4ld(%2.1f) is removed:\n", node->getNodeNumber(), init_DCCType );
+		printf("If %4ld(%2.1f, Depth = %ld ) is removed:\n", node->getNodeNumber(), init_DCCType, node->getDepth() );
 	}
 	if( mode == 2 )
 	{
 		node->setIfPlaceHeader(0).setVTAType(-1) ;
-		printf("If %4ld(H) is removed:\n", node->getNodeNumber() );
+		printf("If %4ld(H, Depth = %ld) is removed:\n", node->getNodeNumber(), node->getDepth()  );
 	}
 		
 	for( long p = 0; p < getPathList().size(); p++ )
@@ -1017,8 +1020,8 @@ void ClockTree::RemoveDCCandSeeResult( vector<CTN*> &vDeploy, int mode )
 	{
 		printf("\n---------------------------------------------------------------------------\n");
 		printf("Input " GRN"< 0  " RST": leaving QQ\n");
-		printf("Input " GRN"  0  " RST": List all DCCs\n");
-		printf("Input " GRN"other" RST": check the certain DCC\n");
+		printf("Input " GRN"  0  " RST": List all DCCs/Leaders removement\n");
+		printf("Input " GRN"other" RST": check the certain DCC/Leader removement\n");
 		printf("Your selection is:");
 		cin >> ctrl;
 		system("clear");

@@ -4742,5 +4742,14 @@ void ClockTree::printClauseCount()
     cout << "---------------------------------------------------------------------------\n";
 }
 
+void ClockTree::printLeaderLayer()
+{
+	printf("NodeID( Depth )\n");
+	for( auto node: this->_VTAlist )
+	{
+		printf("%ld( %ld )\n", node.second->getNodeNumber(), node.second->getDepth() );
+	}
+	
+}
 
 
