@@ -196,9 +196,9 @@ int main(int argc, char **argv)
 	
 	midtime = chrono::steady_clock::now();
 	// Insert buffers with the given "optimal Tc"
-	//circuit.bufferInsertion();
+	circuit.bufferInsertion();
 	// Minimize buffers placement
-	//circuit.minimizeBufferInsertion();
+	circuit.minimizeBufferInsertion();
 	endtime = chrono::steady_clock::now();
 	bufinstime = chrono::duration_cast<chrono::duration<double>>(endtime - midtime);
 	totaltime = chrono::duration_cast<chrono::duration<double>>(endtime - starttime);
@@ -216,7 +216,8 @@ int main(int argc, char **argv)
     cout << " \tOverhead reduction    : " << minitime.count() << "\n";
     cout << " \tBuffer insertion      : " << bufinstime.count() << "\n";
     circuit.dumpDccVTALeaderToFile() ;//circuit.dumpToFile();
-    circuit.printPathCriticality();
+    //circuit.printPathCriticality();
+    circuit.printBufferInsertedList();
     fclose(fPtr);
 	//circuit.~ClockTree();
 	

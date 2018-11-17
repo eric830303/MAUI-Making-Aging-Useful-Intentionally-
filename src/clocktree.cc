@@ -3211,7 +3211,7 @@ void ClockTree::tcRecheck(void)
 // Insert buffers based on the optimal Tc determined by DCC insertion
 //
 /////////////////////////////////////////////////////////////////////
-/*
+
 void ClockTree::bufferInsertion(void)
 {
 	if((this->_bufinsert < 1) || (this->_bufinsert > 2))
@@ -3227,7 +3227,11 @@ void ClockTree::bufferInsertion(void)
 				continue;
 			double dataarrtime = 0, datareqtime = 0;
 			// Calculate the Ci and Cj
-			this->calculateClockLatencyWithoutDcc(path, &datareqtime, &dataarrtime);
+			
+            
+            datareqtime = this->calClkLaten_givDcc_givVTA( path->getEndPonitClkPath()  , 0.5, NULL, -1, NULL );
+            dataarrtime = this->calClkLaten_givDcc_givVTA( path->getStartPonitClkPath(), 0.5, NULL, -1, NULL );
+        
 			// Require time
 			datareqtime += (path->getTsu() * this->_agingtsu) + this->_tc;
 			// Arrival time
@@ -3269,14 +3273,12 @@ void ClockTree::bufferInsertion(void)
 		}
 	}
 }
-*/
 /////////////////////////////////////////////////////////////////////
 //
 // ClockTree Class - Public Method
 // Minimize the inserted buffers
 //
 /////////////////////////////////////////////////////////////////////
-/*
 void ClockTree::minimizeBufferInsertion(void)
 {
 	if((this->_bufinsert != 2) || (this->_insertbufnum < 2))
@@ -3328,7 +3330,8 @@ void ClockTree::minimizeBufferInsertion(void)
 				{
 					double dataarrtime = 0, datareqtime = 0;
 					// Calculate the Ci and Cj
-					this->calculateClockLatencyWithoutDcc(path, &datareqtime, &dataarrtime);
+                    datareqtime = this->calClkLaten_givDcc_givVTA( path->getEndPonitClkPath()  , 0.5, NULL, -1, NULL );
+                    dataarrtime = this->calClkLaten_givDcc_givVTA( path->getStartPonitClkPath(), 0.5, NULL, -1, NULL );
 					// Require time
 					datareqtime += (path->getTsu() * this->_agingtsu) + this->_tc;
 					// Arrival time
@@ -3359,7 +3362,8 @@ void ClockTree::minimizeBufferInsertion(void)
 				{
 					double dataarrtime = 0, datareqtime = 0;
 					// Calculate the Ci and Cj
-					this->calculateClockLatencyWithoutDcc(path, &datareqtime, &dataarrtime);
+                    datareqtime = this->calClkLaten_givDcc_givVTA( path->getEndPonitClkPath()  , 0.5, NULL, -1, NULL );
+                    dataarrtime = this->calClkLaten_givDcc_givVTA( path->getStartPonitClkPath(), 0.5, NULL, -1, NULL );
 					// Require time
 					datareqtime += (path->getTsu() * this->_agingtsu) + this->_tc;
 					// Arrival time
@@ -3416,7 +3420,6 @@ void ClockTree::minimizeBufferInsertion(void)
 		nodequeue.pop();
 	}
 }
-*/
 /////////////////////////////////////////////////////////////////////
 //
 // ClockTree Class - Public Method

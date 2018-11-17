@@ -150,7 +150,7 @@ public:
 			   _clktreeroot(nullptr), _firstchildrennode(nullptr), _mostcriticalpath(nullptr),
 			   _timingreport(""), _timingreportfilename(""), _timingreportloc(""), _timingreportdesign(""),_dumpCNF(false), _checkCNF(false), _checkfile(false),
 			   _cgfilename(""), _outputdir(""), _tcAfterAdjust(0), _printClause(false), _baseVthOffset(0), _exp(0.2),  _usingSeniorAging(false),
-               _printClkNode(false), _calVTA(false), _dcc_leader(false), _dc_formulation(false), Max_timing_count(0), refine_time(100), _dcc_constraint_ctr(0), _leader_constraint_ctr(0), _printCP(false) {}
+               _printClkNode(false), _calVTA(false), _dcc_leader(false), _dc_formulation(false), Max_timing_count(0), refine_time(100), _dcc_constraint_ctr(0), _leader_constraint_ctr(0), _printCP(false), _analysis(0) {}
 	//-Destructor------------------------------------------------------------------
     ~ClockTree(void);
 	
