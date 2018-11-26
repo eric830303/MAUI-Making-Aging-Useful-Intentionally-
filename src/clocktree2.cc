@@ -310,37 +310,7 @@ void ClockTree::calVTABufferCountByFile()
         cerr << RED"[Error]" << "Can not read 'DccVTA.txt'\n";
         return                ;
     }
-    
-    //-- Read DCC/VTA Deployment ------------------------------------------------------
-    getline( fDCCVTA, line )        ;
-    string          tc              ;
-    istringstream   token( line )   ;
-    token     >>  tc   >> tc        ;
-    
-    while( getline( fDCCVTA, line ) )
-    {
-        long    BufID       = 0   ;
-        int     BufVthLib   = -1  ;
-        double  BufDCC      = 0.5 ;
-        istringstream   token( line )     ;
-        token >> BufID >> BufVthLib >> BufDCC ;
-        CTN *buffer = searchClockTreeNode( BufID ) ;
-        if( buffer == NULL )
-        {
-            printf( RED"[Error] " RESET"Can't find clock node with id = %ld\n", BufID ) ;
-            return ;
-        }
-        if( BufDCC != 0.5 && BufDCC != -1 && BufDCC != 0 ){
-            buffer->setIfPlaceDcc(true);
-            buffer->setDccType( BufDCC )    ;
-        }
-        if( BufVthLib != -1  ){
-            buffer->setIfPlaceHeader(true);
-            buffer->setVTAType( BufVthLib ) ;
-        }
-    }
-    fDCCVTA.close();
-    
+	readDCCVTAFile();
     calVTABufferCount(true) ;
 }
 

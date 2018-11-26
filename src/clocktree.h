@@ -118,6 +118,7 @@ private:
     double  _exp            ;
     double  _nominal_agr[8] ;
     double  _HTV_agr[8]     ;
+	double  _HTV_fresh      ;
     
     
     long long int Max_timing_count;
@@ -279,26 +280,25 @@ public:
     
     //---Timing Constraint---------------------------------------------------------
 	long    timingConstraint( void );
-    void    timingConstraint_doDCC_ndoVTA ( CP*, bool update = false );
-    void    timingConstraint_doDCC_doVTA  ( CP*, bool update = false );
-    void    timingConstraint_ndoDCC_doVTA ( CP*, bool update = false );
-    double  timingConstraint_ndoDCC_ndoVTA( CP*, bool update = false, bool genclause = 1 );
+    void    timingConstraint_doDCC_ndoVTA ( CP*, bool update = 0, bool aging = 1 );
+    void    timingConstraint_doDCC_doVTA  ( CP*, bool update = 0, bool aging = 1 );
+    void    timingConstraint_ndoDCC_doVTA ( CP*, bool update = 0, bool aging = 1 );
+    double  timingConstraint_ndoDCC_ndoVTA( CP*, bool update = 0, bool aging = 1 );
 	
 
-    double  timingConstraint_givDCC_givVTA( CP*, double, double, CTN*, CTN*, int, int,CTN*, CTN*ed);
-    void    timingConstraint_givDCC_doVTA(  CP*, double, double, CTN*, CTN*);
-    void    timingConstraint_givDCC_ndoVTA( CP*, double, double, CTN*, CTN*);
-    double  timingConstraint_ndoDCC_givVTA( void );
+    double  timingConstraint_givDCC_givVTA( CP*, double, double, CTN*, CTN*, int, int,CTN*, CTN*ed, bool aging = 1);
+    void    timingConstraint_givDCC_doVTA(  CP*, double, double, CTN*, CTN*, bool aging = 1);
+    void    timingConstraint_givDCC_ndoVTA( CP*, double, double, CTN*, CTN*, bool aging = 1);
     //---Clause ------------------------------------------------------------------
     void    writeClause_givDCC( string &clause, CTN* node, double DCCType  );
     void    writeClause_givVTA( string &clause, CTN* node, int    LibIndex );
     //---VTA-related -------------------------------------------------------------
-    double  getAgingRate_givDC_givVth( double DC, int LibIndex, bool initial = false ) ;
+    double  getAgingRate_givDC_givVth( double DC, int LibIndex, bool initial = false, bool caging = true ) ;
     //---Timing-related ----------------------------------------------------------
     void    adjustOriginTc( void )        ;
     void    updateAllPathTiming( void )   ;
     void    tcRecheck( void )             ;
-    double  calClkLaten_givDcc_givVTA   (vector<CTN*> path, double DC, CTN* Loc1, int Lib, CTN* Loc2 );
+    double  calClkLaten_givDcc_givVTA   (vector<CTN*> path, double DC, CTN* Loc1, int Lib, CTN* Loc2, bool aging=true );
     
     //---Dumper ------------------------------------------------------------------
 	void    dumpClauseToCnfFile(void)      ;
