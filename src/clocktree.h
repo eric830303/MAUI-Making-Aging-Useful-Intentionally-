@@ -280,10 +280,10 @@ public:
     
     //---Timing Constraint---------------------------------------------------------
 	long    timingConstraint( void );
-    void    timingConstraint_doDCC_ndoVTA ( CP*, bool update = 0, bool aging = 1 );
-    void    timingConstraint_doDCC_doVTA  ( CP*, bool update = 0, bool aging = 1 );
-    void    timingConstraint_ndoDCC_doVTA ( CP*, bool update = 0, bool aging = 1 );
-    double  timingConstraint_ndoDCC_ndoVTA( CP*, bool update = 0, bool aging = 1 );
+    void    timingConstraint_doDCC_ndoVTA ( CP*, bool aging = 1 );
+    void    timingConstraint_doDCC_doVTA  ( CP*, bool aging = 1 );
+    void    timingConstraint_ndoDCC_doVTA ( CP*, bool aging = 1 );
+    double  timingConstraint_ndoDCC_ndoVTA( CP*, bool aging = 1 );
 	
 
     double  timingConstraint_givDCC_givVTA( CP*, double, double, CTN*, CTN*, int, int,CTN*, CTN*ed, bool aging = 1);

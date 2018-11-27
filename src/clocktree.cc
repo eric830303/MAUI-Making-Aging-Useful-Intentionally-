@@ -1978,18 +1978,18 @@ long ClockTree::timingConstraint(void)
 	{
 		if( (path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF) ) continue;
 		//--No DCC insertion ----------------------------------
-		this->timingConstraint_ndoDCC_ndoVTA( path, 0, 1 );//Aging
-		this->timingConstraint_ndoDCC_ndoVTA( path, 0, 0 );//Fresh
-        this->timingConstraint_ndoDCC_doVTA(  path, 0, 1 );//Aging
-		this->timingConstraint_ndoDCC_doVTA(  path, 0, 0 );//Fresh
+		this->timingConstraint_ndoDCC_ndoVTA( path, 1 );//Aging
+		this->timingConstraint_ndoDCC_ndoVTA( path, 0 );//Fresh
+        this->timingConstraint_ndoDCC_doVTA(  path, 1 );//Aging
+		this->timingConstraint_ndoDCC_doVTA(  path, 0 );//Fresh
         
 		//--DCC Insertion && VTA ------------------------------
         if( this->_placedcc )
         {
-            this->timingConstraint_doDCC_ndoVTA( path, 0, 1 );//Aging
-			this->timingConstraint_doDCC_ndoVTA( path, 0, 0 );//Fresh
-            this->timingConstraint_doDCC_doVTA(  path, 0, 1 );//Aging
-			this->timingConstraint_doDCC_doVTA(  path, 0, 0 );//Fresh
+            this->timingConstraint_doDCC_ndoVTA( path, 1 );//Aging
+			this->timingConstraint_doDCC_ndoVTA( path, 0 );//Fresh
+            this->timingConstraint_doDCC_doVTA(  path, 1 );//Aging
+			this->timingConstraint_doDCC_doVTA(  path, 0 );//Fresh
         }
         
 	}
@@ -2007,7 +2007,7 @@ long ClockTree::timingConstraint(void)
     update    = 0 (default) => Do not update the timing info of the pipeline
               = 1           => Update timing info of the pipeline
  -------------------------------------------------------------------------------------*/
-double ClockTree::timingConstraint_ndoDCC_ndoVTA( CriticalPath *path, bool update, bool aging )
+double ClockTree::timingConstraint_ndoDCC_ndoVTA( CriticalPath *path, bool aging )
 {
 	if( path == nullptr )
 		return -1 ;
@@ -2062,7 +2062,12 @@ double ClockTree::timingConstraint_ndoDCC_ndoVTA( CriticalPath *path, bool updat
             this->_timingconstraintlist.insert(clause) ;
             if( _printClause )
             {
-                if( newslack < 0 ) fprintf( this->fptr, "Path(%ld), stDCC(%.1f), edDCC(%.1f), stVTA(%d), edVTA(%d), slk = %f, %s \n", path->getPathNum(), -1.0, -1.0, -1, -1, newslack, clause.c_str() );
+                if( newslack < 0 )
+				{
+					if( aging ) fprintf( this->fptr, "10-yr aging ");
+					else		fprintf( this->fptr, "Fresh aging ");
+					fprintf( this->fptr, "Path(%ld), stDCC(%.1f), edDCC(%.1f), stVTA(%d), edVTA(%d), slk = %f, %s \n", path->getPathNum(), -1.0, -1.0, -1, -1, newslack, clause.c_str() );
+				}
             }
         }
 	}
@@ -2154,7 +2159,7 @@ double ClockTree::UpdatePathTiming( CriticalPath * path, bool update, bool DCCVT
  Introduction:
     Do timing constraint iterate DCC insertion, but don't do VTA
  -------------------------------------------------------------------------------------*/
-void ClockTree::timingConstraint_doDCC_ndoVTA( CriticalPath *path, bool update, bool aging )
+void ClockTree::timingConstraint_doDCC_ndoVTA( CriticalPath *path, bool aging )
 {
     if( path == nullptr || this->_placedcc == false ) return  ;
     
@@ -2224,7 +2229,7 @@ void ClockTree::timingConstraint_doDCC_ndoVTA( CriticalPath *path, bool update, 
  Introduction:
     Do timing constraint iterate DCC insertion
  -------------------------------------------------------------------------------------*/
-void ClockTree::timingConstraint_doDCC_doVTA( CriticalPath *path, bool update, bool aging )
+void ClockTree::timingConstraint_doDCC_doVTA( CriticalPath *path, bool aging )
 {
     if( path == nullptr || this->_placedcc == false || this->ifdoVTA() == false )return  ;
     
@@ -2298,7 +2303,7 @@ void ClockTree::timingConstraint_doDCC_doVTA( CriticalPath *path, bool update, b
  Introduction:
     Do timing constraint iterate DCC VTA
  -------------------------------------------------------------------------------------*/
-void ClockTree::timingConstraint_ndoDCC_doVTA( CriticalPath *path, bool update, bool aging )
+void ClockTree::timingConstraint_ndoDCC_doVTA( CriticalPath *path, bool aging )
 {
     if( this->ifdoVTA() == false ) return ;
     //----- Checking ---------------------------------
@@ -2589,6 +2594,8 @@ double ClockTree::timingConstraint_givDCC_givVTA(   CriticalPath *path,
             this->_timingconstraintlist.insert(clause) ;
             if( _printClause )
             {
+				if( caging )  fprintf( this->fptr,"10-yr aging " );
+				else          fprintf( this->fptr,"Fresh aging " );
                 fprintf( this->fptr,"Path(%4ld), ", path->getPathNum() );
                 if( stDCCLoc )  fprintf( this->fptr,"stDCC (%4ld, %.1f ), ", stDCCLoc->getNodeNumber(), stDCCType  );
                 else            fprintf( this->fptr,"stDCC (%4d, %.1f ), ",                          -1, -1.0       );
@@ -3191,52 +3198,37 @@ void ClockTree::tcRecheck(void)
 	if(this->_mostcriticalpath->getSlack() < 0)
 		this->_besttc += ceilNPrecision(abs(this->_mostcriticalpath->getSlack()), PRECISION);
 	double oribesttc = this->_besttc;
+	double slack_aging = 0;
+	double slack_fresh = 0;
 	while( 1 )
 	{
 		bool endflag = 0;
 		// Decrease the optimal Tc
 		this->_tc = this->_besttc - (1 / pow(10, PRECISION));
-		if( this->_tc < 0 )
-			break;
+		if( this->_tc < 0 ) break;
 		// Assess if the critical path occurs timing violation
 		for(auto const& path: this->_pathlist)
 		{
-			if((path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF))
-				continue;
-			double slack = 0;
-            /*
-			if(this->_placedcc)
-				slack = this->updatePathTimingWithDcc(path, 0);
-			else
-                slack = this->timingConstraint_nDcc_nVTA( path, 0, 0);//assessTimingWithoutDcc(path, 0 (genClause), 0 (update) );
-                                            //The last 2 args are 0 => Only get slack instead of generating clauses and set timing
-            */
-            slack = this->UpdatePathTiming( path, false ) ;
-			if( slack < 0 )
+			if((path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF)) continue;
+			
+            slack_aging = this->UpdatePathTiming( path, 0, 1, 1 ) ;
+			slack_fresh = this->UpdatePathTiming( path, 0, 1, 0 ) ;
+			if( slack_aging < 0 || slack_fresh < 0 )
 			{
-                endflag = 1;
-                printf( RED"[Error] Path: %ld timing error", path->getPathNum() );
+				endflag = 1;
 				break;
 			}
 		}
 		if( endflag ) break ;
 		this->_besttc = this->_tc;
 	}
-	if( oribesttc == this->_besttc )
-		return;
+	if( oribesttc == this->_besttc ) return;
 	this->_tc = this->_besttc;
 	// Update timing information of all critical path based on the new optimal Tc
-	for(auto const& path: this->_pathlist)
+	for( auto const& path: this->_pathlist )
 	{
-		if((path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF))
-			continue;
-        /*
-		if( this->_placedcc )
-			this->UpdatePathTiming( path, true ) ;
-		else
-            this->timingConstraint_nDcc_nVTA(path, 0, 1);//assessTimingWithoutDcc(path, 0, 1);
-         */
-        this->UpdatePathTiming( path, true ) ;
+		if((path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF)) continue;
+        this->UpdatePathTiming( path, 1, 1, 1 ) ;
 	}
 }
 
@@ -3929,10 +3921,13 @@ void ClockTree::printPath( int pathid )
     printf("==> NodeID( Duty Cycle, VthType, " GREEN"Buffer Delay" RESET" ) \n");
     printf("==> Duty Cycle: 0.2, 0.4, 0.5, 0.8 \n" );
     printf("==> Vth type  : -1(Nominal), 0(VTA) \n" );
+	
+	readDCCVTAFile( "./setting/DccVTA.txt" ) ;
+	printPath_givFile( path, false  /*DCC/VTA*/, false  /*Aging*/, true  /*Tc from file*/ ) ;
     readDCCVTAFile( "./setting/DccVTA.txt" ) ;
-    printPath_givFile( path, true  /*DCC/VTA*/, true  /*Aging*/, true  /*Tc from file*/ ) ;
+    printPath_givFile( path, true  /*DCC/VTA*/, false  /*Aging*/, true  /*Tc from file*/ ) ;
     printf("From DccVTA.txt\n" );
-    readDCCVTAFile( "./setting/DccVTA2.txt" ) ;
+    readDCCVTAFile( "./setting/DccVTA.txt" ) ;
     printPath_givFile( path, true  /*DCC/VTA*/, true  /*Aging*/, true  /*Tc from file*/ ) ;
     printf("From DccVTA2.txt\n" );
 }
