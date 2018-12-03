@@ -775,8 +775,10 @@ int ClockTree::checkParameter(int argc, char **argv, string *message)
 			vector<string> strspl = stringSplit(string(argv[loop]), "=");
 			if(strspl.back().compare("insert") == 0)
 				this->_bufinsert = 1;							// Insert buffers
+			else if(strspl.back().compare("file") == 0)
+				this->_bufinsert = 2;
 			else if(strspl.back().compare("min_insert") == 0)
-				this->_bufinsert = 2;							// Insert buffers and minimize buffer insertion
+				this->_bufinsert = 3;							// Insert buffers and minimize buffer insertion
 			else
 			{
 				*message = "\033[31m[ERROR]: Wrong Buffer insertion setting!!\033[0m\n";
@@ -3256,8 +3258,8 @@ void ClockTree::bufferInsertion(void)
 			// Calculate the Ci and Cj
 			
             
-            datareqtime = this->calClkLaten_givDcc_givVTA( path->getEndPonitClkPath()  , 0.5, NULL, -1, NULL );
-            dataarrtime = this->calClkLaten_givDcc_givVTA( path->getStartPonitClkPath(), 0.5, NULL, -1, NULL );
+            datareqtime = this->calClkLaten_givDcc_givVTA( path->getEndPonitClkPath()  , 0.5, NULL, -1, NULL, 1 );
+            dataarrtime = this->calClkLaten_givDcc_givVTA( path->getStartPonitClkPath(), 0.5, NULL, -1, NULL, 1 );
         
 			// Require time
 			datareqtime += (path->getTsu() * this->_agingtsu) + this->_tc;
@@ -3299,6 +3301,7 @@ void ClockTree::bufferInsertion(void)
 			break;
 		}
 	}
+	this->calInsertBufCount();
 }
 /////////////////////////////////////////////////////////////////////
 //
@@ -3308,7 +3311,7 @@ void ClockTree::bufferInsertion(void)
 /////////////////////////////////////////////////////////////////////
 void ClockTree::minimizeBufferInsertion(void)
 {
-	if((this->_bufinsert != 2) || (this->_insertbufnum < 2))
+	if((this->_bufinsert != 3) || (this->_insertbufnum < 3))
 		return;
 	cout << "\033[32m[Info]: Minimizing Buffer Insertion...\033[0m\n";
 	cout << "\033[32m    Before Buffer Insertion Minimization\033[0m\n";

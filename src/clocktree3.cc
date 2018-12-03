@@ -146,3 +146,79 @@ bool ClockTree::PathIsPlacedDCCorLeader( CP *pptr, int mode )
 	
 	return false;
 }
+
+void ClockTree::minimizeBufferInsertion2()
+{
+	if( this->_bufinsert < 1 || this->_bufinsert > 3 ) return;
+	for( auto node: this->_clktreeroot->getChildren() )
+		minimizeBufferInsertion2( node );
+	this->calInsertBufCount();
+}
+
+void ClockTree::minimizeBufferInsertion2( CTN* node )
+{
+	if( node == NULL ) return;
+	if( node->ifInsertBuffer() ) return;
+	if( node->getChildren().size() == 0 ) return;
+	
+	
+	bool   buf_upward	= true;
+	double max_buf_delay= 0;
+	double buf_delay  	= 0;
+	for( auto child: node->getChildren() )
+	{
+		minimizeBufferInsertion2( child );
+		
+		if( child->ifInsertBuffer() == false )  buf_upward = false;
+	}
+	
+	if( buf_upward )
+	{
+		//I should check timing here
+		
+		node->setIfInsertBuffer(1);
+		node->setInsertBufferDelay(max_buf_delay);
+		printf( "clknode(%ld, %s), 1 <= %ld:\n", node->getNodeNumber(), node->getGateData()->getGateName().c_str(), node->getChildren().size() );
+		
+		
+		for( auto child: node->getChildren() )
+		{
+			assert( child->ifInsertBuffer() );
+			child->setIfInsertBuffer(0);
+			buf_delay = child->getInsertBufferDelay() ;
+			max_buf_delay = ( buf_delay > max_buf_delay )? ( buf_delay ):( max_buf_delay );
+			printf("\tclknode(%ld, %s)\n", child->getNodeNumber(), child->getGateData()->getGateName().c_str() );
+		}
+		
+	}
+}
+
+long ClockTree::calInsertBufCount()
+{
+	long bufcount = 0;
+	
+	for( auto node: this->_buflist )
+		if( node.second->ifInsertBuffer() ) bufcount++;
+	for( auto node: this->_ffsink )
+		if( node.second->ifInsertBuffer() ) bufcount++;
+	
+	printf("Inserted Bufs = %ld\n", bufcount );
+	return bufcount;
+	
+}
+
+void ClockTree::bufinsertionbyfile()
+{
+	readDCCVTAFile();
+	this->_besttc = this->_tc;
+	bufferInsertion();
+	minimizeBufferInsertion2();
+}
+
+
+
+
+
+
+
+

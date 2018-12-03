@@ -61,6 +61,14 @@ bool ClockTree::DoOtherFunction()
         this->printClockNode();
         return 0;
     }
+	//-------- Buffer insertion----------------------------------------------
+	if( this->_bufinsert == 2 )
+	{
+		this->bufinsertionbyfile();
+		return 0;
+	}
+	
+	
     return 1;
 }
 /*----------------------------------------------------------------------------------

@@ -65,6 +65,7 @@ int main(int argc, char **argv)
 			cout << "      -bufinsert=[choice]    Show how many buffers inseted by given a Tc. (default None).\n";
 			cout << "                               -bufinsert=insert    : just buffer insertion.\n";
 			cout << "                               -bufinsert=min_insert: minimize buffer insertion.\n";
+			cout << "      -bufinsert=file        Do buffer insertion based on the Tc given in the file DccVTA.txt.\n";
 			cout << "      -path=[choice]         Choice which category of path you want to consider.\n";
 			cout << "                               -path=all   : consider all types of path. (default)\n";
 			cout << "                               -path=pi_ff : consider input port to FF and FF to FF two types of path.\n";
@@ -197,8 +198,8 @@ int main(int argc, char **argv)
 	midtime = chrono::steady_clock::now();
 	// Insert buffers with the given "optimal Tc"
 	circuit.bufferInsertion();
-	// Minimize buffers placement
 	circuit.minimizeBufferInsertion();
+	circuit.minimizeBufferInsertion2();
 	endtime = chrono::steady_clock::now();
 	bufinstime = chrono::duration_cast<chrono::duration<double>>(endtime - midtime);
 	totaltime = chrono::duration_cast<chrono::duration<double>>(endtime - starttime);

@@ -76,7 +76,7 @@ private:
     
     //--- Control of function ----------------------------------------------------------
     bool    _printpath, _dumpCNF, _checkCNF, _checkfile ;
-    bool    _printClause, _calVTA, _dcc_leader          ;
+    bool    _printClause, _calVTA, _dcc_leader, _bufinsertion ;
     bool    _dc_formulation, _printCP, _analysis         ;
     
     //--- Timing-related ----------------------------------------------------------------
@@ -249,6 +249,9 @@ public:
     //---Buffer Insertion -----------------------------------------------------
     void    bufferInsertion(void);
     void    minimizeBufferInsertion(void);
+	void    minimizeBufferInsertion2(void);
+	void    minimizeBufferInsertion2(ClockTreeNode*);
+	long    calInsertBufCount();
     
     //---Refine: Minimize DCC Count ------------------------------------------------
     void    minimizeDccPlacement(void);//Actually, minimal rather than minimum
@@ -345,6 +348,7 @@ public:
     void    EncodeDccLeader( double )           ;
     CTN*    searchClockTreeNode( string )       ;
     CTN*    searchClockTreeNode( long   )       ;
+	void    bufinsertionbyfile();
     vector<CP*>     searchCriticalPath( char, string );
     vector<CTN*>    getFFChildren(CTN*)         ;
     
