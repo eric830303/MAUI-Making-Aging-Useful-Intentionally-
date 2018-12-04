@@ -209,12 +209,36 @@ long ClockTree::calInsertBufCount()
 
 void ClockTree::bufinsertionbyfile()
 {
-	readDCCVTAFile();
+	readDCCVTAFile();//read Tc from the file
 	this->_besttc = this->_tc;
 	bufferInsertion();
 	minimizeBufferInsertion2();
 }
 
+void ClockTree::clockgating()
+{
+	this->SortCPbySlack( 0 /*Do not consider DCC*/);
+	
+	for( auto pptr: this->_pathlist )
+	{
+		if( pptr->getPathType() != NONE ) continue;
+		
+		//Do not select gated cells along Cj/end clk path.
+		for( auto node: pptr->getEndPonitClkPath()  )
+			if( node->ifClockGating() ) return ;
+				
+		vector<CTN*> stClkPath = pptr->getStartPonitClkPath() ;
+		if( stClkPath.size() == 0 ) continue;
+		else
+		{
+			CTN* node = stClkPath.back();
+			node->setIfClockGating(1);
+			node->setGatingProbability( genRandomNum("float", this->_gplowbound, this->_gpupbound, 2) );
+			this->_cglist.insert(pair<string, ClockTreeNode *> ( node->getGateData()->getGateName(), node));
+		}
+		//Temporal setting: If pptr's cj is gated, then break the loop.
+	}
+}
 
 
 

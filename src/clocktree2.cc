@@ -13,53 +13,60 @@
 
 bool ClockTree::DoOtherFunction()
 {
-    if( this->ifanalysis() )
-    {
-        this->Analysis();
-        return 0 ;
-    }
+	//-------- print pipeline -----------------------------------------
+	if( this->_program_ctl == 1 )
+	{
+		this->printPath();
+		return 0;
+	}
+	//-------- Dump SAT CNF as DCC/VTA ------------------------------
+	if( this->_program_ctl == 2 )
+	{
+		this->dumpCNF() ;
+		return 0 ;
+	}
+	//-------- Check Timing with given DccVTA.txt ---------------------
+	if( this->_program_ctl == 3 )
+	{
+		this->CheckTiming_givFile() ;
+		return 0 ;
+	}
+	//-------- cal VTA ------------------------------------------------
+	if( this->_program_ctl == 4 )
+	{
+		this->calVTABufferCountByFile() ;
+		return 0 ;
+	}
+	//-------- Check CNF/DccVTA.txt -----------------------------------
+	if( this->_program_ctl == 5 )
+	{
+		this->checkCNF() ;
+		return 0 ;
+	}
+	//-------- print Node----------------------------------------------
+	if( this->_program_ctl == 6 )
+	{
+		this->printClockNode();
+		return 0;
+	}
+	//-------- Analysis ------------------------------------------------
+	if( this->_program_ctl == 7  )
+	{
+		this->Analysis();
+		return 0 ;
+	}
+	//-------- Analysis ------------------------------------------------
+	if( this->_program_ctl == 8  )
+	{
+		//this->Analysis();
+		return 0 ;
+	}
     //-------- print DCC ------------------------------------------------
     if( this->ifprintCP() )
     {
         this->readDCCVTAFile();
         this->printPathCriticality();
         return 0 ;
-    }
-    //-------- cal VTA ------------------------------------------------
-    if( this->ifCalVTA() )
-    {
-        this->calVTABufferCountByFile() ;
-        return 0 ;
-    }
-    //-------- Check CNF/DccVTA.txt -----------------------------------
-    if( this->ifCheckCNF() )
-    {
-        this->checkCNF() ;
-        return 0 ;
-    }
-    //-------- Check Timing with given DccVTA.txt ---------------------
-    if( this->ifCheckFile() )
-    {
-        this->CheckTiming_givFile() ;
-        return 0 ;
-    }
-    //-------- Dump SAT CNF as DCC/VTA ------------------------------
-    if( this->ifDumpCNF() )
-    {
-        this->dumpCNF() ;
-        return 0 ;
-    }
-    //-------- print pipeline -----------------------------------------
-    if( this->ifprintPath() )
-    {
-        this->printPath();
-        return 0;
-    }
-    //-------- print Node----------------------------------------------
-    if( this->ifprintNode())
-    {
-        this->printClockNode();
-        return 0;
     }
 	//-------- Buffer insertion----------------------------------------------
 	if( this->_bufinsert == 2 )

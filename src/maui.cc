@@ -70,6 +70,7 @@ int main(int argc, char **argv)
 			cout << "                               -path=all   : consider all types of path. (default)\n";
 			cout << "                               -path=pi_ff : consider input port to FF and FF to FF two types of path.\n";
 			cout << "                               -path=onlyff: consider only FF to FF path.\n";
+			cout << "      -CG					  Do clock gating: select cells along Ci.\n";
 			cout << "      -clockgating=[choice]  Consider insertion of clock gating cells.\n";
 			cout << "                               -clockgating=yes   : insert clock gating cells.\n";
 			cout << "                               -clockgating=no    : otherwise. (default)\n";

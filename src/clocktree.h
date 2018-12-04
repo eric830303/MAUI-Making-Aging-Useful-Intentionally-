@@ -66,6 +66,7 @@ class ClockTree
 {
 private:
 	int     _pathselect, _bufinsert, _gpupbound, _gplowbound, _minisatexecnum;
+	int		_program_ctl;
 	bool    _placedcc, _aging, _mindccplace, _tcrecheck, _clkgating, _dumpdcc, _dumpcg, _dumpbufins, _doVTA;
 	bool    _usingSeniorAging, _printClkNode ;
 	long    _pathusednum, _pitoffnum, _fftoffnum, _fftoponum, _nonplacedccbufnum;
@@ -75,9 +76,8 @@ private:
 	double  _tcAfterAdjust ;
     
     //--- Control of function ----------------------------------------------------------
-    bool    _printpath, _dumpCNF, _checkCNF, _checkfile ;
     bool    _printClause, _calVTA, _dcc_leader, _bufinsertion ;
-    bool    _dc_formulation, _printCP, _analysis         ;
+    bool    _dc_formulation, _printCP        ;
     
     //--- Timing-related ----------------------------------------------------------------
     double  _origintc, _besttc, _tc         ;
@@ -143,15 +143,15 @@ public:
     //-Constructor-----------------------------------------------------------------
 	ClockTree(void)
 			 : _pathselect(0), _bufinsert(0), _placedcc(1), _doVTA(1), _VTH_LIB_cnt(0), _FIN_CONV_Year(100) ,_aging(1), _mindccplace(0), _tcrecheck(0), _clkgating(0),
-			   _dumpdcc(0), _dumpcg(0), _dumpbufins(0), _agingtcq(1.2), _agingdij(1.17), _agingtsu(1),_printpath(0),
+			   _dumpdcc(0), _dumpcg(0), _dumpbufins(0), _agingtcq(1.2), _agingdij(1.17), _agingtsu(1),
 			   _cgpercent(0.02), _pathusednum(0), _pitoffnum(0), _fftoffnum(0), _fftoponum(0),
 			   _masklevel(0), _maskleng(0.5), _maxlevel(0), _nonplacedccbufnum(0), _dccatlastbufnum(0), _insertbufnum(0),
 			   _totalnodenum(1), _ffusednum(0), _bufferusednum(0), _minisatexecnum(0), _gpupbound(70), _gplowbound(20), 
 			   _origintc(0), _besttc(0), _tc(0), _tcupbound(0), _tclowbound(0),
 			   _clktreeroot(nullptr), _firstchildrennode(nullptr), _mostcriticalpath(nullptr),
-			   _timingreport(""), _timingreportfilename(""), _timingreportloc(""), _timingreportdesign(""),_dumpCNF(false), _checkCNF(false), _checkfile(false),
+			   _timingreport(""), _timingreportfilename(""), _timingreportloc(""), _timingreportdesign(""),
 			   _cgfilename(""), _outputdir(""), _tcAfterAdjust(0), _printClause(false), _baseVthOffset(0), _exp(0.2),  _usingSeniorAging(false),
-               _printClkNode(false), _calVTA(false), _dcc_leader(false), _dc_formulation(false), Max_timing_count(0), refine_time(100), _dcc_constraint_ctr(0), _leader_constraint_ctr(0), _printCP(false), _analysis(0) {}
+               _printClkNode(false), _calVTA(false), _dcc_leader(false), _dc_formulation(false), Max_timing_count(0), refine_time(100), _dcc_constraint_ctr(0), _leader_constraint_ctr(0), _printCP(false), _program_ctl(0) {}
 	//-Destructor------------------------------------------------------------------
     ~ClockTree(void);
 	
@@ -218,15 +218,10 @@ public:
     set< pair<CTN*,CTN*> >& getVTASet(void) { return _setVTALeader ; }
     set< pair<int,int> >& getDCCSet(void) { return _setDCC ; }
 	//-- Bool Attr Access -------------------------------------------------------
-    bool ifanalysis(void)                           { return _analysis          ; }
     bool ifprintCP(void)                            { return _printCP           ; }
     bool ifCalVTA(void)                             { return _calVTA            ; }
     bool ifdccleader(void)                          { return _dcc_leader        ; }
     bool ifprintNode(void)                          { return _printClkNode      ; }
-    bool ifCheckFile(void)                          { return _checkfile         ; }
-    bool ifCheckCNF(void)                           { return _checkCNF          ; }
-    bool ifDumpCNF(void)                            { return _dumpCNF           ; }
-    bool ifprintPath(void)                          { return _printpath         ; }
 	bool ifPlaceDcc(void)                           { return _placedcc          ; }
 	bool ifAging(void)                              { return _aging             ; }
 	bool ifMinDccNumber(void)                       { return _mindccplace       ; }
@@ -386,6 +381,8 @@ public:
 	void    getPathType( string &PathType, CP* pptr );
 	bool    PathReasonable( CP* pptr);
 	void    getNodeSide( string &Side, CTN*node, CP* pptr );
+	//---- "-CG" clock gating--------------------------------------------------------------
+	void    clockgating();
 	
 };
 

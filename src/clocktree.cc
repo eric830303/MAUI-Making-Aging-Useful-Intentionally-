@@ -610,7 +610,7 @@ int ClockTree::checkParameter(int argc, char **argv, string *message)
 		else if(strcmp(argv[loop], "-nondcc") == 0)
 			this->_placedcc = 0;
         else if(strcmp(argv[loop], "-analysis") == 0)
-            this->_analysis = 1;        
+            this->_program_ctl = 7;        
         else if(strcmp(argv[loop], "-nonVTA") == 0)
             this->_doVTA = 0;
         else if(strcmp(argv[loop], "-print=CP") == 0)
@@ -624,21 +624,28 @@ int ClockTree::checkParameter(int argc, char **argv, string *message)
 		else if(strcmp(argv[loop], "-tc_recheck") == 0)
 			this->_tcrecheck = 1;								// Recheck Tc
         else if(strcmp(argv[loop], "-print=path") == 0)
-            this->_printpath = 1;
+			this->_program_ctl = 1;
+            //this->_printpath = 1;
         else if(strcmp(argv[loop], "-dump=SAT_CNF") == 0)
-            this->_dumpCNF   = 1;
+			this->_program_ctl = 2;
+            //this->_dumpCNF   = 1;
+		
         else if(strcmp(argv[loop], "-dc_for") == 0)
             this->_dc_formulation = 1;
         else if(strcmp(argv[loop], "-checkFile") == 0)
-            this->_checkfile = 1;
+			this->_program_ctl = 3;
+            //this->_checkfile = 1;
         else if(strcmp(argv[loop], "-calVTA") == 0)
-            this->_calVTA    = 1;
+			this->_program_ctl = 4;
+            //this->_calVTA    = 1;
         else if(strcmp(argv[loop], "-print=Clause") == 0)
             this->_printClause  = 1;
         else if(strcmp(argv[loop], "-checkCNF") == 0)
-            this->_checkCNF  = 1;
+			this->_program_ctl = 5;
+            //this->_checkCNF  = 1;
         else if(strcmp(argv[loop], "-print=Node") == 0)
-            this->_printClkNode  = 1;
+			this->_program_ctl = 6;
+            //this->_printClkNode  = 1;
         else if(strcmp(argv[loop], "-aging=Senior") == 0)
             this->_usingSeniorAging = 1;
 		else if(strcmp(argv[loop], "-mask_leng") == 0)
@@ -2745,13 +2752,12 @@ double ClockTree::calClkLaten_givDcc_givVTA(    vector<ClockTreeNode *> clkpath,
         
         laten += buftime*agingrate ;
         //printf("Buf = %f, ", buftime*agingrate );
-        /*
+		
         if( clkpath.at(i)->ifClockGating() )
         {
             DC =  DC * (1 - clkpath.at(i)->getGatingProbability()) ;
-            agingrate = getAgingRate_givDC_givVth( DC, LibVthType ) ;
+            agingrate = getAgingRate_givDC_givVth( DC, LibVthType, false, caging ) ;
         }
-         */
     }
     agingrate = getAgingRate_givDC_givVth( DC, LibVthType, false, caging ) ;
     laten += clkpath.back()->getGateData()->getWireTime() * agingrate ;
@@ -3839,6 +3845,17 @@ double ClockTree::getAgingRate_givDC_givVth( double DC, int Libindex, bool initi
         return agr ;
     }else//initial
     {
+		
+		double conv_Vth = this->calConvergentVth( 0.86, this->getExp() ) ;//80% DCC
+		
+		double Sv       = this->calSv( DC , this->getBaseVthOffset(), conv_Vth ) ;//20% DCC
+		
+		
+		
+		
+		
+		
+		
         if( Libindex == -1 )
         {
 			if( caging == false )				   		return 1               ;
@@ -3852,6 +3869,8 @@ double ClockTree::getAgingRate_givDC_givVth( double DC, int Libindex, bool initi
 			
         }else
         {
+			double Sv = this->calSv( DC , 0.1 + this->getBaseVthOffset(), conv_Vth ) ;//20% DCC
+
 			if( caging == false )				   		return _HTV_fresh  ;
             else if( DC == -1 || DC == 0 || DC == 0.5 ) return _HTV_agr[2] ;
             else if( DC == 0.2 )                   		return _HTV_agr[0] ;
