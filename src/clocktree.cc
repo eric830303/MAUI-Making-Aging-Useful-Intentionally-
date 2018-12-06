@@ -483,14 +483,21 @@ void ClockTree::readParameter()
     file.open("./setting/Parameter.txt");
     while( getline(file, line) )
     {
-        if( line.find("#")                      != string::npos ) continue ;//Comment->Ignore
-        if( line.find("REFINE")                 != string::npos ) this->refine_time = atoi(line.c_str() + 6 )   ;
-        if( line.find("FIN_CONVERGENT_YEAR")    != string::npos ) this->setFinYear( atoi(line.c_str() + 19 ))    ;
-        if( line.find("BASE_VTH")               != string::npos ) this->setBaseVthOffset( atof(line.c_str() + 8 ))    ;
-        if( line.find("EXP")               != string::npos )
-        {
-            this->setExp( atof(line.c_str() + 3 ))    ;
-        }
+		//cout << line << endl;
+        if( line.find("#")                  != string::npos ) continue ;//Comment->Ignore
+        if( line.find("REFINE")             != string::npos ) this->refine_time = atoi(line.c_str() + 6 )   ;
+        if( line.find("FIN_CONVERGENT_YEAR")!= string::npos ) this->setFinYear( atoi(line.c_str() + 19 ))    ;
+        if( line.find("BASE_VTH")           != string::npos ) this->setBaseVthOffset( atof(line.c_str() + 8 ))    ;
+		if( line.find("DC_1_Nf")            != string::npos ) this->setDC1( atof( line.c_str() + 7 ) )    ;
+		if( line.find("DC_2_Nf")            != string::npos ) this->setDC2( atof( line.c_str() + 7 ) )    ;
+		if( line.find("DC_3_Nf")            != string::npos ) this->setDC3( atof( line.c_str() + 7 ) )   ;
+		if( line.find("DC_N_Nf")            != string::npos ) this->setDCN( atof( line.c_str() + 7 ) )   ;
+		if( line.find("DC_1_F")             != string::npos ) this->setDC1_Ag( atof( line.c_str() + 6 ) )    ;
+		if( line.find("DC_2_F")             != string::npos ) this->setDC2_Ag( atof( line.c_str() + 6 ) )   ;
+		if( line.find("DC_3_F")             != string::npos ) this->setDC3_Ag( atof( line.c_str() + 6 ) )  ;
+		if( line.find("DC_N_F")             != string::npos ) this->setDCN_Ag( atof( line.c_str() + 6 ) )   ;
+        if( line.find("EXP")               	!= string::npos ) this->setExp( atof(line.c_str() + 3 ))    ;
+	
         if( line.find("LIB_VTH_COUNT")          != string::npos )
         {
             this->setLibCount( atoi(line.c_str()+ 13 ))    ;
@@ -506,28 +513,28 @@ void ClockTree::readParameter()
 
                     struct VTH_TECH * ptrTech = new VTH_TECH() ;
                     ptrTech->_VTH_OFFSET     = atof(line.c_str() + 19 ) ;
-                    ptrTech->_VTH_CONVGNT[0] = this->calConvergentVth( 0.2, this->getExp() ) ;//20% DCC
-                    ptrTech->_VTH_CONVGNT[1] = this->calConvergentVth( 0.4, this->getExp() ) ;//40% DCC
-                    ptrTech->_VTH_CONVGNT[2] = this->calConvergentVth( 0.5, this->getExp() ) ;//No  DCC
-                    ptrTech->_VTH_CONVGNT[3] = this->calConvergentVth( 0.8, this->getExp() ) ;//80% DCC
-                    ptrTech->_VTH_CONVGNT[4] = this->calConvergentVth( 0.24, this->getExp() ) ;//20% DCC
-                    ptrTech->_VTH_CONVGNT[5] = this->calConvergentVth( 0.44, this->getExp() ) ;//40% DCC
-                    ptrTech->_VTH_CONVGNT[6] = this->calConvergentVth( 0.86, this->getExp() ) ;//80% DCC
+                    ptrTech->_VTH_CONVGNT[0] = this->calConvergentVth( DC_1, this->getExp() ) ;//20% DCC
+                    ptrTech->_VTH_CONVGNT[1] = this->calConvergentVth( DC_2, this->getExp() ) ;//40% DCC
+                    ptrTech->_VTH_CONVGNT[2] = this->calConvergentVth( DC_N, this->getExp() ) ;//No  DCC
+                    ptrTech->_VTH_CONVGNT[3] = this->calConvergentVth( DC_3, this->getExp() ) ;//80% DCC
+                    ptrTech->_VTH_CONVGNT[4] = this->calConvergentVth( DC_1_age, this->getExp() ) ;//20% DCC
+                    ptrTech->_VTH_CONVGNT[5] = this->calConvergentVth( DC_2_age, this->getExp() ) ;//40% DCC
+                    ptrTech->_VTH_CONVGNT[6] = this->calConvergentVth( DC_3_age, this->getExp() ) ;//80% DCC
             
-                    ptrTech->_Sv[0]          = this->calSv( 0.2 , this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[0] ) ;//20% DCC
-                    ptrTech->_Sv[1]          = this->calSv( 0.4 , this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[1] ) ;//40% DCC
-                    ptrTech->_Sv[2]          = this->calSv( 0.5 , this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[2] ) ;//No  DCC
-                    ptrTech->_Sv[3]          = this->calSv( 0.8 , this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[3] ) ;//80% DCC
-                    ptrTech->_Sv[4]          = this->calSv( 0.24, this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[4] ) ;//20% DCC
-                    ptrTech->_Sv[5]          = this->calSv( 0.48, this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[5] ) ;//40% DCC
-                    ptrTech->_Sv[6]          = this->calSv( 0.86, this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[6] ) ;//80% DCC
-                    ptrTech->_Sv[7]          = this->calSv( 0.2 , ptrTech->_VTH_OFFSET + this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[0] ) ;//20% DCC
-                    ptrTech->_Sv[8]          = this->calSv( 0.4 , ptrTech->_VTH_OFFSET + this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[1] ) ;//40% DCC
-                    ptrTech->_Sv[9]          = this->calSv( 0.5 , ptrTech->_VTH_OFFSET + this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[2] ) ;//No  DCC
-                    ptrTech->_Sv[10]         = this->calSv( 0.8 , ptrTech->_VTH_OFFSET + this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[3] ) ;//80% DCC
-                    ptrTech->_Sv[11]         = this->calSv( 0.24, ptrTech->_VTH_OFFSET + this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[4] ) ;//80% DCC
-                    ptrTech->_Sv[12]         = this->calSv( 0.48, ptrTech->_VTH_OFFSET + this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[5] ) ;//80% DCC
-                    ptrTech->_Sv[13]         = this->calSv( 0.86, ptrTech->_VTH_OFFSET + this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[6] ) ;//80% DCC
+                    ptrTech->_Sv[0]          = this->calSv( DC_1, this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[0] ) ;//20% DCC
+                    ptrTech->_Sv[1]          = this->calSv( DC_2, this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[1] ) ;//40% DCC
+                    ptrTech->_Sv[2]          = this->calSv( DC_N, this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[2] ) ;//No  DCC
+                    ptrTech->_Sv[3]          = this->calSv( DC_3, this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[3] ) ;//80% DCC
+                    ptrTech->_Sv[4]          = this->calSv( DC_1_age, this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[4] ) ;//20% DCC
+                    ptrTech->_Sv[5]          = this->calSv( DC_2_age, this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[5] ) ;//40% DCC
+                    ptrTech->_Sv[6]          = this->calSv( DC_3_age, this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[6] ) ;//80% DCC
+                    ptrTech->_Sv[7]          = this->calSv( DC_1, ptrTech->_VTH_OFFSET + this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[0] ) ;//20% DCC
+                    ptrTech->_Sv[8]          = this->calSv( DC_2, ptrTech->_VTH_OFFSET + this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[1] ) ;//40% DCC
+                    ptrTech->_Sv[9]          = this->calSv( DC_N, ptrTech->_VTH_OFFSET + this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[2] ) ;//No  DCC
+                    ptrTech->_Sv[10]         = this->calSv( DC_3, ptrTech->_VTH_OFFSET + this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[3] ) ;//80% DCC
+                    ptrTech->_Sv[11]         = this->calSv( DC_1_age, ptrTech->_VTH_OFFSET + this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[4] ) ;//80% DCC
+                    ptrTech->_Sv[12]         = this->calSv( DC_2_age, ptrTech->_VTH_OFFSET + this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[5] ) ;//80% DCC
+                    ptrTech->_Sv[13]         = this->calSv( DC_3_age, ptrTech->_VTH_OFFSET + this->getBaseVthOffset(), ptrTech->_VTH_CONVGNT[6] ) ;//80% DCC
                     this->getLibList().push_back( ptrTech ) ;
                     
                     //double bof = this->getBaseVthOffset() ;
@@ -537,7 +544,15 @@ void ClockTree::readParameter()
                     printf( CYAN"\t[Setting] " RESET"Fin convergent Year    = %4d years \n", this->getFinYear() );
                     printf( CYAN"\t[Setting] " RESET"Vth offset (VTA)       = " RED"%.2f (V)\n"  , ptrTech->_VTH_OFFSET );
                     printf( CYAN"\t[Setting] " RESET"Vth offset (Baseline)  = %.2f (V)\n" RESET  , this->getBaseVthOffset() );
-                    printf( CYAN"\t[Setting] " RESET"Exponential term       = %.2f \n"     , this->getExp() );
+                    printf( CYAN"\t[Setting] " RESET"Exponential term       = %.2f \n", this->getExp() );
+					printf( CYAN"\t[Setting] " RESET"DC1					= %.2f \n", this->DC_1 );
+					printf( CYAN"\t[Setting] " RESET"DC2					= %.2f \n", this->DC_2 );
+					printf( CYAN"\t[Setting] " RESET"DC3					= %.2f \n", this->DC_3 );
+					printf( CYAN"\t[Setting] " RESET"DCN					= %.2f \n", this->DC_N );
+					printf( CYAN"\t[Setting] " RESET"DC1age (-dc_formu..) = %.2f \n", this->DC_1_age );
+					printf( CYAN"\t[Setting] " RESET"DC2age (-dc_formu..) = %.2f \n", this->DC_2_age );
+					printf( CYAN"\t[Setting] " RESET"DC3age (-dc_formu..) = %.2f \n", this->DC_3_age );
+					
                     
                     printf( CYAN"\t---------------------------------------------------------------------------------\n" );
                     printf( CYAN"\t[Note] " RESET"Following is the timing information of clock buffers\n" );
@@ -547,36 +562,36 @@ void ClockTree::readParameter()
                     printf( CYAN"\t[Note] " RESET"H-Vth denotes clock buffer with 'high     Vth'\n" );
                     printf( CYAN"\t------------------------- Nominal Clk buffer -----------------------------------\n" );
                     
-                    printf( CYAN"\t20 %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.2, -1, true )        - 1 )*100 );
-                    printf( CYAN"\t40 %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.4, -1, true )        - 1 )*100 );
-                    printf( CYAN"\t50 %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.5, -1, true )        - 1 )*100 );
-                    printf( CYAN"\t80 %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.8, -1, true )        - 1 )*100 );
-                    printf( CYAN"\t2x %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_20DCC, -1, true )   - 1 )*100 );
-                    printf( CYAN"\t4x %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_40DCC, -1, true )   - 1 )*100 );
-                    printf( CYAN"\t8x %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_80DCC, -1, true )   - 1 )*100 );
+                    printf( CYAN"\t20 %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_1, -1, true )        - 1 )*100 );
+                    printf( CYAN"\t40 %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_2, -1, true )        - 1 )*100 );
+                    printf( CYAN"\t50 %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_N, -1, true )        - 1 )*100 );
+                    printf( CYAN"\t80 %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_3, -1, true )        - 1 )*100 );
+                    printf( CYAN"\t2x %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_1_age, -1, true )   - 1 )*100 );
+                    printf( CYAN"\t4x %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_2_age, -1, true )   - 1 )*100 );
+                    printf( CYAN"\t8x %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_3_age, -1, true )   - 1 )*100 );
                     
                     
                     printf( CYAN"\t------------------------- High-Vth Clk buffer -----------------------------------\n" );
-                    printf( CYAN"\t20 %%, H-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( 0.2,  0, true )               - 1 )*100 );
-                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.2,  0 ) - 2*(tof) - 1 )*100 );
+                    printf( CYAN"\t20 %%, H-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( DC_1,  0, true )               - 1 )*100 );
+                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_1,  0 ) - 2*(tof) - 1 )*100 );
                     
-                    printf( CYAN"\t40 %%, H-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( 0.4,  0, true )               - 1 )*100 );
-                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.4,  0 ) - 2*(tof) - 1 )*100 );
+                    printf( CYAN"\t40 %%, H-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( DC_2,  0, true )               - 1 )*100 );
+                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_2,  0 ) - 2*(tof) - 1 )*100 );
                     
-                    printf( CYAN"\t50 %%, H-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( 0.5,  0, true )               - 1 )*100 );
-                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.5,  0 ) - 2*(tof) - 1 )*100 );
+                    printf( CYAN"\t50 %%, H-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( DC_N,  0, true )               - 1 )*100 );
+                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_N,  0 ) - 2*(tof) - 1 )*100 );
                     
-                    printf( CYAN"\t80 %%, H-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( 0.8,  0, true )               - 1 )*100 );
-                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( 0.8,  0 ) - 2*(tof) - 1 )*100 );
+                    printf( CYAN"\t80 %%, H-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( DC_3,  0, true )               - 1 )*100 );
+                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_3,  0 ) - 2*(tof) - 1 )*100 );
                     
-                    printf( CYAN"\t2x %%, H-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( DC_20DCC,  0, true )               - 1 )*100 );
-                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_20DCC,  0 ) - 2*(tof) - 1 )*100 );
+                    printf( CYAN"\t2x %%, H-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( DC_1_age,  0, true )               - 1 )*100 );
+                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_1_age,  0 ) - 2*(tof) - 1 )*100 );
                     
-                    printf( CYAN"\t4x %%, H-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( DC_40DCC,  0, true )               - 1 )*100 );
-                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_40DCC,  0 ) - 2*(tof) - 1 )*100 );
+                    printf( CYAN"\t4x %%, H-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( DC_2_age,  0, true )               - 1 )*100 );
+                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_2_age,  0 ) - 2*(tof) - 1 )*100 );
                     
-                    printf( CYAN"\t8x %%, H-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( DC_80DCC,  0, true )               - 1 )*100 );
-                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_80DCC,  0 ) - 2*(tof) - 1 )*100 );
+                    printf( CYAN"\t8x %%, H-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( DC_3_age,  0, true )               - 1 )*100 );
+                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_3_age,  0 ) - 2*(tof) - 1 )*100 );
                     
                 }
             }
@@ -645,6 +660,8 @@ int ClockTree::checkParameter(int argc, char **argv, string *message)
             //this->_checkCNF  = 1;
         else if(strcmp(argv[loop], "-print=Node") == 0)
 			this->_program_ctl = 6;
+		else if(strcmp(argv[loop], "-CG") == 0)
+			this->_program_ctl = 8;
             //this->_printClkNode  = 1;
         else if(strcmp(argv[loop], "-aging=Senior") == 0)
             this->_usingSeniorAging = 1;
@@ -2132,9 +2149,7 @@ double ClockTree::UpdatePathTiming( CriticalPath * path, bool update, bool DCCVT
     double cj = 0 ;
     double newslack = 0, req_time = 0, avl_time = 0;
 
-	
-	
-    
+
     int PathType = path->getPathType() ;
     if( PathType == FFtoFF || PathType == FFtoPO )
         ci = this->calClkLaten_givDcc_givVTA( path->getStartPonitClkPath(), stDCCType, stDCCLoc, stLibIndex, stHeader, aging );//Has consider aging
@@ -2153,11 +2168,11 @@ double ClockTree::UpdatePathTiming( CriticalPath * path, bool update, bool DCCVT
     
     if( update )
     {
-        path->setCi(ci)                         ;
-        path->setCj(cj)                         ;
-        path->setArrivalTime(avl_time)       ;
-        path->setRequiredTime(req_time)      ;
-        path->setSlack(newslack)                ;
+        path->setCi(ci)                  ;
+        path->setCj(cj)                  ;
+        path->setArrivalTime(avl_time)   ;
+        path->setRequiredTime(req_time)  ;
+        path->setSlack(newslack)         ;
     }
     
     return newslack ;
@@ -2718,9 +2733,9 @@ double ClockTree::calClkLaten_givDcc_givVTA(    vector<ClockTreeNode *> clkpath,
                 LibVthTypeDCC = LibIndex ;
                 if( this->_dc_formulation )
                 {
-                    if( DC == 0.8 )         DC = DC_80DCC ;
-                    else if( DC == 0.2 )    DC = DC_20DCC ;
-                    else if( DC == 0.4 )    DC = DC_40DCC ;
+                    if( DC == this->DC_3 )         DC = this->DC_3_age ;
+                    else if( DC == this->DC_1 )    DC = this->DC_1_age ;
+                    else if( DC == this->DC_2 )    DC = this->DC_2_age ;
                 }
             }
             //--- DCC Loc is ahead of VTA Leader ------------------------------------
@@ -2730,36 +2745,38 @@ double ClockTree::calClkLaten_givDcc_givVTA(    vector<ClockTreeNode *> clkpath,
             else if( meetHeader )
             {
                 LibVthTypeDCC = LibVthType ;
-                if( this->_dc_formulation ){
-                    if( DC == 0.8 )         DC = DC_80DCC ;
-                    else if( DC == 0.2 )    DC = DC_20DCC ;
-                    else if( DC == 0.4 )    DC = DC_40DCC ;
-                }
+				if( this->_dc_formulation )
+				{
+					if( DC == this->DC_3 )         DC = this->DC_3_age ;
+					else if( DC == this->DC_1 )    DC = this->DC_1_age ;
+					else if( DC == this->DC_2 )    DC = this->DC_2_age ;
+				}
             }
-            //agingrate = (this->_aging)? getAgingRate_givDC_givVth( DC, LibVthType ) : (1)  ;
-			agingrate = getAgingRate_givDC_givVth( DC, LibVthType, false, caging ) ;
         }
         //--- First meet VTA Header -------------------------------------------------
         if( ( clkpath.at(i) == Header ) && (!meetHeader) )
         {
             LibVthType = LibIndex ;//Need modifys
             meetHeader = true ;
-            //agingrate = (this->_aging)? getAgingRate_givDC_givVth( DC, LibVthType ) : (1)  ;
-			agingrate = getAgingRate_givDC_givVth( DC, LibVthType, false, caging ) ;
         }
-        
-        
-        
-        laten += buftime*agingrate ;
-        //printf("Buf = %f, ", buftime*agingrate );
+		if( clkpath.at(i)->ifClockGating() )
+			DC =  DC * (1 - clkpath.at(i)->getGatingProbability()) ;
 		
-        if( clkpath.at(i)->ifClockGating() )
-        {
-            DC =  DC * (1 - clkpath.at(i)->getGatingProbability()) ;
-            agingrate = getAgingRate_givDC_givVth( DC, LibVthType, false, caging ) ;
-        }
+        agingrate = getAgingRate_givDC_givVth( DC, LibVthType, false, caging ) ;
+        laten += buftime*agingrate ;
+		
+		if( clkpath.at(i)->ifInsertBuffer() )
+			laten += clkpath.at(i)->getInsertBufferDelay()*agingrate;
     }
+	
+	if( clkpath.back()->ifClockGating() )
+		DC =  DC * (1 - clkpath.back()->getGatingProbability()) ;
+	
     agingrate = getAgingRate_givDC_givVth( DC, LibVthType, false, caging ) ;
+	
+	if( clkpath.back()->ifInsertBuffer() )
+		laten += clkpath.back()->getInsertBufferDelay()*agingrate;
+	
     laten += clkpath.back()->getGateData()->getWireTime() * agingrate ;
     
     if( DCCLoc != NULL )
@@ -2767,21 +2784,17 @@ double ClockTree::calClkLaten_givDcc_givVTA(    vector<ClockTreeNode *> clkpath,
         //double agr_DCC =  (this->_aging)? (getAgingRate_givDC_givVth( 0.5, LibVthTypeDCC )) : (1) ;//DCC use 0.5 DC?
 		double agr_DCC =  getAgingRate_givDC_givVth( 0.5, LibVthTypeDCC, false, caging );//DCC use 0.5 DC?
         double DCC_Delay = 0 ;
-        if( DCCType == 0.2 )
+        if( DCCType == this->DC_1 )
             DCC_Delay = minbufdelay*agr_DCC*DCCDELAY20PA ;
-        else if( DCCType == 0.4 )
+        else if( DCCType == this->DC_2 )
             DCC_Delay = minbufdelay*agr_DCC*DCCDELAY40PA ;
-        else if( DCCType == 0.5 || DCCType == -1 || DCCType == 0 )
+        else if( DCCType == this->DC_N || DCCType == -1 || DCCType == 0 )
             DCC_Delay = minbufdelay*agr_DCC*DCCDELAY50PA ;
-        else if( DCCType == 0.8 )
+        else if( DCCType == this->DC_3 )
             DCC_Delay = minbufdelay*agr_DCC*DCCDELAY80PA ;
         
         //if( LibVthTypeDCC != -1 ) DCC_Delay *= 1.2 ;//New!!!
         laten += DCC_Delay ;
-        
-        
-        //printf("MinBuffer = %f, DCC Delay = %f\n", minbufdelay ,DCC_Delay );
-        //printf("DCC Type = %f\n\n", DCCType );
     }
     
     return laten ;
@@ -3756,29 +3769,29 @@ void ClockTree::printBufferInsertedList(void)
  --------------------------------------------------------------*/
 double ClockTree::getAgingRate_givDC_givVth( double DC, int Libindex, bool initial, bool caging )
 {
+	if( DC == -1 || DC == 0 ) DC = this->DC_N ;
     if( initial )
     {
         //---- Sv ------------------------------------------------------
         double Sv = 0 ;
-        if( DC == -1 || DC == 0 ) DC = 0.5 ;
         if( this->_usingSeniorAging == true  )
             return (1 + (((-0.117083333333337) * (DC) * (DC)) + (0.248750000000004 * (DC)) + 0.0400333333333325));
         
         if( Libindex != -1 )
         {
-            if( DC == 0.2 )
+            if( DC == this->DC_1 )
                 Sv = this->getLibList().at(Libindex)->_Sv[7] ;
-            else if( DC == 0.4 )
+            else if( DC == this->DC_2 )
                 Sv = this->getLibList().at(Libindex)->_Sv[8] ;
-            else if( DC == 0.5 || DC == -1 || DC == 0 )
+            else if( DC == this->DC_N )
                 Sv = this->getLibList().at(Libindex)->_Sv[9] ;
-            else if( DC == 0.8 )
+            else if( DC == this->DC_3 )
                 Sv = this->getLibList().at(Libindex)->_Sv[10] ;
-            else if( DC == DC_20DCC )
+            else if( DC == this->DC_1_age )
                 Sv = this->getLibList().at(Libindex)->_Sv[11] ;
-            else if( DC == DC_40DCC )
+            else if( DC == this->DC_2_age )
                 Sv = this->getLibList().at(Libindex)->_Sv[12] ;
-            else if( DC == DC_80DCC )
+            else if( DC == this->DC_3_age )
                 Sv = this->getLibList().at(Libindex)->_Sv[13] ;
             else
             {
@@ -3788,23 +3801,22 @@ double ClockTree::getAgingRate_givDC_givVth( double DC, int Libindex, bool initi
         }
         else
         {
-            if( DC == 0.2 )
+            if( DC == this->DC_1 )
                 Sv = this->getLibList().at(0)->_Sv[0] ;
-            else if( DC == 0.4 )
+            else if( DC == this->DC_2 )
                 Sv = this->getLibList().at(0)->_Sv[1] ;
-            else if( DC == 0.5 || DC == -1 || DC == 0 )
+            else if( DC == this->DC_N )
                 Sv = this->getLibList().at(0)->_Sv[2] ;
-            else if( DC == 0.8 )
+            else if( DC == this->DC_3 )
                 Sv = this->getLibList().at(0)->_Sv[3] ;
-            else if( DC == DC_20DCC )
+            else if( DC == this->DC_1_age )
                 Sv = this->getLibList().at(0)->_Sv[4] ;
-            else if( DC == DC_40DCC )
+            else if( DC == this->DC_2_age )
                 Sv = this->getLibList().at(0)->_Sv[5] ;
-            else if( DC == DC_80DCC )
+            else if( DC == this->DC_3_age )
                 Sv = this->getLibList().at(0)->_Sv[6] ;
             else
             {
-                //Sv = this->calSv( 0.2, this->getLibList().at(0)->_VTH_OFFSET + this->getBaseVthOffset(), this->getLibList().at(0)->_VTH_CONVGNT[0] ) ;//20% DCC
                 cerr << "[Error] Irrecognized duty cycle in func \"getAgingRate_givDC_givVth (double DC, int LibIndex )\"    \n" ;
                 return -1 ;
             }
@@ -3824,61 +3836,68 @@ double ClockTree::getAgingRate_givDC_givVth( double DC, int Libindex, bool initi
 		
 		
         if( Libindex == -1 ){
-            if( DC == -1 || DC == 0 || DC == 0.5 ) _nominal_agr[2] = agr ;
-            else if( DC == 0.2 )                   _nominal_agr[0] = agr ;
-            else if( DC == 0.4 )                   _nominal_agr[1] = agr ;
-            else if( DC == 0.8 )                   _nominal_agr[3] = agr ;
-            else if( DC == DC_20DCC )              _nominal_agr[4] = agr ;
-            else if( DC == DC_40DCC )              _nominal_agr[5] = agr ;
-            else if( DC == DC_80DCC )              _nominal_agr[6] = agr ;
+            if(      DC == this->DC_N )     this->_nominal_agr[2] = agr ;
+            else if( DC == this->DC_1 )     this->_nominal_agr[0] = agr ;
+            else if( DC == this->DC_2 )     this->_nominal_agr[1] = agr ;
+            else if( DC == this->DC_3 )     this->_nominal_agr[3] = agr ;
+            else if( DC == this->DC_1_age ) this->_nominal_agr[4] = agr ;
+            else if( DC == this->DC_2_age ) this->_nominal_agr[5] = agr ;
+            else if( DC == this->DC_3_age ) this->_nominal_agr[6] = agr ;
 
         }else{
 			this->_HTV_fresh = (1 + 2*this->getLibList().at(Libindex)->_VTH_OFFSET ) ;
-            if( DC == -1 || DC == 0 || DC == 0.5 ) _HTV_agr[2] = agr  ;
-            else if( DC == 0.2 )                   _HTV_agr[0] = agr  ;
-            else if( DC == 0.4 )                   _HTV_agr[1] = agr  ;
-            else if( DC == 0.8 )                   _HTV_agr[3] = agr  ;
-            else if( DC == DC_20DCC )              _HTV_agr[4] = agr  ;
-            else if( DC == DC_40DCC )              _HTV_agr[5] = agr  ;
-            else if( DC == DC_80DCC )              _HTV_agr[6] = agr  ;
+            if(      DC == this->DC_N ) 	this->_HTV_agr[2] = agr  ;
+            else if( DC == this->DC_1 )     this->_HTV_agr[0] = agr  ;
+            else if( DC == this->DC_2 )     this->_HTV_agr[1] = agr  ;
+            else if( DC == this->DC_3 )     this->_HTV_agr[3] = agr  ;
+            else if( DC == this->DC_1_age ) this->_HTV_agr[4] = agr  ;
+            else if( DC == this->DC_2_age ) this->_HTV_agr[5] = agr  ;
+            else if( DC == this->DC_3_age ) this->_HTV_agr[6] = agr  ;
         }
         return agr ;
     }else//initial
     {
 		
 		double conv_Vth = this->calConvergentVth( 0.86, this->getExp() ) ;//80% DCC
-		
-		double Sv       = this->calSv( DC , this->getBaseVthOffset(), conv_Vth ) ;//20% DCC
-		
-		
-		
-		
-		
-		
+		double Sv = 0;
 		
         if( Libindex == -1 )
         {
-			if( caging == false )				   		return 1               ;
-            else if( DC == -1 || DC == 0 || DC == 0.5 ) return _nominal_agr[2] ;
-            else if( DC == 0.2 )                   		return _nominal_agr[0] ;
-            else if( DC == 0.4 )                   		return _nominal_agr[1] ;
-            else if( DC == 0.8 )                   		return _nominal_agr[3] ;
-            else if( DC == DC_20DCC )              		return _nominal_agr[4] ;
-            else if( DC == DC_40DCC )              		return _nominal_agr[5] ;
-            else if( DC == DC_80DCC )              		return _nominal_agr[6] ;
+			if( caging == false )				return 1 ;
+            else if( DC == this->DC_N )  		return this->_nominal_agr[2] ;
+            else if( DC == this->DC_1 )         return this->_nominal_agr[0] ;
+            else if( DC == this->DC_2 )         return this->_nominal_agr[1] ;
+            else if( DC == this->DC_3 )         return this->_nominal_agr[3] ;
+            else if( DC == this->DC_1_age )     return this->_nominal_agr[4] ;
+            else if( DC == this->DC_2_age )     return this->_nominal_agr[5] ;
+            else if( DC == this->DC_3_age )     return this->_nominal_agr[6] ;
+			else
+			{
+				double Vth_offset = this->getBaseVthOffset() ;
+				Sv = this->calSv( DC , this->getBaseVthOffset(), conv_Vth ) ;
+				double Vth_nbti = ( 1 - Sv*Vth_offset )*( 0.0039/2 )*( pow( DC*( 315360000 ), this->getExp() ) );
+				double agr = (1 + Vth_nbti*2 + 0 ) ;
+				return agr;
+			}
 			
         }else
         {
-			double Sv = this->calSv( DC , 0.1 + this->getBaseVthOffset(), conv_Vth ) ;//20% DCC
-
-			if( caging == false )				   		return _HTV_fresh  ;
-            else if( DC == -1 || DC == 0 || DC == 0.5 ) return _HTV_agr[2] ;
-            else if( DC == 0.2 )                   		return _HTV_agr[0] ;
-            else if( DC == 0.4 )                   		return _HTV_agr[1] ;
-            else if( DC == 0.8 )                   		return _HTV_agr[3] ;
-            else if( DC == DC_20DCC )              		return _HTV_agr[4] ;
-            else if( DC == DC_40DCC )              		return _HTV_agr[5] ;
-            else if( DC == DC_80DCC )              		return _HTV_agr[6] ;
+			if( caging == false )				return this->_HTV_fresh  ;
+            else if( DC == this->DC_N ) 		return this->_HTV_agr[2] ;
+            else if( DC == this->DC_1 )         return this->_HTV_agr[0] ;
+            else if( DC == this->DC_2 )         return this->_HTV_agr[1] ;
+            else if( DC == this->DC_3 )         return this->_HTV_agr[3] ;
+            else if( DC == this->DC_1_age )     return this->_HTV_agr[4] ;
+            else if( DC == this->DC_2_age )     return this->_HTV_agr[5] ;
+            else if( DC == this->DC_2_age )     return this->_HTV_agr[6] ;
+			else
+			{
+				double Vth_offset = this->getLibList().at(Libindex)->_VTH_OFFSET + this->getBaseVthOffset() ;
+				Sv = this->calSv( DC , this->getLibList().at(Libindex)->_VTH_OFFSET + this->getBaseVthOffset(), conv_Vth ) ;
+				double Vth_nbti = ( 1 - Sv*Vth_offset )*( 0.0039/2 )*( pow( DC*( 315360000 ), this->getExp() ) );
+				double agr = (1 + Vth_nbti*2 + 2*this->getLibList().at(Libindex)->_VTH_OFFSET )  ;
+				return agr;
+			}
         }
     }
     return -1 ;
@@ -3944,11 +3963,11 @@ void ClockTree::printPath( int pathid )
     printf("==> Duty Cycle: 0.2, 0.4, 0.5, 0.8 \n" );
     printf("==> Vth type  : -1(Nominal), 0(VTA) \n" );
 	
-	readDCCVTAFile( "./setting/DccVTA.txt" ) ;
-	printPath_givFile( path, false  /*DCC/VTA*/, false  /*Aging*/, true  /*Tc from file*/ ) ;
-    readDCCVTAFile( "./setting/DccVTA.txt" ) ;
-    printPath_givFile( path, true  /*DCC/VTA*/, false  /*Aging*/, true  /*Tc from file*/ ) ;
-    printf("From DccVTA.txt\n" );
+	//readDCCVTAFile( "./setting/DccVTA.txt" ) ;
+	//printPath_givFile( path, false  /*DCC/VTA*/, false  /*Aging*/, true  /*Tc from file*/ ) ;
+    //readDCCVTAFile( "./setting/DccVTA.txt" ) ;
+    //printPath_givFile( path, true  /*DCC/VTA*/, false  /*Aging*/, true  /*Tc from file*/ ) ;
+    //printf("From DccVTA.txt\n" );
     readDCCVTAFile( "./setting/DccVTA.txt" ) ;
     printPath_givFile( path, true  /*DCC/VTA*/, true  /*Aging*/, true  /*Tc from file*/ ) ;
     printf("From DccVTA2.txt\n" );
@@ -4024,9 +4043,9 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
                 DCCLib_L = DCCLib_R = clknode->getVTAType() ;
                 if( this->_dc_formulation )
                 {
-                    if(      DC_Com == 0.2 )     DC_Com = DC_20DCC  ;
-                    else if( DC_Com == 0.4 )     DC_Com = DC_40DCC  ;
-                    else if( DC_Com == 0.8 )     DC_Com = DC_80DCC  ;
+                    if(      DC_Com == this->DC_1 )     DC_Com = this->DC_1_age  ;
+                    else if( DC_Com == this->DC_2 )     DC_Com = this->DC_2_age  ;
+                    else if( DC_Com == this->DC_3 )     DC_Com = this->DC_3_age  ;
                 }
             }
             //-- DCC is ahead of leader
@@ -4036,12 +4055,12 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
             else if( MeetVTA_Com )
             {
                 DCCLib_L = DCCLib_R = LibIndex_Com ;
-                if( this->_dc_formulation )
-                {
-                    if(      DC_Com == 0.2 )     DC_Com = DC_20DCC  ;
-                    else if( DC_Com == 0.4 )     DC_Com = DC_40DCC  ;
-                    else if( DC_Com == 0.8 )     DC_Com = DC_80DCC  ;
-                }
+				if( this->_dc_formulation )
+				{
+					if(      DC_Com == this->DC_1 )     DC_Com = this->DC_1_age  ;
+					else if( DC_Com == this->DC_2 )     DC_Com = this->DC_2_age  ;
+					else if( DC_Com == this->DC_3 )     DC_Com = this->DC_3_age  ;
+				}
             }
         }
         //-- First Meet leader -------------------------------------------------
@@ -4087,9 +4106,9 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
                 DCCLib_R = clknode->getVTAType() ;
                 if( this->_dc_formulation )
                 {
-                    if(      DC_right == 0.2 )    DC_right = DC_20DCC ;
-                    else if( DC_right == 0.4 )    DC_right = DC_40DCC  ;
-                    else if( DC_right == 0.8 )    DC_right = DC_80DCC  ;
+                    if(      DC_right == this->DC_1 )    DC_right = this->DC_1_age ;
+                    else if( DC_right == this->DC_2 )    DC_right = this->DC_2_age ;
+                    else if( DC_right == this->DC_3 )    DC_right = this->DC_3_age ;
                 }
             }
             //-- DCC is ahead of leader
@@ -4098,12 +4117,12 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
             //-- DCC is behind leader
             else if( MeetVTA_right ){
                 DCCLib_R = LibIndex_right ;
-                if( this->_dc_formulation )
-                {
-                    if(      DC_right == 0.2 )    DC_right = DC_20DCC ;
-                    else if( DC_right == 0.4 )    DC_right = DC_40DCC  ;
-                    else if( DC_right == 0.8 )    DC_right = DC_80DCC  ;
-                }
+				if( this->_dc_formulation )
+				{
+					if(      DC_right == this->DC_1 )    DC_right = this->DC_1_age ;
+					else if( DC_right == this->DC_2 )    DC_right = this->DC_2_age ;
+					else if( DC_right == this->DC_3 )    DC_right = this->DC_3_age ;
+				}
             }
         }
         //-- First Meet Header -------------------------------------------------
@@ -4136,6 +4155,9 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
         clknode  = edClkPath.at(i) ;
         gatePtr  = clknode->getGateData() ;
         printClkNodeFeature( clknode, doDCCVTA );
+		
+		if( clknode->ifClockGating() )
+			printf( YELLOW"Gated Cell (p = %f)" RST, clknode->getGatingProbability());
         if( clknode->ifMasked() )
             printf( "%3ld(%.2f,%2d," GRN"%f" RST"," RED"X" RST")---",clknode->getNodeNumber(), clknode->getDC(), clknode->getVthType(),clknode->getBufTime() );
         else
@@ -4153,7 +4175,9 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
         clknode  = edClkPath.at(i) ;
         gatePtr  = clknode->getGateData() ;
         printClkNodeFeature( clknode, doDCCVTA );
-        
+		
+		if( clknode->ifClockGating() )
+			printf( YELLOW"Gated Cell (p = %f)" RST, clknode->getGatingProbability());
         if( clknode->ifMasked() )
             printf( "%3ld(%.2f,%2d," GRN"%f" RST"," RED"X" RST")---",clknode->getNodeNumber(), clknode->getDC(), clknode->getVthType(),clknode->getBufTime() );
         else
@@ -4193,9 +4217,9 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
                 DCCLib_L = clknode->getVTAType() ;
                 if( this->_dc_formulation )
                 {
-                    if(      DC_left == 0.2 )    DC_left = DC_20DCC ;
-                    else if( DC_left == 0.4 )    DC_left = DC_40DCC  ;
-                    else if( DC_left == 0.8 )    DC_left = DC_80DCC  ;
+                    if(      DC_left == this->DC_1 )    DC_left = this->DC_1_age ;
+                    else if( DC_left == this->DC_2 )    DC_left = this->DC_2_age  ;
+                    else if( DC_left == this->DC_3 )    DC_left = this->DC_3_age  ;
                 }
             }
             //-- DCC is ahead of header
@@ -4205,12 +4229,12 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
             else if( MeetVTA_left )
             {
                 DCCLib_L = LibIndex_left ;
-                if( this->_dc_formulation )
-                {
-                    if(      DC_left == 0.2 )    DC_left = DC_20DCC ;
-                    else if( DC_left == 0.4 )    DC_left = DC_40DCC  ;
-                    else if( DC_left == 0.8 )    DC_left = DC_80DCC  ;
-                }
+				if( this->_dc_formulation )
+				{
+					if(      DC_left == this->DC_1 )    DC_left = this->DC_1_age ;
+					else if( DC_left == this->DC_2 )    DC_left = this->DC_2_age  ;
+					else if( DC_left == this->DC_3 )    DC_left = this->DC_3_age  ;
+				}
             }
         }
         //-- First Meet Header -------------------------------------------------
@@ -4234,7 +4258,9 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
             
         if( clknode == stClkPath.back() ) LibIndex_left = -1 ;
         printClkNodeFeature( clknode, doDCCVTA );
-        
+		
+		if( clknode->ifClockGating() )
+			printf( YELLOW"Gated Cell (p = %f)" RST, clknode->getGatingProbability());
         if( clknode->ifMasked() )
             printf( "%3ld(%.2f,%d," GREEN"%.4f" RESET", " RED  "X" RESET")--" , clknode->getNodeNumber(), DC_left, LibIndex_left, buftime );
         else
@@ -4321,9 +4347,9 @@ void ClockTree::printPI_PO_givFile(CriticalPath *path, bool doDCCVTA, bool aging
                 DCCLib_R = clknode->getVTAType() ;
                 if( this->_dc_formulation )
                 {
-                    if(      DC_right == 0.2 ) DC_right = DC_20DCC ;
-                    else if( DC_right == 0.4 ) DC_right = DC_40DCC ;
-                    else if( DC_right == 0.8 ) DC_right = DC_80DCC ;
+                    if(      DC_right == this->DC_1 ) DC_right = this->DC_1_age ;
+                    else if( DC_right == this->DC_2 ) DC_right = this->DC_2_age ;
+                    else if( DC_right == this->DC_3 ) DC_right = this->DC_3_age ;
                 }
             }
             //-- DCC is ahead of leader
@@ -4333,12 +4359,12 @@ void ClockTree::printPI_PO_givFile(CriticalPath *path, bool doDCCVTA, bool aging
             else if( MeetVTA_right )
             {
                 DCCLib_R = LibIndex_right ;
-                if( this->_dc_formulation )
-                {
-                    if(      DC_right == 0.2 ) DC_right = DC_20DCC ;
-                    else if( DC_right == 0.4 ) DC_right = DC_40DCC ;
-                    else if( DC_right == 0.8 ) DC_right = DC_80DCC ;
-                }
+				if( this->_dc_formulation )
+				{
+					if(      DC_right == this->DC_1 ) DC_right = this->DC_1_age ;
+					else if( DC_right == this->DC_2 ) DC_right = this->DC_2_age ;
+					else if( DC_right == this->DC_3 ) DC_right = this->DC_3_age ;
+				}
             }
         }
         //-- First Meet Header -------------------------------------------------
@@ -4431,9 +4457,14 @@ void ClockTree::dumpDccVTALeaderToFile()
     fprintf( fPtr, "Tc %f\n", this->_tc );
     for( auto node: this->_buflist )
     {
-        if( node.second->ifPlacedDcc() || node.second->getIfPlaceHeader() )
-            fprintf( fPtr, "%ld %d %f\n", node.second->getNodeNumber(), node.second->getVTAType(), node.second->getDccType() );
+        if( node.second->ifPlacedDcc() || node.second->getIfPlaceHeader() || node.second->ifClockGating() )
+            fprintf( fPtr, "%ld %d %f %f\n", node.second->getNodeNumber(), node.second->getVTAType(), node.second->getDccType(), node.second->getGatingProbability() );
     }
+	for( auto node: this->_ffsink )
+	{
+		if( node.second->ifPlacedDcc() || node.second->getIfPlaceHeader() || node.second->ifClockGating() )
+			fprintf( fPtr, "%ld %d %f %f\n", node.second->getNodeNumber(), node.second->getVTAType(), node.second->getDccType(), node.second->getGatingProbability() );
+	}
     fclose(fPtr);
     
 }
@@ -4693,15 +4724,16 @@ void ClockTree::readDCCVTAFile( string filename )
         long    BufID       = 0   ;
         int     BufVthLib   = -1  ;
         double  BufDCC      = 0.5 ;
+		double  SleepProb   = 0   ;
         istringstream   token( line )     ;
-        token >> BufID >> BufVthLib >> BufDCC ;
+        token >> BufID >> BufVthLib >> BufDCC  >> SleepProb;
         ClockTreeNode *buffer = searchClockTreeNode( BufID ) ;
         if( buffer == NULL )
         {
             printf( RED"[Error] " RESET"Can't find clock node with id = %ld\n", BufID ) ;
             return ;
         }
-        if( BufDCC != 0.5 && BufDCC != -1 && BufDCC != 0 ){
+        if( BufDCC != this->DC_N && BufDCC != -1 && BufDCC != 0 ){
             buffer->setIfPlaceDcc(true);
             buffer->setDccType( BufDCC )    ;
             this->_dcclist.insert(pair<string, ClockTreeNode *> (buffer->getGateData()->getGateName(), buffer));
@@ -4711,6 +4743,11 @@ void ClockTree::readDCCVTAFile( string filename )
             buffer->setVTAType( BufVthLib ) ;
             this->_VTAlist.insert(pair<string, ClockTreeNode *> (buffer->getGateData()->getGateName(), buffer));
         }
+		if( SleepProb != 0  ){
+			buffer->setIfClockGating(true);
+			buffer->setGatingProbability(SleepProb);
+			this->_cglist.insert(pair<string, ClockTreeNode *> (buffer->getGateData()->getGateName(), buffer));
+		}
     }
 }
 

@@ -153,6 +153,16 @@ void ClockTree::minimizeBufferInsertion2()
 	for( auto node: this->_clktreeroot->getChildren() )
 		minimizeBufferInsertion2( node );
 	this->calInsertBufCount();
+	
+	bool timingvio = 0;
+	for( auto path: this->_pathlist )
+	{
+		if( path->getPathType() == NONE || path->getPathType() == PItoPO ) continue;
+		if( UpdatePathTiming( path, 1, 1, 1 ) < 0 ) timingvio = 1;
+	}
+	
+	if( timingvio ) printf( RED"[Timing error]" RST" After Buffer insertion, timing violation takes place\n");
+	else			printf( GRN"[Timing PASS]"  RST" After Buffer insertion, All paths pass\n");
 }
 
 void ClockTree::minimizeBufferInsertion2( CTN* node )
@@ -162,34 +172,58 @@ void ClockTree::minimizeBufferInsertion2( CTN* node )
 	if( node->getChildren().size() == 0 ) return;
 	
 	
-	bool   buf_upward	= true;
+	//bool   buf_upward	= true;
 	double max_buf_delay= 0;
 	double buf_delay  	= 0;
+	double buf_ctr      = 0;
 	for( auto child: node->getChildren() )
 	{
 		minimizeBufferInsertion2( child );
 		
-		if( child->ifInsertBuffer() == false )  buf_upward = false;
+		if( child->ifInsertBuffer()  )  buf_ctr++;
 	}
 	
-	if( buf_upward )
+	//if( buf_upward )
+	double ratio = buf_ctr/node->getChildren().size();
+	string Gate = "";
+	if( ratio >= 0.5 )
 	{
-		//I should check timing here
 		
-		node->setIfInsertBuffer(1);
-		node->setInsertBufferDelay(max_buf_delay);
-		printf( "clknode(%ld, %s), 1 <= %ld:\n", node->getNodeNumber(), node->getGateData()->getGateName().c_str(), node->getChildren().size() );
-		
-		
+		printf( "Try (ratio = %3.2f) clknode(%6ld)\n 1 <-- %ld:\n", ratio, node->getNodeNumber(), node->getChildren().size() );
 		for( auto child: node->getChildren() )
 		{
-			assert( child->ifInsertBuffer() );
-			child->setIfInsertBuffer(0);
+			
+			Gate = ( child->ifInsertBuffer() )? (CYAN"Buf" RST):("   ");
+			
 			buf_delay = child->getInsertBufferDelay() ;
 			max_buf_delay = ( buf_delay > max_buf_delay )? ( buf_delay ):( max_buf_delay );
-			printf("\tclknode(%ld, %s)\n", child->getNodeNumber(), child->getGateData()->getGateName().c_str() );
+			printf("\t%s clknode(%6ld), Inserted buf delay = %f\n",  Gate.c_str(), child->getNodeNumber(), buf_delay );
+			child->setIfInsertBuffer(0);
 		}
+		node->setIfInsertBuffer(1);
+		node->setInsertBufferDelay(max_buf_delay);
+		printf( "\tInserted Buf delay = %f\n", max_buf_delay );
+		//--- Check Timing after buffer lifting -------------
+		for( auto path: this->_pathlist )
+		{
+			if( path->getPathType() == NONE || path->getPathType() == PItoPO ) continue;
+			if( UpdatePathTiming( path, 1 ,1, 1 ) < 0 )
+			{
+				//while timing violation takes place, cancel buffer lifting
+				for( auto child: node->getChildren() )
+					if( child->getInsertBufferDelay()  != 0 ) child->setIfInsertBuffer(1);//recover its status
+				node->setIfInsertBuffer(0);
+				node->setInsertBufferDelay(0);
+				printf( RED"\tCancel buf upwarding (due to timing violation)\n" RST);
+				break;
+			}
+		}
+		//while succeed in buffer lifting, clean the children's inserted buffer
+		for( auto child: node->getChildren() )
+			if( child->getInsertBufferDelay() != 0 ) child->setInsertBufferDelay(0);
 		
+		
+		printf( GRN"\tSucceed in buf upwarding\n" RST);
 	}
 }
 
@@ -217,16 +251,19 @@ void ClockTree::bufinsertionbyfile()
 
 void ClockTree::clockgating()
 {
-	this->SortCPbySlack( 0 /*Do not consider DCC*/);
+	//this->SortCPbySlack( 0 /*Do not consider DCC*/, 0);
+	bool flag = 1;
 	
 	for( auto pptr: this->_pathlist )
 	{
-		if( pptr->getPathType() != NONE ) continue;
+		if( pptr->getPathType() != NONE || pptr->getPathType() == PItoPO ) continue;
 		
 		//Do not select gated cells along Cj/end clk path.
 		for( auto node: pptr->getEndPonitClkPath()  )
-			if( node->ifClockGating() ) return ;
-				
+			if( node->ifClockGating() ) flag = 0;
+		
+		
+		if( !flag ) break ;
 		vector<CTN*> stClkPath = pptr->getStartPonitClkPath() ;
 		if( stClkPath.size() == 0 ) continue;
 		else
@@ -236,12 +273,58 @@ void ClockTree::clockgating()
 			node->setGatingProbability( genRandomNum("float", this->_gplowbound, this->_gpupbound, 2) );
 			this->_cglist.insert(pair<string, ClockTreeNode *> ( node->getGateData()->getGateName(), node));
 		}
-		//Temporal setting: If pptr's cj is gated, then break the loop.
+	}
+	
+	this->GatedCellRecursive();
+	
+	printf("Gated Cells:\n");
+	int c = 0 ;
+	for( auto node: this->_cglist )
+	{
+		printf("\t%d. %s(%ld), prob = %f\n", c, node.second->getGateData()->getGateName().c_str(), node.second->getNodeNumber(), node.second->getGatingProbability() );
+		c++;
 	}
 }
 
-
-
+void ClockTree::GatedCellRecursive()
+{
+	for( auto node: this->_clktreeroot->getChildren() )
+		GatedCellRecursive2( node );
+}
+void ClockTree::GatedCellRecursive2( CTN* node )
+{
+	if( node == NULL ) return;
+	if( node->ifClockGating() ) return;
+	if( node->getChildren().size() == 0 ) return;
+	
+	
+	bool   cell_upward	= 1;
+	double min_prob     = 1;//sleep prob
+	double cell_prob  	= 0;
+	for( auto child: node->getChildren() )
+	{
+		GatedCellRecursive2( child );
+		
+		if( child->ifClockGating() == false )  cell_upward = false;
+	}
+	
+	if( cell_upward )
+	{
+		//I should check timing here
+		
+		printf( "clknode(%ld, %s), 1 <= %ld:\n", node->getNodeNumber(), node->getGateData()->getGateName().c_str(), node->getChildren().size() );
+		for( auto child: node->getChildren() )
+		{
+			assert( child->ifInsertBuffer() );
+			child->setIfInsertBuffer(0);
+			cell_prob = child->getGatingProbability() ;
+			min_prob = ( min_prob > cell_prob )? ( cell_prob ):( min_prob );
+			printf("\tclknode(%ld, %s)\n", child->getNodeNumber(), child->getGateData()->getGateName().c_str() );
+		}
+		node->setIfClockGating(1);
+		node->setGatingProbability( min_prob );
+	}
+}
 
 
 

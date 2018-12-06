@@ -58,7 +58,7 @@ bool ClockTree::DoOtherFunction()
 	//-------- Analysis ------------------------------------------------
 	if( this->_program_ctl == 8  )
 	{
-		//this->Analysis();
+		this->clockgating();
 		return 0 ;
 	}
     //-------- print DCC ------------------------------------------------
@@ -757,12 +757,12 @@ bool compare( CP* A, CP*B )
     else                                return true  ;
 }
 
-void ClockTree::SortCPbySlack( bool DCCHTV )
+void ClockTree::SortCPbySlack( bool DCCHTV, bool update )
 {
     for( auto const& path: this->_pathlist )
     {
         if( (path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF) ) continue;
-        UpdatePathTiming( path, true, DCCHTV, true );
+        UpdatePathTiming( path, update, DCCHTV, true );
     }
     sort( this->getPathList().begin(), this->getPathList().end(), compare );
     

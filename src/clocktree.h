@@ -25,9 +25,9 @@
 #define DCCDELAY50PA    (1.33)		// 50% DCC Delay
 #define DCCDELAY80PA    (1.67)		// 80% DCC Delay
 
-#define DC_20DCC        (0.22)
-#define DC_40DCC        (0.44)
-#define DC_80DCC        (0.83)
+//#define DC_20DCC        (0.22)
+//#define DC_40DCC        (0.44)
+//#define DC_80DCC        (0.83)
 #define PRECISION       (4)			// Precision of real number
 #define PATHMASKPERCENT (1.0)	    // Mask how many percentage of critical path (0~1)
 #define TenYear_Sec     (315360000)
@@ -87,7 +87,12 @@ private:
     //--- FileName-Related --------------------------------------------------------------
 	string _timingreport, _timingreportfilename, _timingreportloc, _timingreportdesign;
 	string _cgfilename, _outputdir;
-    
+	
+	
+	double DC_1, DC_2, DC_N, DC_3;
+	double DC_1_age, DC_2_age, DC_N_age, DC_3_age;
+	
+	
     //--- Benchmark-Related --------------------------------------------------------------
 	CTN *_clktreeroot, *_firstchildrennode;
 	CP  *_mostcriticalpath;
@@ -151,7 +156,7 @@ public:
 			   _clktreeroot(nullptr), _firstchildrennode(nullptr), _mostcriticalpath(nullptr),
 			   _timingreport(""), _timingreportfilename(""), _timingreportloc(""), _timingreportdesign(""),
 			   _cgfilename(""), _outputdir(""), _tcAfterAdjust(0), _printClause(false), _baseVthOffset(0), _exp(0.2),  _usingSeniorAging(false),
-               _printClkNode(false), _calVTA(false), _dcc_leader(false), _dc_formulation(false), Max_timing_count(0), refine_time(100), _dcc_constraint_ctr(0), _leader_constraint_ctr(0), _printCP(false), _program_ctl(0) {}
+               _printClkNode(false), _calVTA(false), _dcc_leader(false), _dc_formulation(false), Max_timing_count(0), refine_time(100), _dcc_constraint_ctr(0), _leader_constraint_ctr(0), _printCP(false), _program_ctl(0), DC_1(0.2), DC_2(0.4), DC_3(0.8), DC_N(0.5), DC_1_age(0.22), DC_2_age(0.44), DC_3_age(0.83), DC_N_age(0.5) {}
 	//-Destructor------------------------------------------------------------------
     ~ClockTree(void);
 	
@@ -166,6 +171,14 @@ public:
 	void setOutputDirectoryPath( string path )  { this->_outputdir      = path  ; }
     void setIfVTA( bool b )                     { this->_doVTA          = b     ; }
     void setBaseVthOffset( double b )           { this->_baseVthOffset  = b     ; }
+	void setDC1( double d )   					{ this->DC_1 			= d 	; }
+	void setDC2( double d )   					{ this->DC_2 			= d 	; }
+	void setDC3( double d )   					{ this->DC_3 			= d 	; }
+	void setDCN( double d )   					{ this->DC_N 			= d 	; }
+	void setDC1_Ag( double d )   				{ this->DC_1_age		= d 	; }
+	void setDC2_Ag( double d )   				{ this->DC_2_age 		= d 	; }
+	void setDC3_Ag( double d )   				{ this->DC_3_age 		= d 	; }
+	void setDCN_Ag( double d )   				{ this->DC_N_age 		= d 	; }
 	//-Getter methods--------------------------------------------------------------
     double  getExp(void)                            { return _exp               ; }
     double  getTc_adjust(void)                      { return _tcAfterAdjust     ; }
@@ -369,7 +382,7 @@ public:
     void          FindDCCLeaderInPathVector( set<CTN*>&, CP* );
 	void          RemoveDCCandSeeResult2( CTN*, int=1);
     void    Analysis(void);
-    void    SortCPbySlack(bool);
+    void    SortCPbySlack(bool,bool=true);
     CT&     DisplayDCCLeaderinSet(        set<CTN*>&, int=1 );
     CT&     DisplayDCCLeaderinVec(     vector<CTN*>&, int=1 );
     void    RemoveDCCandSeeResult(     vector<CTN*>&, int=1 );
@@ -383,6 +396,8 @@ public:
 	void    getNodeSide( string &Side, CTN*node, CP* pptr );
 	//---- "-CG" clock gating--------------------------------------------------------------
 	void    clockgating();
+	void    GatedCellRecursive();
+	void    GatedCellRecursive2( CTN* );
 	
 };
 

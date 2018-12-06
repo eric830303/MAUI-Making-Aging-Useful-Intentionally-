@@ -100,24 +100,28 @@ int main(int argc, char **argv)
 	starttime = chrono::steady_clock::now();
 	//---- Parse *.rpt -----------------------------------------------
 	circuit.parseTimingReport();
-    
-    
-	//---- CLK Gating ------------------------------------------------
-    //1. Replace some buffers in the clock tree to clock gating cells
-	circuit.clockGatingCellReplacement();
-    
-    //---- Tc Adjust --------------------------------------------------
-    printf( YELLOW"[Setting]" RST" Adjusting original Tc...\n" );
+	
+	
+	//---- Tc Adjust --------------------------------------------------
+	printf( YELLOW"[Setting]" RST" Adjusting original Tc...\n" );
 	circuit.adjustOriginTc();
 	endtime = chrono::steady_clock::now();
 	preprocesstime = chrono::duration_cast<chrono::duration<double>>(endtime - starttime);
+	
+	//---- Do other Fuction --------------------------------------------
+	if( !circuit.DoOtherFunction() ) return 0;
+	
+    
+	//---- CLK Gating ------------------------------------------------
+    //1. Replace some buffers in the clock tree to clock gating cells
+	//circuit.clockGatingCellReplacement();
+	//circuit.clockgating();
+	
     
     //---- Mask -------------------------------------------------------
     circuit.dccPlacementByMasked();
     
-    //---- Do other Fuction --------------------------------------------
-    if( !circuit.DoOtherFunction() ) return 0;
-    
+	
 	cout << "---------------------------------------------------------------------------\n";
     //-------- Remove CNF file ------------------------------------------------------------
     circuit.removeCNFFile() ;
