@@ -259,7 +259,7 @@ public:
     void    minimizeBufferInsertion(void);
 	void    minimizeBufferInsertion2(void);
 	void    minimizeBufferInsertion2(ClockTreeNode*, double thred = 0.5);
-	long    calInsertBufCount();
+	long    calBufInserOrClockGating( int status = 0 );
     
     //---Refine: Minimize DCC Count ------------------------------------------------
     void    minimizeDccPlacement(void);//Actually, minimal rather than minimum
@@ -396,8 +396,7 @@ public:
 	void    getNodeSide( string &Side, CTN*node, CP* pptr );
 	//---- "-CG" clock gating--------------------------------------------------------------
 	void    clockgating();
-	void    GatedCellRecursive();
-	void    GatedCellRecursive2( CTN* );
+	void    GatedCellRecursive( CTN*, double thred = 0.5 );
 	
 };
 

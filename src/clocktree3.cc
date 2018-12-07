@@ -155,7 +155,7 @@ void ClockTree::minimizeBufferInsertion2()
 	double thred = 0;
 	cin >> thred;
 	this->minimizeBufferInsertion2( this->_clktreeroot, thred );
-	this->calInsertBufCount();
+	this->calBufInserOrClockGating(0);
 	
 	
 	FILE *fPtr;
@@ -228,18 +228,25 @@ void ClockTree::minimizeBufferInsertion2( CTN* node, double thred )
 	}
 }
 
-long ClockTree::calInsertBufCount()
+long ClockTree::calBufInserOrClockGating( int status )
 {
-	long bufcount = 0;
+	long ctr = 0;
 	
 	for( auto node: this->_buflist )
-		if( node.second->ifInsertBuffer() ) bufcount++;
+	{
+		if( node.second->ifInsertBuffer() && status == 0 ) ctr++;
+		if( node.second->ifClockGating() && status == 1 ) ctr++;
+	}
 	for( auto node: this->_ffsink )
-		if( node.second->ifInsertBuffer() ) bufcount++;
+	{
+		if( node.second->ifInsertBuffer() && status == 0 ) ctr++;
+		if( node.second->ifClockGating() && status == 1 ) ctr++;
+	}
 	
-	printf("Inserted Bufs = %ld\n", bufcount );
-	return bufcount;
-	
+	if( status == 0 )		printf("Inserted Bufs = %ld\n", ctr );
+	else if( status == 1 )	printf("Clock-Gating cells = %ld\n", ctr );
+	else					cerr << "Unreconized status in calBufInserOrClockGating( int status )\n" ;
+	return ctr ;
 }
 
 void ClockTree::bufinsertionbyfile()
@@ -279,55 +286,76 @@ void ClockTree::clockgating()
 		}
 	}
 	
-	this->GatedCellRecursive();
+	this->GatedCellRecursive( this->_clktreeroot );
+	this->calBufInserOrClockGating(1);//0:Buf insertion, 1:Clock gating
 	
+	
+	
+	
+	FILE *fPtr;
+	string filename = "./clock_gating_" + this->_outputdir + ".txt";
+	fPtr = fopen( filename.c_str(), "w" );
 	printf("Gated Cells:\n");
-	int c = 0 ;
-	for( auto node: this->_cglist )
+	
+	int index = 0 ;
+	for( auto const &node: this->_cglist )
 	{
-		printf("\t%d. %s(%ld), prob = %f\n", c, node.second->getGateData()->getGateName().c_str(), node.second->getNodeNumber(), node.second->getGatingProbability() );
-		c++;
+		printf("\t%d. node(%ld), prob = %f\n", index, node.second->getNodeNumber(), node.second->getGatingProbability() );
+		fprintf( fPtr, "%ld %f\n", node.second->getNodeNumber(), node.second->getGatingProbability() );
+		index++;
 	}
 }
 
-void ClockTree::GatedCellRecursive()
-{
-	for( auto node: this->_clktreeroot->getChildren() )
-		GatedCellRecursive2( node );
-}
-void ClockTree::GatedCellRecursive2( CTN* node )
+void ClockTree::GatedCellRecursive( CTN* node, double thred )
 {
 	if( node == NULL ) return;
 	if( node->ifClockGating() ) return;
 	if( node->getChildren().size() == 0 ) return;
 	
-	
-	bool   cell_upward	= 1;
-	double min_prob     = 1;//sleep prob
-	double cell_prob  	= 0;
+	double min_prob = 1;//sleep prob
+	double ctr		= 0;
 	for( auto child: node->getChildren() )
 	{
-		GatedCellRecursive2( child );
-		
-		if( child->ifClockGating() == false )  cell_upward = false;
+		GatedCellRecursive( child );
+	
+		if( child->ifClockGating() ){
+			ctr++;
+			min_prob = ( child->getGatingProbability() < min_prob )? ( child->getGatingProbability() ):( min_prob );
+		}
 	}
 	
-	if( cell_upward )
+	if( ctr/node->getChildren().size() >= thred )
 	{
-		//I should check timing here
-		
-		printf( "clknode(%ld, %s), 1 <= %ld:\n", node->getNodeNumber(), node->getGateData()->getGateName().c_str(), node->getChildren().size() );
-		for( auto child: node->getChildren() )
+		printf( "Try clknode(%ld), 1 <= %ld:\n", node->getNodeNumber(), node->getChildren().size() );
+		for( auto const &child: node->getChildren() )
 		{
-			assert( child->ifInsertBuffer() );
-			child->setIfInsertBuffer(0);
-			cell_prob = child->getGatingProbability() ;
-			min_prob = ( min_prob > cell_prob )? ( cell_prob ):( min_prob );
-			printf("\tclknode(%ld, %s)\n", child->getNodeNumber(), child->getGateData()->getGateName().c_str() );
+			if( child->ifClockGating() )//Temporarily remove the gated cell
+				child->setIfClockGating(0);
+			
+			printf("\tclknode(%ld, p = %f)\n", child->getNodeNumber(), child->getGatingProbability() );
 		}
 		node->setIfClockGating(1);
 		node->setGatingProbability( min_prob );
-	}
+		//After trying insert gated cell, checking
+		for( auto const & path: this->_pathlist )
+		{
+			if( path->getPathType() == NONE || path->getPathType() == PItoPO || path->getPathType() == FFtoPO ) continue;
+			if( path->getPathNum() > 200 ) continue;
+			
+			for( auto const &node: path->getEndPonitClkPath() )
+			{
+				if( node->ifClockGating() )
+				{
+					//Cancel lifting
+					node->setIfClockGating(0);
+					node->setGatingProbability(0);
+					//recover
+					for( auto const &child: node->getChildren() )
+						if( child->getGatingProbability() ) child->setIfClockGating(1);
+				}
+			}//endclkpath
+		}//pathlist
+	}//thred
 }
 
 

@@ -135,9 +135,9 @@ void ClockTree::printClockNode( CTN*node, int layer )
         printf( RST"--" );
         
         if( node->ifPlacedDcc() ){
-            if( node->getDccType() == 0.2 ) printf( RED"20 " RST );
-            if( node->getDccType() == 0.4 ) printf( RED"40 " RST );
-            if( node->getDccType() == 0.8 ) printf( RED"80 " RST );
+            if( node->getDccType() == this->DC_1 ) printf( RED"20 " RST );
+            if( node->getDccType() == this->DC_2 ) printf( RED"40 " RST );
+            if( node->getDccType() == this->DC_3 ) printf( RED"80 " RST );
             padLen--;
         }
         if( node->getIfPlaceHeader()){
