@@ -3963,14 +3963,11 @@ void ClockTree::printPath( int pathid )
     printf("==> Duty Cycle: 0.2, 0.4, 0.5, 0.8 \n" );
     printf("==> Vth type  : -1(Nominal), 0(VTA) \n" );
 	
-	//readDCCVTAFile( "./setting/DccVTA.txt" ) ;
-	//printPath_givFile( path, false  /*DCC/VTA*/, false  /*Aging*/, true  /*Tc from file*/ ) ;
-    //readDCCVTAFile( "./setting/DccVTA.txt" ) ;
-    //printPath_givFile( path, true  /*DCC/VTA*/, false  /*Aging*/, true  /*Tc from file*/ ) ;
-    //printf("From DccVTA.txt\n" );
-    readDCCVTAFile( "./setting/DccVTA.txt" ) ;
-    printPath_givFile( path, true  /*DCC/VTA*/, true  /*Aging*/, true  /*Tc from file*/ ) ;
-    printf("From DccVTA2.txt\n" );
+	
+	readDCCVTAFile( "./setting/buf.txt", 1 /*status*/ ) ;
+    printPath_givFile( path, 1  /*DCC/VTA*/, 1 /*Aging*/, 1  /*Tc from file*/ ) ;
+	readDCCVTAFile( "./setting/DccVTA.txt", 0 ) ;
+    printPath_givFile( path, 1  /*DCC/VTA*/, 1  /*Aging*/, 1  /*Tc from file*/ ) ;
 }
 
 void ClockTree::printPath_givFile( CriticalPath *path, bool doDCCVTA, bool aging, bool TcFromFile )
@@ -3985,8 +3982,6 @@ void ClockTree::printPath_givFile( CriticalPath *path, bool doDCCVTA, bool aging
     //-- Cal & Print ClockTree -------------------------------------------------
     printf("--------------------------------------------------------\n");
     printf(CYAN"[Topology]\n" RESET);
-    //printAssociatedCriticalPathAtStartPoint( path, doDCCVTA, aging ) ;
-    //printAssociatedCriticalPathAtEndPoint( path, doDCCVTA, aging ) ;
     this->printPI_PO_givFile(  path, doDCCVTA, aging );
     this->printFFtoFF_givFile( path, doDCCVTA, aging );
 }
@@ -4070,14 +4065,19 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
         }
             
         gatePtr         =  clknode->getGateData() ;
-        buftime         =  ( clknode != edClkPath.back() )? (gatePtr->getGateTime()+gatePtr->getWireTime()) : (gatePtr->getWireTime()) ;
+		buftime			=  gatePtr->getWireTime() + gatePtr->getGateTime();
+		clknode->setBufTime(buftime);
+		
+		if( clknode->ifInsertBuffer() && doDCCVTA ) buftime += clknode->getInsertBufferDelay();
+		if( clknode->ifClockGating()  && doDCCVTA ) DC_Com = DC_Com * (1-clknode->getGatingProbability());
+        //buftime         =  ( clknode != edClkPath.back() )? (gatePtr->getGateTime()+gatePtr->getWireTime()) : (gatePtr->getWireTime()) ;
         if( clknode != this->_clktreeroot  ){
             minbuf_right=  min( buftime, minbuf_right );
             minbuf_left =  min( buftime, minbuf_left  );
         }
         agr             =  getAgingRate_givDC_givVth( DC_Com, LibIndex_Com, 0, aging)  ;
         buftime         *= agr;//FF's Vth is not changed
-        avl_time        += (buftime);
+        avl_time        += buftime;
         req_time        += buftime ;
             
         //---- Set --------------------------------------------------------
@@ -4132,13 +4132,21 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
         }
         
         if( clknode != edClkPath.back() ){
-            buftime      = gatePtr->getGateTime()+gatePtr->getWireTime() ;
+            buftime      = gatePtr->getWireTime() + gatePtr->getGateTime() ;
+			clknode->setBufTime(buftime);
             minbuf_right = min( minbuf_right, buftime ) ;
         }
         else{
             LibIndex_right = -1 ;
             buftime        = gatePtr->getWireTime() ;
+			clknode->setBufTime(buftime);
         }
+		
+		if( clknode->ifInsertBuffer() && doDCCVTA )
+			buftime += clknode->getInsertBufferDelay();
+		if( clknode->ifClockGating() && doDCCVTA)
+			DC_right = DC_right * (1-clknode->getGatingProbability());
+		
         agr          =  getAgingRate_givDC_givVth( DC_right, LibIndex_right, 0, aging)  ;
         buftime     *= agr     ;
         req_time    += buftime ;
@@ -4153,11 +4161,12 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
     for( long i = common +1; i < edClkPath.size(); i++ )
     {
         clknode  = edClkPath.at(i) ;
-        gatePtr  = clknode->getGateData() ;
         printClkNodeFeature( clknode, doDCCVTA );
 		
-		if( clknode->ifClockGating() )
+		if( clknode->ifClockGating()  && doDCCVTA )
 			printf( YELLOW"Gated Cell (p = %f)" RST, clknode->getGatingProbability());
+		if( clknode->ifInsertBuffer()  && doDCCVTA )
+			printf( YELLOW"Buf (d = %f)" RST, clknode->getInsertBufferDelay());
         if( clknode->ifMasked() )
             printf( "%3ld(%.2f,%2d," GRN"%f" RST"," RED"X" RST")---",clknode->getNodeNumber(), clknode->getDC(), clknode->getVthType(),clknode->getBufTime() );
         else
@@ -4176,8 +4185,10 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
         gatePtr  = clknode->getGateData() ;
         printClkNodeFeature( clknode, doDCCVTA );
 		
-		if( clknode->ifClockGating() )
+		if( clknode->ifClockGating()  && doDCCVTA )
 			printf( YELLOW"Gated Cell (p = %f)" RST, clknode->getGatingProbability());
+		if( clknode->ifInsertBuffer()  && doDCCVTA )
+			printf( YELLOW"Buf (d = %f)" RST, clknode->getInsertBufferDelay());
         if( clknode->ifMasked() )
             printf( "%3ld(%.2f,%2d," GRN"%f" RST"," RED"X" RST")---",clknode->getNodeNumber(), clknode->getDC(), clknode->getVthType(),clknode->getBufTime() );
         else
@@ -4244,14 +4255,20 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
         }
 
         if( clknode != stClkPath.back() ){
-            buftime = gatePtr->getGateTime()+gatePtr->getWireTime();
+			buftime = gatePtr->getGateTime() + gatePtr->getWireTime() ;
+			clknode->setBufTime(buftime);
             minbuf_left = min( buftime, minbuf_left  );
         }
         else{
             buftime = gatePtr->getWireTime() ;
+			clknode->setBufTime(buftime);
             LibIndex_left = -1;
         }
-       
+		
+		if( clknode->ifInsertBuffer()  && doDCCVTA )
+			buftime += clknode->getInsertBufferDelay();
+		if( clknode->ifClockGating()  && doDCCVTA)
+			DC_left = DC_left * (1-clknode->getGatingProbability());
         agr         =  getAgingRate_givDC_givVth( DC_left, LibIndex_left, 0, aging)  ;
         buftime     *= agr     ;
         avl_time   += buftime ;
@@ -4259,12 +4276,14 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
         if( clknode == stClkPath.back() ) LibIndex_left = -1 ;
         printClkNodeFeature( clknode, doDCCVTA );
 		
-		if( clknode->ifClockGating() )
+		if( clknode->ifClockGating()  && doDCCVTA )
 			printf( YELLOW"Gated Cell (p = %f)" RST, clknode->getGatingProbability());
+		if( clknode->ifInsertBuffer()   && doDCCVTA)
+			printf( YELLOW"Buf (d = %f)" RST, clknode->getInsertBufferDelay());
         if( clknode->ifMasked() )
-            printf( "%3ld(%.2f,%d," GREEN"%.4f" RESET", " RED  "X" RESET")--" , clknode->getNodeNumber(), DC_left, LibIndex_left, buftime );
+            printf( "%3ld(%.2f,%d," GREEN"%.4f" RESET", " RED  "X" RESET")--" , clknode->getNodeNumber(), DC_left, LibIndex_left, clknode->getBufTime() );
         else
-            printf( "%3ld(%.2f,%d," GREEN"%.4f" RESET", " GREEN"O" RESET")--" , clknode->getNodeNumber(), DC_left, LibIndex_left, buftime );
+            printf( "%3ld(%.2f,%d," GREEN"%.4f" RESET", " GREEN"O" RESET")--" , clknode->getNodeNumber(), DC_left, LibIndex_left, clknode->getBufTime() );
     }
     printf( "  => " YELLOW"Start " RESET"Clk Path\n");
         
@@ -4551,7 +4570,10 @@ void ClockTree::InitClkTree()
         clknode.second->setIfPlaceHeader(false) ;
         clknode.second->setDccType(0.5)         ;
         clknode.second->setVTAType(-1)          ;
-        //clknode.second->setifMasked(true)       ;
+		clknode.second->setIfInsertBuffer(0)    ;
+		clknode.second->setInsertBufferDelay(0) ;
+		clknode.second->setIfClockGating(0)     ;
+		clknode.second->setGatingProbability(0) ;
     }
     for( auto FF: this->_ffsink )
     {
@@ -4559,7 +4581,10 @@ void ClockTree::InitClkTree()
         FF.second->setIfPlaceHeader(false)      ;
         FF.second->setDccType(0.5)              ;
         FF.second->setVTAType(-1)               ;
-        //FF.second->setifMasked(true)            ;
+		FF.second->setIfInsertBuffer(0)    ;
+		FF.second->setInsertBufferDelay(0) ;
+		FF.second->setIfClockGating(0)     ;
+		FF.second->setGatingProbability(0) ;
     }
     //this->dccPlacementByMasked(1)               ;
 }
@@ -4633,7 +4658,9 @@ void ClockTree::CheckTiming_givFile()
 {
     printf("----------------- " CYAN"Check Constraint " RESET"--------------------\n");
     //-- Read Tc/DCC/Leader Info ----------------------------------------------
-    readDCCVTAFile() ;
+	string filename = "./setting/buf.txt";
+	printf( "Checking: " RED"%s\n" RST, filename.c_str());
+    readDCCVTAFile( filename, 1 ) ;
     bool   fail = 0 ;
 	double slack_aging = 0;
 	double slack_fresh = 0;
@@ -4704,7 +4731,7 @@ void ClockTree::CheckTiming_givFile()
         }//for
     }//while
 }
-void ClockTree::readDCCVTAFile( string filename )
+void ClockTree::readDCCVTAFile( string filename, int status )
 {
     InitClkTree()                  ;//Init ifPlacedDCC();
     //-- Read Tc/DCC/Leader Info ----------------------------------------------
@@ -4718,42 +4745,60 @@ void ClockTree::readDCCVTAFile( string filename )
     string          tc              ;
     istringstream   token( line )   ;
     token     >>  tc   >> this->_tc ;
-    
+	this->_besttc = this->_tc       ;
+	
+	if( status == 3 ) return ;
     while( getline( file, line ) )
     {
         long    BufID       = 0   ;
         int     BufVthLib   = -1  ;
         double  BufDCC      = 0.5 ;
 		double  SleepProb   = 0   ;
+		double  bufdelay    = 0   ;
         istringstream   token( line )     ;
-        token >> BufID >> BufVthLib >> BufDCC  >> SleepProb;
-        ClockTreeNode *buffer = searchClockTreeNode( BufID ) ;
-        if( buffer == NULL )
-        {
-            printf( RED"[Error] " RESET"Can't find clock node with id = %ld\n", BufID ) ;
-            return ;
-        }
-        if( BufDCC != this->DC_N && BufDCC != -1 && BufDCC != 0 ){
-            buffer->setIfPlaceDcc(true);
-            buffer->setDccType( BufDCC )    ;
-            this->_dcclist.insert(pair<string, ClockTreeNode *> (buffer->getGateData()->getGateName(), buffer));
-        }
-        if( BufVthLib != -1  ){
-            buffer->setIfPlaceHeader(true);
-            buffer->setVTAType( BufVthLib ) ;
-            this->_VTAlist.insert(pair<string, ClockTreeNode *> (buffer->getGateData()->getGateName(), buffer));
-        }
-		if( SleepProb != 0  ){
-			buffer->setIfClockGating(true);
-			buffer->setGatingProbability(SleepProb);
-			this->_cglist.insert(pair<string, ClockTreeNode *> (buffer->getGateData()->getGateName(), buffer));
+		
+		if( status == 0 )
+		{
+        	token >> BufID >> BufVthLib >> BufDCC  >> SleepProb;
+        	ClockTreeNode *buffer = searchClockTreeNode( BufID ) ;
+        	if( buffer == NULL )
+        	{
+            	printf( RED"[Error] " RESET"Can't find clock node with id = %ld\n", BufID ) ;
+            	return ;
+        	}
+        	if( BufDCC != this->DC_N && BufDCC != -1 && BufDCC != 0 ){
+            	buffer->setIfPlaceDcc(true);
+            	buffer->setDccType( BufDCC )    ;
+            	this->_dcclist.insert(pair<string, ClockTreeNode *> (buffer->getGateData()->getGateName(), buffer));
+        	}
+        	if( BufVthLib != -1  ){
+            	buffer->setIfPlaceHeader(true);
+            	buffer->setVTAType( BufVthLib ) ;
+            	this->_VTAlist.insert(pair<string, ClockTreeNode *> (buffer->getGateData()->getGateName(), buffer));
+        	}
+			if( SleepProb != 0  ){
+				buffer->setIfClockGating(true);
+				buffer->setGatingProbability(SleepProb);
+				this->_cglist.insert(pair<string, ClockTreeNode *> (buffer->getGateData()->getGateName(), buffer));
+			}
+		}
+		else if (status == 1 )
+		{
+			token >> BufID >> bufdelay ;
+			ClockTreeNode *buffer = searchClockTreeNode( BufID ) ;
+			if( buffer == NULL )
+			{
+				printf( RED"[Error] " RESET"Can't find clock node with id = %ld\n", BufID ) ;
+				return ;
+			}
+			buffer->setIfInsertBuffer(1);
+			buffer->setInsertBufferDelay(bufdelay);
 		}
     }
 }
 
 bool ClockTree::checkDCCVTAConstraint()
 {
-    readDCCVTAFile( "./setting/DccVTA.txt" )             ;//Set   DCC/VTA location
     bool result = true           ;
     for( auto path: this->_pathlist )
     {

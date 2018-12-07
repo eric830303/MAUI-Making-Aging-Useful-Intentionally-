@@ -150,80 +150,81 @@ bool ClockTree::PathIsPlacedDCCorLeader( CP *pptr, int mode )
 void ClockTree::minimizeBufferInsertion2()
 {
 	if( this->_bufinsert < 1 || this->_bufinsert > 3 ) return;
-	for( auto node: this->_clktreeroot->getChildren() )
-		minimizeBufferInsertion2( node );
+	
+	printf("The threshold of ratio while lifting buffers\nYour thred = ");
+	double thred = 0;
+	cin >> thred;
+	this->minimizeBufferInsertion2( this->_clktreeroot, thred );
 	this->calInsertBufCount();
 	
-	bool timingvio = 0;
-	for( auto path: this->_pathlist )
-	{
-		if( path->getPathType() == NONE || path->getPathType() == PItoPO ) continue;
-		if( UpdatePathTiming( path, 1, 1, 1 ) < 0 ) timingvio = 1;
-	}
 	
-	if( timingvio ) printf( RED"[Timing error]" RST" After Buffer insertion, timing violation takes place\n");
-	else			printf( GRN"[Timing PASS]"  RST" After Buffer insertion, All paths pass\n");
+	FILE *fPtr;
+	string filename = "./bufinsertion_" + to_string( this->_tc ) + ".txt";
+	fPtr = fopen( filename.c_str(), "w" );
+	fprintf( fPtr, "Tc %f\n", this->_tc );
+	for( auto node: this->_buflist )
+	{
+		if( node.second->ifInsertBuffer() )
+			fprintf( fPtr, "%ld %f\n", node.second->getNodeNumber(), node.second->getInsertBufferDelay() );
+	}
+	for( auto node: this->_ffsink )
+	{
+		if( node.second->ifInsertBuffer() )
+			fprintf( fPtr, "%ld %f\n", node.second->getNodeNumber(), node.second->getInsertBufferDelay()  );
+	}
+	fclose(fPtr);
 }
 
-void ClockTree::minimizeBufferInsertion2( CTN* node )
+void ClockTree::minimizeBufferInsertion2( CTN* node, double thred )
 {
 	if( node == NULL ) return;
 	if( node->ifInsertBuffer() ) return;
 	if( node->getChildren().size() == 0 ) return;
 	
-	
-	//bool   buf_upward	= true;
 	double max_buf_delay= 0;
-	double buf_delay  	= 0;
 	double buf_ctr      = 0;
 	for( auto child: node->getChildren() )
 	{
-		minimizeBufferInsertion2( child );
+		minimizeBufferInsertion2( child, thred );
 		
 		if( child->ifInsertBuffer()  )  buf_ctr++;
 	}
-	
-	//if( buf_upward )
+
 	double ratio = buf_ctr/node->getChildren().size();
-	string Gate = "";
-	if( ratio >= 0.5 )
+	
+	if( ratio > thred && node != this->_clktreeroot )
 	{
-		
-		printf( "Try (ratio = %3.2f) clknode(%6ld)\n 1 <-- %ld:\n", ratio, node->getNodeNumber(), node->getChildren().size() );
 		for( auto child: node->getChildren() )
 		{
-			
-			Gate = ( child->ifInsertBuffer() )? (CYAN"Buf" RST):("   ");
-			
-			buf_delay = child->getInsertBufferDelay() ;
-			max_buf_delay = ( buf_delay > max_buf_delay )? ( buf_delay ):( max_buf_delay );
-			printf("\t%s clknode(%6ld), Inserted buf delay = %f\n",  Gate.c_str(), child->getNodeNumber(), buf_delay );
+			if( child->ifInsertBuffer() )
+				max_buf_delay = ( child->getInsertBufferDelay() > max_buf_delay )? ( child->getInsertBufferDelay() ):( max_buf_delay );
 			child->setIfInsertBuffer(0);
 		}
 		node->setIfInsertBuffer(1);
 		node->setInsertBufferDelay(max_buf_delay);
-		printf( "\tInserted Buf delay = %f\n", max_buf_delay );
+		
 		//--- Check Timing after buffer lifting -------------
-		for( auto path: this->_pathlist )
+		bool timing_vio = 0;
+		for( auto const &path: this->_pathlist )
 		{
 			if( path->getPathType() == NONE || path->getPathType() == PItoPO ) continue;
-			if( UpdatePathTiming( path, 1 ,1, 1 ) < 0 )
-			{
-				//while timing violation takes place, cancel buffer lifting
-				for( auto child: node->getChildren() )
-					if( child->getInsertBufferDelay()  != 0 ) child->setIfInsertBuffer(1);//recover its status
-				node->setIfInsertBuffer(0);
-				node->setInsertBufferDelay(0);
-				printf( RED"\tCancel buf upwarding (due to timing violation)\n" RST);
-				break;
-			}
+			double slack = this->UpdatePathTiming( path, 0 ,1, 1 );
+			if( slack < 0 ){ timing_vio = 1; break; }
 		}
-		//while succeed in buffer lifting, clean the children's inserted buffer
-		for( auto child: node->getChildren() )
-			if( child->getInsertBufferDelay() != 0 ) child->setInsertBufferDelay(0);
 		
-		
-		printf( GRN"\tSucceed in buf upwarding\n" RST);
+		if( timing_vio )
+		{
+			//while timing violation takes place, cancel buffer lifting
+			for( auto child: node->getChildren() )
+				if( child->getInsertBufferDelay()  != 0 ) child->setIfInsertBuffer(1);//recover its status
+			node->setIfInsertBuffer(0);
+			node->setInsertBufferDelay(0);
+			
+		}else{
+			//while succeed in buffer lifting, clean the children's inserted buffer
+			for( auto child: node->getChildren() )
+				if( child->getInsertBufferDelay() != 0 ) child->setInsertBufferDelay(0);
+		}
 	}
 }
 
@@ -243,8 +244,7 @@ long ClockTree::calInsertBufCount()
 
 void ClockTree::bufinsertionbyfile()
 {
-	readDCCVTAFile();//read Tc from the file
-	this->_besttc = this->_tc;
+	readDCCVTAFile( "./setting/DccVTA.txt", 3 );//Only read Tc from the file
 	bufferInsertion();
 	minimizeBufferInsertion2();
 }
@@ -252,20 +252,24 @@ void ClockTree::bufinsertionbyfile()
 void ClockTree::clockgating()
 {
 	//this->SortCPbySlack( 0 /*Do not consider DCC*/, 0);
-	bool flag = 1;
 	
 	for( auto pptr: this->_pathlist )
 	{
 		if( pptr->getPathType() != NONE || pptr->getPathType() == PItoPO ) continue;
 		
-		//Do not select gated cells along Cj/end clk path.
-		for( auto node: pptr->getEndPonitClkPath()  )
-			if( node->ifClockGating() ) flag = 0;
-		
-		
-		if( !flag ) break ;
 		vector<CTN*> stClkPath = pptr->getStartPonitClkPath() ;
-		if( stClkPath.size() == 0 ) continue;
+		vector<CTN*> edClkPath = pptr->getEndPonitClkPath();
+		
+		//Do not select gated cells along Cj/end clk path.
+		if( edClkPath.size() == 0 ) continue;
+		if( edClkPath.back()->ifClockGating() )
+		{
+			printf("Stop clockgatinh at pptr(%ld)", pptr->getPathNum() );
+			break;
+		}
+		
+		
+		if( stClkPath.size() == 0 || stClkPath.back()->ifClockGating() ) continue;
 		else
 		{
 			CTN* node = stClkPath.back();

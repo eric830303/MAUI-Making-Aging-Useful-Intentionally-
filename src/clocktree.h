@@ -258,7 +258,7 @@ public:
     void    bufferInsertion(void);
     void    minimizeBufferInsertion(void);
 	void    minimizeBufferInsertion2(void);
-	void    minimizeBufferInsertion2(ClockTreeNode*);
+	void    minimizeBufferInsertion2(ClockTreeNode*, double thred = 0.5);
 	long    calInsertBufCount();
     
     //---Refine: Minimize DCC Count ------------------------------------------------
@@ -341,7 +341,7 @@ public:
     double  calConvergentVth( double dc , double Exp = 0.2 ) ;
     double  calSv( double dc, double VthOffset, double VthFin ) ;
     //---Other ----------------------------------------------------------------------
-    void    readDCCVTAFile( string="./setting/DccVTA.txt" );
+    void    readDCCVTAFile( string="./setting/DccVTA.txt", int status=0 );
     int     calBufChildSize( CTN* )             ;
     bool    checkDCCVTAConstraint( void )       ;
     bool    checkDCCVTAConstraint_givPath( CP* );
