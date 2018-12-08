@@ -115,8 +115,7 @@ int main(int argc, char **argv)
 	//---- CLK Gating ------------------------------------------------
     //1. Replace some buffers in the clock tree to clock gating cells
 	//circuit.clockGatingCellReplacement();
-	//circuit.clockgating();
-	
+	circuit.clockgating();
     
     //---- Mask -------------------------------------------------------
     circuit.dccPlacementByMasked();

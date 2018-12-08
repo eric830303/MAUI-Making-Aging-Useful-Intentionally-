@@ -2173,6 +2173,28 @@ double ClockTree::UpdatePathTiming( CriticalPath * path, bool update, bool DCCVT
         path->setArrivalTime(avl_time)   ;
         path->setRequiredTime(req_time)  ;
         path->setSlack(newslack)         ;
+		/*
+		if( path->getPathNum() == 42 )
+		{
+			printf("Ci = %f\n", ci);
+			printf("Cj = %f\n", cj);
+			printf("Avl= %f\n", avl_time);
+			printf("Req= %f\n", req_time);
+			if( stDCCLoc ){
+				printf("st detect DCC\n");
+			}
+			if( edDCCLoc ){
+				printf("ed detect DCC\n");
+			}
+			//-- VTA Header Location ----------------------------------------------
+			if( stHeader ){
+				printf("st detect Leader\n");
+			}
+			if( edHeader ){
+				printf("ed detect Leader\n");
+			}
+		}
+		 */
     }
     
     return newslack ;
@@ -2706,7 +2728,7 @@ double ClockTree::calClkLaten_givDcc_givVTA(    vector<ClockTreeNode *> clkpath,
     double  laten       =   0   ;
     bool    meetDCCLoc  = false ;
     bool    meetHeader  = false ;
-    double  DC          = 0.5   ;//Duty Cycle
+    double  DC          = this->DC_N   ;//Duty Cycle
     
     int     LibVthType    = -1    ;//Vth type of clock buffer (except DCC)
     int     LibVthTypeDCC = -1    ;//Vth type of DCC
@@ -2759,25 +2781,19 @@ double ClockTree::calClkLaten_givDcc_givVTA(    vector<ClockTreeNode *> clkpath,
             LibVthType = LibIndex ;//Need modifys
             meetHeader = true ;
         }
-		if( clkpath.at(i)->ifClockGating() )
-			DC =  DC * (1 - clkpath.at(i)->getGatingProbability()) ;
+		if( clkpath.at(i)->ifClockGating() )	DC =  DC * (1 - clkpath.at(i)->getGatingProbability()) ;
+		if( clkpath.at(i)->ifInsertBuffer() )	buftime += clkpath.at(i)->getInsertBufferDelay();
 		
         agingrate = getAgingRate_givDC_givVth( DC, LibVthType, false, caging ) ;
         laten += buftime*agingrate ;
-		
-		if( clkpath.at(i)->ifInsertBuffer() )
-			laten += clkpath.at(i)->getInsertBufferDelay()*agingrate;
     }
+	buftime = clkpath.back()->getGateData()->getWireTime();
+	if( clkpath.back()->ifClockGating() ) DC =  DC * (1 - clkpath.back()->getGatingProbability()) ;
+	if( clkpath.back()->ifInsertBuffer() ) buftime += clkpath.back()->getInsertBufferDelay();
 	
-	if( clkpath.back()->ifClockGating() )
-		DC =  DC * (1 - clkpath.back()->getGatingProbability()) ;
+    agingrate = getAgingRate_givDC_givVth( DC, -1, false, caging ) ;
 	
-    agingrate = getAgingRate_givDC_givVth( DC, LibVthType, false, caging ) ;
-	
-	if( clkpath.back()->ifInsertBuffer() )
-		laten += clkpath.back()->getInsertBufferDelay()*agingrate;
-	
-    laten += clkpath.back()->getGateData()->getWireTime() * agingrate ;
+    laten += buftime * agingrate ;
     
     if( DCCLoc != NULL )
     {
@@ -3320,7 +3336,7 @@ void ClockTree::bufferInsertion(void)
 			break;
 		}
 	}
-	this->calInsertBufCount();
+	this->calBufInserOrClockGating(0);
 }
 /////////////////////////////////////////////////////////////////////
 //
@@ -3858,7 +3874,7 @@ double ClockTree::getAgingRate_givDC_givVth( double DC, int Libindex, bool initi
     }else//initial
     {
 		
-		double conv_Vth = this->calConvergentVth( 0.86, this->getExp() ) ;//80% DCC
+		double conv_Vth = this->calConvergentVth( DC, this->getExp() ) ;//80% DCC
 		double Sv = 0;
 		
         if( Libindex == -1 )
@@ -3964,8 +3980,8 @@ void ClockTree::printPath( int pathid )
     printf("==> Vth type  : -1(Nominal), 0(VTA) \n" );
 	
 	//readDCCVTAFile( "./setting/ClkGating.txt", 2 /*status*/ ) ;
-	readDCCVTAFile( "./setting/BufInsert.txt", 1 /*status*/ ) ;
-    printPath_givFile( path, 1  /*DCC/VTA*/, 1 /*Aging*/, 1  /*Tc from file*/ ) ;
+	//readDCCVTAFile( "./setting/BufInsert.txt", 1 /*status*/ ) ;
+    //printPath_givFile( path, 1  /*DCC/VTA*/, 1 /*Aging*/, 1  /*Tc from file*/ ) ;
 	readDCCVTAFile( "./setting/DccVTA.txt", 0 ) ;
     printPath_givFile( path, 1  /*DCC/VTA*/, 1  /*Aging*/, 1  /*Tc from file*/ ) ;
 }
@@ -4006,7 +4022,7 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
     long            common      = Parent->getDepth() ;
     bool            MeetDCC_Com = false;
     bool            MeetVTA_Com = false;
-    double          DC_Com      = 0.5  ;
+    double          DC_Com      = this->DC_N  ;
     int             LibIndex_Com= -1   ;
     double          minbuf_right= 9999 ;
     double          minbuf_left = 9999 ;
@@ -4014,8 +4030,8 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
     int             DCCLib_L    = -1   ;
     bool            DCC_R       = false;//Whether meet dcc for right clk path
     bool            DCC_L       = false;
-    double          DCC_R_Type  = 0.5  ;
-    double          DCC_L_Type  = 0.5  ;
+    double          DCC_R_Type  = this->DC_N   ;
+    double          DCC_L_Type  = this->DC_N   ;
     double          agr         = 1.0  ;
     double          buftime      = 0    ;
     double          req_time     = 0    ;
@@ -4066,7 +4082,7 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
             
         gatePtr         =  clknode->getGateData() ;
 		buftime			=  gatePtr->getWireTime() + gatePtr->getGateTime();
-		clknode->setBufTime(buftime);
+		
 		
 		if( clknode->ifInsertBuffer() && doDCCVTA ) buftime += clknode->getInsertBufferDelay();
 		if( clknode->ifClockGating()  && doDCCVTA ) DC_Com = DC_Com * (1-clknode->getGatingProbability());
@@ -4079,7 +4095,7 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
         buftime         *= agr;//FF's Vth is not changed
         avl_time        += buftime;
         req_time        += buftime ;
-            
+		
         //---- Set --------------------------------------------------------
         clknode->setBufTime(buftime).setDC(DC_Com).setVthType(LibIndex_Com);
     }
@@ -4142,10 +4158,8 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
 			clknode->setBufTime(buftime);
         }
 		
-		if( clknode->ifInsertBuffer() && doDCCVTA )
-			buftime += clknode->getInsertBufferDelay();
-		if( clknode->ifClockGating() && doDCCVTA)
-			DC_right = DC_right * (1-clknode->getGatingProbability());
+		if( clknode->ifInsertBuffer() && doDCCVTA ) buftime += clknode->getInsertBufferDelay();
+		if( clknode->ifClockGating() && doDCCVTA)	DC_right = DC_right * (1-clknode->getGatingProbability());
 		
         agr          =  getAgingRate_givDC_givVth( DC_right, LibIndex_right, 0, aging)  ;
         buftime     *= agr     ;
@@ -4265,10 +4279,8 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
             LibIndex_left = -1;
         }
 		
-		if( clknode->ifInsertBuffer()  && doDCCVTA )
-			buftime += clknode->getInsertBufferDelay();
-		if( clknode->ifClockGating()  && doDCCVTA)
-			DC_left = DC_left * (1-clknode->getGatingProbability());
+		if( clknode->ifInsertBuffer()  && doDCCVTA )buftime += clknode->getInsertBufferDelay();
+		if( clknode->ifClockGating()  && doDCCVTA)	DC_left = DC_left * (1-clknode->getGatingProbability());
         agr         =  getAgingRate_givDC_givVth( DC_left, LibIndex_left, 0, aging)  ;
         buftime     *= agr     ;
         avl_time   += buftime ;
@@ -4658,9 +4670,9 @@ void ClockTree::CheckTiming_givFile()
 {
     printf("----------------- " CYAN"Check Constraint " RESET"--------------------\n");
     //-- Read Tc/DCC/Leader Info ----------------------------------------------
-	string filename = "./setting/buf.txt";
+	string filename = "./setting/DccVTA.txt";
 	printf( "Checking: " RED"%s\n" RST, filename.c_str());
-    readDCCVTAFile( filename, 1 ) ;
+    readDCCVTAFile( filename, 0 ) ;
     bool   fail = 0 ;
 	double slack_aging = 0;
 	double slack_fresh = 0;
@@ -4674,7 +4686,7 @@ void ClockTree::CheckTiming_givFile()
 		else if( path->getPathType() == FFtoFF )    PathType = "FFtoFF" ;
 		else                                        continue            ;
 	
-        slack_aging = this->UpdatePathTiming( path, 0/*Update*/, 1/*Consider DCC*/, 1/*Consider Aging*/ );
+        slack_aging = this->UpdatePathTiming( path, 1/*Update*/, 1/*Consider DCC*/, 1/*Consider Aging*/ );
         if( slack_aging < 0 )
         {
 			printf( CYAN"[Timing Constraint (10-yr aging)]" RED"[Violated]" RST"Path( %ld, %s ) fail, slack = " RED"%f\n", path->getPathNum(), PathType.c_str(), slack_aging );

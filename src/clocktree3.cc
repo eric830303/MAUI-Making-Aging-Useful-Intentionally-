@@ -259,10 +259,11 @@ void ClockTree::bufinsertionbyfile()
 void ClockTree::clockgating()
 {
 	//this->SortCPbySlack( 0 /*Do not consider DCC*/, 0);
-	
+	cout << this->_program_ctl << endl;
+	if( this->_program_ctl != 8 ) return;
 	for( auto pptr: this->_pathlist )
 	{
-		if( pptr->getPathType() != NONE || pptr->getPathType() == PItoPO ) continue;
+		if( pptr->getPathType() == NONE || pptr->getPathType() == PItoPO ) continue;
 		
 		vector<CTN*> stClkPath = pptr->getStartPonitClkPath() ;
 		vector<CTN*> edClkPath = pptr->getEndPonitClkPath();
@@ -271,10 +272,10 @@ void ClockTree::clockgating()
 		if( edClkPath.size() == 0 ) continue;
 		if( edClkPath.back()->ifClockGating() )
 		{
-			printf("Stop clockgatinh at pptr(%ld)", pptr->getPathNum() );
+			edClkPath.back()->setIfClockGating(0);
+			printf("Stop clockgatinh at pptr(%ld)\n", pptr->getPathNum() );
 			break;
 		}
-		
 		
 		if( stClkPath.size() == 0 || stClkPath.back()->ifClockGating() ) continue;
 		else
@@ -282,28 +283,40 @@ void ClockTree::clockgating()
 			CTN* node = stClkPath.back();
 			node->setIfClockGating(1);
 			node->setGatingProbability( genRandomNum("float", this->_gplowbound, this->_gpupbound, 2) );
-			this->_cglist.insert(pair<string, ClockTreeNode *> ( node->getGateData()->getGateName(), node));
+			//node->setGatingProbability( 0.9 );
 		}
 	}
 	
-	this->GatedCellRecursive( this->_clktreeroot );
+	
+	int index = 1 ;
+	map <string, CTN*> nodes = this->_buflist;
+	nodes.insert( _ffsink.begin(), _ffsink.end() );
+	printf("Gated Cells (" RED"Before" RST" minimization by recursive):\n");
+	for( auto const &node: nodes )
+	{
+		if( node.second->ifClockGating() == 0 ) continue;
+		printf("\t%d. node(%5ld), prob = %3.2f\n", index, node.second->getNodeNumber(), node.second->getGatingProbability() );
+		index++;
+	}
+	
+	
 	this->calBufInserOrClockGating(1);//0:Buf insertion, 1:Clock gating
-	
-	
-	
+	this->GatedCellRecursive( this->_clktreeroot, 0.1 );
 	
 	FILE *fPtr;
-	string filename = "./clock_gating_" + this->_outputdir + ".txt";
+	string filename = "./clock_gating.txt";
 	fPtr = fopen( filename.c_str(), "w" );
-	printf("Gated Cells:\n");
+	printf("\nGated Cells (" GRN"After" RST" minimization by recursive):\n");
 	
-	int index = 0 ;
-	for( auto const &node: this->_cglist )
+	index = 1;
+	for( auto const &node: nodes )
 	{
-		printf("\t%d. node(%ld), prob = %f\n", index, node.second->getNodeNumber(), node.second->getGatingProbability() );
+		if( node.second->ifClockGating() == 0 ) continue;
+		printf("\t%d. node(%5ld), prob = %3.2f\n", index, node.second->getNodeNumber(), node.second->getGatingProbability() );
 		fprintf( fPtr, "%ld %f\n", node.second->getNodeNumber(), node.second->getGatingProbability() );
 		index++;
 	}
+	this->calBufInserOrClockGating(1);//0:Buf insertion, 1:Clock gating
 }
 
 void ClockTree::GatedCellRecursive( CTN* node, double thred )
@@ -316,7 +329,7 @@ void ClockTree::GatedCellRecursive( CTN* node, double thred )
 	double ctr		= 0;
 	for( auto child: node->getChildren() )
 	{
-		GatedCellRecursive( child );
+		GatedCellRecursive( child, thred );
 	
 		if( child->ifClockGating() ){
 			ctr++;
@@ -324,15 +337,17 @@ void ClockTree::GatedCellRecursive( CTN* node, double thred )
 		}
 	}
 	
-	if( ctr/node->getChildren().size() >= thred )
+	if( ctr/node->getChildren().size() >= thred && node != this->_clktreeroot )
 	{
-		printf( "Try clknode(%ld), 1 <= %ld:\n", node->getNodeNumber(), node->getChildren().size() );
+		//printf( "Try clknode(%5ld), 1 <= %ld:\n", node->getNodeNumber(), node->getChildren().size() );
 		for( auto const &child: node->getChildren() )
 		{
-			if( child->ifClockGating() )//Temporarily remove the gated cell
+			//Temporarily remove the gated cell
+			if( child->ifClockGating() ){
 				child->setIfClockGating(0);
-			
-			printf("\tclknode(%ld, p = %f)\n", child->getNodeNumber(), child->getGatingProbability() );
+				//printf( RED"\tCG-cell " RST"clknode(%5ld, p = %3.2f)\n", child->getNodeNumber(), child->getGatingProbability() );
+			}//else
+				//printf("\t        clknode(%5ld)\n", child->getNodeNumber() );
 		}
 		node->setIfClockGating(1);
 		node->setGatingProbability( min_prob );
@@ -340,7 +355,6 @@ void ClockTree::GatedCellRecursive( CTN* node, double thred )
 		for( auto const & path: this->_pathlist )
 		{
 			if( path->getPathType() == NONE || path->getPathType() == PItoPO || path->getPathType() == FFtoPO ) continue;
-			if( path->getPathNum() > 200 ) continue;
 			
 			for( auto const &node: path->getEndPonitClkPath() )
 			{
