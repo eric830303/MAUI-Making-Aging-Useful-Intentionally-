@@ -194,11 +194,16 @@ void ClockTree::minimizeBufferInsertion2( CTN* node, double thred )
 	
 	if( ratio > thred && node != this->_clktreeroot )
 	{
+		printf( " clknode(%5ld), 1 <= %ld:\n", node->getNodeNumber(), node->getChildren().size() );
 		for( auto child: node->getChildren() )
 		{
 			if( child->ifInsertBuffer() )
+			{
 				max_buf_delay = ( child->getInsertBufferDelay() > max_buf_delay )? ( child->getInsertBufferDelay() ):( max_buf_delay );
-			child->setIfInsertBuffer(0);
+				child->setIfInsertBuffer(0);
+				printf( RED"\tBuf " RST"clknode(%5ld, p = %f)\n", child->getNodeNumber(), child->getInsertBufferDelay() );
+			}else
+				printf( RED"\t    " RST"clknode(%5ld, p = %f)\n", child->getNodeNumber(), child->getInsertBufferDelay() );
 		}
 		node->setIfInsertBuffer(1);
 		node->setInsertBufferDelay(max_buf_delay);
@@ -208,22 +213,30 @@ void ClockTree::minimizeBufferInsertion2( CTN* node, double thred )
 		for( auto const &path: this->_pathlist )
 		{
 			if( path->getPathType() == NONE || path->getPathType() == PItoPO ) continue;
-			double slack = this->UpdatePathTiming( path, 0 ,1, 1 );
-			if( slack < 0 ){ timing_vio = 1; break; }
+			double slack = this->UpdatePathTiming( path, 1, 0, 1, 1 );
+			if( slack < 0 ){
+				timing_vio = 1;
+				break;
+			}
 		}
 		
 		if( timing_vio )
 		{
 			//while timing violation takes place, cancel buffer lifting
 			for( auto child: node->getChildren() )
-				if( child->getInsertBufferDelay()  != 0 ) child->setIfInsertBuffer(1);//recover its status
+				if( child->getInsertBufferDelay()  != 0 )
+					child->setIfInsertBuffer(1);//recover its status
 			node->setIfInsertBuffer(0);
 			node->setInsertBufferDelay(0);
-			
+			printf( RED"\t[Failing in lifting]\n" RST );
 		}else{
 			//while succeed in buffer lifting, clean the children's inserted buffer
 			for( auto child: node->getChildren() )
-				if( child->getInsertBufferDelay() != 0 ) child->setInsertBufferDelay(0);
+			{
+				if( child->getInsertBufferDelay() != 0 )
+					child->setInsertBufferDelay(0);
+			}
+			printf( GRN"\t[Succeding in lifting]\n" RST );
 		}
 	}
 }

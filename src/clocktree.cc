@@ -2173,6 +2173,22 @@ double ClockTree::UpdatePathTiming( CriticalPath * path, bool update, bool DCCVT
         path->setArrivalTime(avl_time)   ;
         path->setRequiredTime(req_time)  ;
         path->setSlack(newslack)         ;
+		
+		/*
+		if( stDCCLoc ){
+			printf("Detect st DCC\n");
+		}
+		if( edDCCLoc ){
+			printf("Detect ed DCC\n");
+		}
+		//-- VTA Header Location ---------------------------------------------
+		if( stHeader ){
+			printf("Detect st Leader\n");
+		}
+		if( edHeader ){
+			printf("Detect ed Leader\n");
+		}
+		*/
     }
     
     return newslack ;
@@ -2780,7 +2796,7 @@ double ClockTree::calClkLaten_givDcc_givVTA(    vector<ClockTreeNode *> clkpath,
 		
 		bufferinsert = ( clkpath.at(i)->ifInsertBuffer() )?( clkpath.at(i)->getInsertBufferDelay() ) : (0);;
 		//bufferinsert *= agingrate; buffer insetion do not consider aging
-		
+	
 		
         laten += ( buftime + bufferinsert ) ;
 		
@@ -3284,8 +3300,8 @@ void ClockTree::bufferInsertion(void)
 			// Calculate the Ci and Cj
 			
             
-            datareqtime = this->calClkLaten_givDcc_givVTA( path->getEndPonitClkPath()  , 0.5, NULL, -1, NULL, 1 );
-            dataarrtime = this->calClkLaten_givDcc_givVTA( path->getStartPonitClkPath(), 0.5, NULL, -1, NULL, 1 );
+            datareqtime = this->calClkLaten_givDcc_givVTA( path->getEndPonitClkPath()  , 0.5, NULL, -1, NULL, 1, 0 );
+            dataarrtime = this->calClkLaten_givDcc_givVTA( path->getStartPonitClkPath(), 0.5, NULL, -1, NULL, 1, 0 );
         
 			// Require time
 			datareqtime += (path->getTsu() * this->_agingtsu) + this->_tc;
@@ -3314,7 +3330,7 @@ void ClockTree::bufferInsertion(void)
 					path->getEndPonitClkPath().back()->setIfInsertBuffer(1);
 					double delay = path->getEndPonitClkPath().back()->getInsertBufferDelay();
 					delay = max(delay, (dataarrtime - datareqtime));
-					path->getEndPonitClkPath().back()->setInsertBufferDelay(delay);
+					path->getEndPonitClkPath().back()->setInsertBufferDelay(delay*1.01);
 				}
 			}
 		}
@@ -4417,6 +4433,7 @@ void ClockTree::CheckTiming_givFile()
     printf("----------------- " CYAN"Check Constraint " RESET"--------------------\n");
     //-- Read Tc/DCC/Leader Info ----------------------------------------------
     readDCCVTAFile( "./setting/DccVTA.txt", 0 ) ;
+	//readDCCVTAFile( "./setting/BufInsert.txt", 1 ) ;
     bool   fail = 0 ;
 	double slack_aging = 0;
 	double slack_fresh = 0;
@@ -4509,6 +4526,7 @@ void ClockTree::readDCCVTAFile( string filename, int status )
 	
 	if( status == 3 )//Only read Tc from DccVTA.txt
 	{
+		printf("Only reading Tc..\n");
 		token >> tc >> this->_tc ;
 		this->_besttc = this->_tc       ;
 		return;
@@ -4544,6 +4562,7 @@ void ClockTree::readDCCVTAFile( string filename, int status )
 	}
 	else if( status == 1 )//Read Inserted Buffers from ./setting/buf.txt
 	{
+		printf("Reading Tc and buf insertion\n");
 		token >> tc >> this->_tc;
 		this->_besttc = this->_tc;
 		while( getline( file, line ) )
