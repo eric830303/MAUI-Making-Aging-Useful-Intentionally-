@@ -108,6 +108,9 @@ int main(int argc, char **argv)
 	endtime = chrono::steady_clock::now();
 	preprocesstime = chrono::duration_cast<chrono::duration<double>>(endtime - starttime);
 	
+	//---- Mask -------------------------------------------------------
+	circuit.dccPlacementByMasked();
+	
 	//---- Do other Fuction --------------------------------------------
 	if( !circuit.DoOtherFunction() ) return 0;
 	
@@ -117,8 +120,7 @@ int main(int argc, char **argv)
 	//circuit.clockGatingCellReplacement();
 	circuit.clockgating();
     
-    //---- Mask -------------------------------------------------------
-    circuit.dccPlacementByMasked();
+	
     
 	
 	cout << "---------------------------------------------------------------------------\n";

@@ -4022,7 +4022,7 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
         printClkNodeFeature( clknode, doDCCVTA );
 		
 		if( clknode->ifClockGating()  && doDCCVTA )
-			printf( YELLOW"Gated Cell (p = %3.2f)" RST, clknode->getGatingProbability());
+			printf( YELLOW"Gated(p=%3.2f)" RST, clknode->getGatingProbability());
 		if( clknode->ifInsertBuffer()  && doDCCVTA )
 			printf( YELLOW"Buf (d = %f)" RST, clknode->getInsertBufferDelay());
         if( clknode->ifMasked() )
@@ -4041,7 +4041,7 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
         printClkNodeFeature( clknode, doDCCVTA );
 		
 		if( clknode->ifClockGating()  && doDCCVTA )
-			printf( YELLOW"Gated Cell (p = %3.2f)" RST, clknode->getGatingProbability());
+			printf( YELLOW"Gated(p=%3.2f)" RST, clknode->getGatingProbability());
 		if( clknode->ifInsertBuffer()  && doDCCVTA )
 			printf( YELLOW"Buf (d = %f)" RST, clknode->getInsertBufferDelay());
         if( clknode->ifMasked() )
@@ -4060,7 +4060,7 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
 		printClkNodeFeature( clknode, doDCCVTA );
 		
 		if( clknode->ifClockGating()  && doDCCVTA )
-			printf( YELLOW"Gated Cell (p = %3.2f)" RST, clknode->getGatingProbability());
+			printf( YELLOW"Gated(p=%3.2f)" RST, clknode->getGatingProbability());
 		if( clknode->ifInsertBuffer()  && doDCCVTA )
 			printf( YELLOW"Buf (d = %f)" RST, clknode->getInsertBufferDelay());
 		if( clknode->ifMasked() )
@@ -4416,9 +4416,7 @@ void ClockTree::CheckTiming_givFile()
 {
     printf("----------------- " CYAN"Check Constraint " RESET"--------------------\n");
     //-- Read Tc/DCC/Leader Info ----------------------------------------------
-	string filename = "./setting/DccVTA.txt";
-	printf( "Checking: " RED"%s\n" RST, filename.c_str());
-    readDCCVTAFile( filename, 0 ) ;
+    readDCCVTAFile( "./setting/DccVTA.txt", 0 ) ;
     bool   fail = 0 ;
 	double slack_aging = 0;
 	double slack_fresh = 0;
@@ -4505,7 +4503,7 @@ void ClockTree::readDCCVTAFile( string filename, int status )
 	
 	long    BufID       = 0   ;
 	int     BufVthLib   = -1  ;
-	double  BufDCC      = 0.5 ;
+	double  BufDCC      = this->DC_N;
 	double  SleepProb   = 0   ;
 	double  bufdelay    = 0   ;
 	
@@ -4523,8 +4521,10 @@ void ClockTree::readDCCVTAFile( string filename, int status )
 		{
 			istringstream   token( line ) ;
 			token >> BufID >> BufVthLib >> BufDCC  >> SleepProb;
+			//printf("%ld %d %2.1f %3.2f\n", BufID, BufVthLib, BufDCC, SleepProb);
 			ClockTreeNode *buffer = searchClockTreeNode( BufID ) ;
-			assert(buffer);
+			if( !buffer ) cout << "Fail finding " << BufID << endl;
+			
 			if( BufDCC != this->DC_N && BufDCC != -1 && BufDCC != 0 ){
 				buffer->setIfPlaceDcc(true);
 				buffer->setDccType( BufDCC )    ;

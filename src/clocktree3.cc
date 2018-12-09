@@ -259,7 +259,7 @@ void ClockTree::bufinsertionbyfile()
 void ClockTree::clockgating()
 {
 	//this->SortCPbySlack( 0 /*Do not consider DCC*/, 0);
-	cout << this->_program_ctl << endl;
+	
 	if( this->_program_ctl != 8 ) return;
 	for( auto pptr: this->_pathlist )
 	{
@@ -292,17 +292,11 @@ void ClockTree::clockgating()
 	int index = 1 ;
 	map <string, CTN*> nodes = this->_buflist;
 	nodes.insert( _ffsink.begin(), _ffsink.end() );
-	printf("Gated Cells (" RED"Before" RST" minimization by recursive):\n");
-	for( auto const &node: nodes )
-	{
-		if( node.second->ifClockGating() == 0 ) continue;
-		printf("\t%d. node(%5ld), prob = %3.2f\n", index, node.second->getNodeNumber(), node.second->getGatingProbability() );
-		index++;
-	}
-	
 	
 	this->calBufInserOrClockGating(1);//0:Buf insertion, 1:Clock gating
-	this->GatedCellRecursive( this->_clktreeroot, 0.1 );
+	double thd = 0;
+	cin >> thd ;
+	this->GatedCellRecursive( this->_clktreeroot, thd );
 	
 	FILE *fPtr;
 	string filename = "./clock_gating.txt";
