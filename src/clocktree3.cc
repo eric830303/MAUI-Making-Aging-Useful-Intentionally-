@@ -271,7 +271,8 @@ void ClockTree::bufinsertionbyfile()
 
 void ClockTree::clockgating()
 {
-	//this->SortCPbySlack( 0 /*Do not consider DCC*/, 0);
+	this->_tc = this->_tcAfterAdjust;
+	this->SortCPbySlack( 0 /*Do not consider DCC*/, 0);
 	
 	if( this->_program_ctl != 8 ) return;
 	for( auto pptr: this->_pathlist )
@@ -297,7 +298,6 @@ void ClockTree::clockgating()
 			CTN* node = stClkPath.back();
 			node->setIfClockGating(1);
 			node->setGatingProbability( genRandomNum("float", this->_gplowbound, this->_gpupbound, 2) );
-			//node->setGatingProbability( 0.9 );
 		}
 	}
 	
@@ -365,7 +365,7 @@ void ClockTree::GatedCellRecursive( CTN* node, double thred )
 		for( auto const & path: this->_pathlist )
 		{
 			if( path->getPathType() == NONE || path->getPathType() == PItoPO || path->getPathType() == FFtoPO ) continue;
-			if( UpdatePathTiming( path, 0, 0 ,1 ) < 0 )
+			if( UpdatePathTiming( path, 0, 0 ,1, 0 ) < 0 )
 			{
 				node->setIfClockGating(0);
 				node->setGatingProbability(0);

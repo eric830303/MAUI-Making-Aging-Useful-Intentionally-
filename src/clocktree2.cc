@@ -553,7 +553,7 @@ bool ClockTree::SolveCNFbyMiniSAT( double tc, bool ifDeploy )
                 if( findnode != nullptr )
                 {
                     findnode->setIfPlaceDcc(1)      ;
-                    findnode->setDccType(stoi(strspl.at(loop)), stoi(strspl.at(loop + 1)));
+                    findnode->setDccType(stoi(strspl.at(loop)), stoi(strspl.at(loop + 1)),this->DC_1, this->DC_2, this->DC_N, this->DC_3 );
                     this->_dcclist.insert(pair<string, CTN *> (findnode->getGateData()->getGateName(), findnode));
                 }
                 else

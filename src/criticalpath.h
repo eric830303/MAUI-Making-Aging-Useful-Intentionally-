@@ -79,7 +79,7 @@ public:
 	
 	//-- Setter methods ----------------------------------------------------------------------
     ClockTreeNode & setVTACtr(bool b)                           { this->_ifVTACtr       = b     ; return *this ;}
-	ClockTreeNode & setDccType(int, int) ;
+	ClockTreeNode & setDccType(int, int, double DC_1=0.2, double DC_2=0.4, double DC_N=0.5, double DC_3=0.8) ;
     ClockTreeNode & setDC(double DC)                            { this->_DC             = DC    ; return *this ;}//only used in -print=path mode
     ClockTreeNode & setVthType(int Lib)                         { this->_VthType        = Lib   ; return *this ;}//only used in -print=path mode
     ClockTreeNode & setDccType(double type)                     { this->_dcctype        = type  ; return *this ;}

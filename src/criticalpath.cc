@@ -27,16 +27,16 @@
 // 11 => 80% DCC
 //
 /////////////////////////////////////////////////////////////////////
-ClockTreeNode & ClockTreeNode::setDccType(int Lowbit, int Highbit)
+ClockTreeNode & ClockTreeNode::setDccType(int Lowbit, int Highbit, double DC_1, double DC_2, double DC_N, double DC_3 )
 {
     if( Highbit > 0 && Lowbit > 0 )//11
-        this->_dcctype = 0.8 ;
+        this->_dcctype = DC_3 ;
     else if( Highbit < 0 && Lowbit > 0)//01
-        this->_dcctype = 0.2 ;
+        this->_dcctype = DC_1 ;
     else if( Highbit > 0 && Lowbit < 0)//10
-        this->_dcctype = 0.4 ;
+        this->_dcctype = DC_2 ;
     else if( Highbit < 0 && Lowbit < 0)//00
-        this->_dcctype = 0.5 ;
+        this->_dcctype = DC_N ;
         /*
 	if((bit1 > 0) && (bit2 > 0))
 		this->_dcctype = 0.8;

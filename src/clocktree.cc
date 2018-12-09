@@ -3060,7 +3060,7 @@ void ClockTree::updateAllPathTiming(void)
                     if( findnode != nullptr )
                     {
                         findnode->setIfPlaceDcc(1)      ;
-                        findnode->setDccType(stoi(strspl.at(loop)), stoi(strspl.at(loop + 1)));
+                        findnode->setDccType(stoi(strspl.at(loop)), stoi(strspl.at(loop + 1)), this->DC_1, this->DC_2, this->DC_N, this->DC_3 );
                         this->_dcclist.insert(pair<string, ClockTreeNode *> (findnode->getGateData()->getGateName(), findnode));
                         //printf("[Info] Insert DCC\n");
                     }
@@ -4098,113 +4098,39 @@ void ClockTree::printFFtoFF_givFile(CriticalPath *path, bool doDCCVTA, bool agin
 
 void ClockTree::printPI_PO_givFile(CriticalPath *path, bool doDCCVTA, bool aging )
 {
-    //-- Check ---------------------------------------------------------------
-    if( path == NULL || path->getPathType() == NONE || path->getPathType() == FFtoFF ) return ;
-    
-    //-- Declaratio -----------------------------------------------------------
-    vector<ClockTreeNode*> vClkPath     ;
-    double          buftime      = 0    ;
-    double          req_time     = 0    ;
-    double          avl_time     = 0    ;
-    GateData*       gatePtr      = NULL ;
-    if( path->getPathType() == PItoFF ) vClkPath = path->getEndPonitClkPath()  ;
-    if( path->getPathType() == FFtoPO ) vClkPath = path->getStartPonitClkPath();
-    
-    //-- Preprocess -----------------------------------------------------------
-    if( path->getPathType() == PItoFF ) printf("PathType: " YELLOW"PItoFF\n" RESET );
-    if( path->getPathType() == FFtoPO ) printf("PathType: " YELLOW"FFtoPO\n" RESET );
-    bool    MeetDCC_right  = false  ;
-    bool    MeetVTA_right  = false  ;
-    double  DC_right       = 0.5    ;
-    double  minbuf_right   = 9999   ;
-    int     LibIndex_right = -1     ;
-    double  DCCLib_R       = -1     ;
-    bool    DCC_R          = false  ;
-    double  DCC_R_Type     = 0.5    ;
-    double  agr            = 1.0    ;
-    for( const auto clknode:vClkPath )
-    {
-        gatePtr     = clknode->getGateData() ;
-        //-- First Meet DCC -------------------------------------------------
-        if( !MeetDCC_right && doDCCVTA && clknode->ifPlacedDcc() )
-        {
-            MeetDCC_right = true ;
-            DC_right      = clknode->getDccType() ;
-            DCC_R         = 1 ;
-            DCC_R_Type    = clknode->getDccType();
-            //-- Clknode is both inserted DCC and header
-            if( clknode->getIfPlaceHeader() )
-            {
-                DCCLib_R = clknode->getVTAType() ;
-                if( this->_dc_formulation )
-                {
-                    if(      DC_right == this->DC_1 ) DC_right = this->DC_1_age ;
-                    else if( DC_right == this->DC_2 ) DC_right = this->DC_2_age ;
-                    else if( DC_right == this->DC_3 ) DC_right = this->DC_3_age ;
-                }
-            }
-            //-- DCC is ahead of leader
-            else if( !MeetVTA_right )
-                DCCLib_R = -1 ;
-            //-- DCC is behind leader
-            else if( MeetVTA_right )
-            {
-                DCCLib_R = LibIndex_right ;
-				if( this->_dc_formulation )
-				{
-					if(      DC_right == this->DC_1 ) DC_right = this->DC_1_age ;
-					else if( DC_right == this->DC_2 ) DC_right = this->DC_2_age ;
-					else if( DC_right == this->DC_3 ) DC_right = this->DC_3_age ;
-				}
-            }
-        }
-        //-- First Meet Header -------------------------------------------------
-        if( !MeetVTA_right && doDCCVTA && clknode->getIfPlaceHeader() ){
-            MeetVTA_right = true ;
-            LibIndex_right= clknode->getVTAType() ;
-        }
-        
-        if( clknode != vClkPath.back() ){
-            buftime = gatePtr->getGateTime()+gatePtr->getWireTime() ;
-            if( clknode != this->_clktreeroot ) minbuf_right = min( minbuf_right, buftime );
-        }
-        else{
-            buftime = gatePtr->getWireTime() ;
-            LibIndex_right = -1 ;
-        }
-    
-        agr         = (aging)? (getAgingRate_givDC_givVth( DC_right, LibIndex_right )):(1) ;
-        buftime    *= agr     ;
-        req_time   += buftime ;
-        
-        printClkNodeFeature( clknode, doDCCVTA );
-        if( clknode->ifMasked() )
-            printf( "%3ld(%.2f,%d," GREEN"%.4f" RESET"," RED"X" RESET")--", clknode->getNodeNumber(), DC_right, LibIndex_right, buftime );
-        else
-            printf( "%3ld(%.2f,%d," GREEN"%.4f" RESET"," GRN"O" RESET")--", clknode->getNodeNumber(), DC_right, LibIndex_right, buftime );
-    }
-    printf( "=> " YELLOW"End " RESET"Clk Path\n");
-        
-    //-- A DCC Exist along rifht clk path ----------------------------------------------------
-    if( DCC_R && doDCCVTA )
-    {
-        double dcc_agr = (aging)? getAgingRate_givDC_givVth( 0.5, DCCLib_R ):(1) ;
-        double dcc_delay = 0 ;
-        if( DCC_R_Type == 0.2 )
-            dcc_delay = minbuf_right * dcc_agr * DCCDELAY20PA ;
-        else if( DCC_R_Type == 0.4 )
-            dcc_delay = minbuf_right * dcc_agr * DCCDELAY40PA ;
-        else if( DCC_R_Type == 0.5 || DCC_R_Type == 0 || DCC_R_Type == -1 )
-            dcc_delay = minbuf_right * dcc_agr * DCCDELAY50PA ;
-        else if( DCC_R_Type == 0.8 )
-            dcc_delay = minbuf_right * dcc_agr * DCCDELAY80PA ;
-        
-        req_time += dcc_delay ;
-         
-        printf("DCC: %.1f, %f (Fresh), %f (Aging), %f (dcc_agr) \n", DCC_R_Type, minbuf_right, dcc_delay, dcc_agr );
-    }
-    //-- Print Timing -------------------------------------------------
-    this->printPathSlackTiming(path, avl_time, req_time, aging );
+	//-- Check ----------------------------------------------------------------
+	if( path == NULL || path->getPathType() == FFtoFF || path->getPathType() == PItoPO ) return ;
+	
+	//-- Assignment -----------------------------------------------------------
+	vector<ClockTreeNode*> ClkPath ;
+	if( path->getPathType() == FFtoPO )
+		ClkPath = path->getStartPonitClkPath() ;
+	if( path->getPathType() == PItoFF )
+		ClkPath = path->getEndPonitClkPath() ;
+	
+	
+	UpdatePathTiming( path, 1, 1, 1, 1 );
+	//-- Declaration ---------------------------------------------------------
+	printf( "PathType: " YELLOW"PItoFF or FFtoPO\n" RESET );
+	ClockTreeNode* clknode = NULL ;
+	
+	//-- Right Part (Only Print) ---------------------------------------------
+	for( long i = 0; i < ClkPath.size(); i++ )
+	{
+		clknode  = ClkPath.at(i) ;
+		printClkNodeFeature( clknode, doDCCVTA );
+		
+		if( clknode->ifClockGating()  && doDCCVTA )
+			printf( YELLOW"Gated(p=%3.2f)" RST, clknode->getGatingProbability());
+		if( clknode->ifInsertBuffer()  && doDCCVTA )
+			printf( YELLOW"Buf (d = %f)" RST, clknode->getInsertBufferDelay());
+		if( clknode->ifMasked() )
+			printf( "%3ld(%.2f,%2d," GRN"%f" RST"," RED"X" RST")---",clknode->getNodeNumber(), clknode->getDC(), clknode->getVthType(),clknode->getBufTime() );
+		else
+			printf( "%3ld(%.2f,%2d," GRN"%f" RST"," GRN"O" RST")---",clknode->getNodeNumber(), clknode->getDC(), clknode->getVthType(),clknode->getBufTime() );
+	}
+	printf( "  => " YELLOW"End " RESET"Clk Path\n");
+	this->printPathSlackTiming( path, path->getCi(), path->getCj(), aging );
 }
 
 

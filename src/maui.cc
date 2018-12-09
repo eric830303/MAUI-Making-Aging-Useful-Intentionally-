@@ -203,9 +203,9 @@ int main(int argc, char **argv)
 	
 	midtime = chrono::steady_clock::now();
 	// Insert buffers with the given "optimal Tc"
-	circuit.bufferInsertion();
-	circuit.minimizeBufferInsertion();
-	circuit.minimizeBufferInsertion2();
+	//circuit.bufferInsertion();
+	//circuit.minimizeBufferInsertion();
+	//circuit.minimizeBufferInsertion2();
 	endtime = chrono::steady_clock::now();
 	bufinstime = chrono::duration_cast<chrono::duration<double>>(endtime - midtime);
 	totaltime = chrono::duration_cast<chrono::duration<double>>(endtime - starttime);
