@@ -273,6 +273,7 @@ void ClockTree::clockgating()
 		if( edClkPath.back()->ifClockGating() )
 		{
 			edClkPath.back()->setIfClockGating(0);
+			edClkPath.back()->setGatingProbability(0);
 			printf("Stop clockgatinh at pptr(%ld)\n", pptr->getPathNum() );
 			break;
 		}
@@ -351,7 +352,25 @@ void ClockTree::GatedCellRecursive( CTN* node, double thred )
 		}
 		node->setIfClockGating(1);
 		node->setGatingProbability( min_prob );
+		
+		//After trying insert gated cell, checking timing
+		this->_tc = this->_tcAfterAdjust;
+		for( auto const & path: this->_pathlist )
+		{
+			if( path->getPathType() == NONE || path->getPathType() == PItoPO || path->getPathType() == FFtoPO ) continue;
+			if( UpdatePathTiming( path, 0, 0 ,1 ) < 0 )
+			{
+				node->setIfClockGating(0);
+				node->setGatingProbability(0);
+				//recover
+				for( auto const &child: node->getChildren() )
+					if( child->getGatingProbability() != 0 )
+						child->setIfClockGating(1);
+			}
+		}
+		
 		//After trying insert gated cell, checking
+		/*
 		for( auto const & path: this->_pathlist )
 		{
 			if( path->getPathType() == NONE || path->getPathType() == PItoPO || path->getPathType() == FFtoPO ) continue;
@@ -369,9 +388,6 @@ void ClockTree::GatedCellRecursive( CTN* node, double thred )
 				}
 			}//endclkpath
 		}//pathlist
+		 */
 	}//thred
 }
-
-
-
-

@@ -71,10 +71,10 @@ private:
 public:
     //-- Constructor/Destructor -------------------------------------------------------------
 	ClockTreeNode(ClockTreeNode *parent = nullptr, long num = 0, long depth = -1, int used = -1, int type = 0,
-	              bool look = 0, bool placedcc = 0, bool gating = 0, double probability = 0)
+	              bool look = 0, bool placedcc = 0)
 	             : _parent(parent), _nodenum(num), _depth(depth), _ifused(used), _dcctype(type), _iflook(look),
-				   _ifplacedcc(placedcc), _ifclkgating(gating), _gatingprobability(probability),
-				   _ifinsertbuf(0), _insbufdelay(0), _ifplaceHeader(0), _LibIndex(-1), _buftime(0), _DC(0.5), _VthType(-1), _ifMasked(true), _ifVTACtr(false) { }
+				   _ifplacedcc(placedcc), _ifclkgating(0), _gatingprobability(0),
+				   _ifinsertbuf(0), _insbufdelay(0), _ifplaceHeader(0), _LibIndex(-1), _buftime(0), _DC(0), _VthType(-1), _ifMasked(true), _ifVTACtr(false) { }
 	~ClockTreeNode() {}
 	
 	//-- Setter methods ----------------------------------------------------------------------

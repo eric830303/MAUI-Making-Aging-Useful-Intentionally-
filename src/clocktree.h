@@ -309,14 +309,14 @@ public:
     void    adjustOriginTc( void )        ;
     void    updateAllPathTiming( void )   ;
     void    tcRecheck( void )             ;
-    double  calClkLaten_givDcc_givVTA   (vector<CTN*> path, double DC, CTN* Loc1, int Lib, CTN* Loc2, bool aging=true );
+    double  calClkLaten_givDcc_givVTA   (vector<CTN*> path, double DC, CTN* Loc1, int Lib, CTN* Loc2, bool aging=true, bool set=false );
     
     //---Dumper ------------------------------------------------------------------
 	void    dumpClauseToCnfFile(void)      ;
     void    dumpCNF(void)                  ;
     void    dumpToFile(void)               ;
     void    dumpDccVTALeaderToFile(void)   ;
-    double  UpdatePathTiming(CP*,bool update = true, bool DCCVTA = true, bool aging = true );
+    double  UpdatePathTiming(CP*,bool update = true, bool DCCVTA = true, bool aging = true, bool set = false );
     
 	//---Printer --------------------------------------------------------------------
 	void    printDccList(void)          ;
