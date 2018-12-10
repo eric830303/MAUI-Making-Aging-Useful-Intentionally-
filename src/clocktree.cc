@@ -562,36 +562,36 @@ void ClockTree::readParameter()
                     printf( CYAN"\t[Note] " RESET"H-Vth denotes clock buffer with 'high     Vth'\n" );
                     printf( CYAN"\t------------------------- Nominal Clk buffer -----------------------------------\n" );
                     
-                    printf( CYAN"\t20 %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_1, -1, true )        - 1 )*100 );
-                    printf( CYAN"\t40 %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_2, -1, true )        - 1 )*100 );
-                    printf( CYAN"\t50 %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_N, -1, true )        - 1 )*100 );
-                    printf( CYAN"\t80 %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_3, -1, true )        - 1 )*100 );
-                    printf( CYAN"\t2x %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_1_age, -1, true )   - 1 )*100 );
-                    printf( CYAN"\t4x %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_2_age, -1, true )   - 1 )*100 );
-                    printf( CYAN"\t8x %%, N-Vth: Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_3_age, -1, true )   - 1 )*100 );
+                    printf( CYAN"\tAgr (DC=%3.2f, N-Vth) " RESET"= %4.1f %%\n", this->DC_1,  	(getAgingRate_givDC_givVth( DC_1, -1, true )     - 1 )*100 );
+                    printf( CYAN"\tAgr (DC=%3.2f, N-Vth) " RESET"= %4.1f %%\n", this->DC_2,		(getAgingRate_givDC_givVth( DC_2, -1, true )     - 1 )*100 );
+                    printf( CYAN"\tAgr (DC=%3.2f, N-Vth) " RESET"= %4.1f %%\n", this->DC_N, 	(getAgingRate_givDC_givVth( DC_N, -1, true )     - 1 )*100 );
+                    printf( CYAN"\tAgr (DC=%3.2f, N-Vth) " RESET"= %4.1f %%\n", this->DC_3,		(getAgingRate_givDC_givVth( DC_3, -1, true )     - 1 )*100 );
+                    printf( CYAN"\tAgr (DC=%3.2f, N-Vth) " RESET"= %4.1f %%\n", this->DC_1_age,	(getAgingRate_givDC_givVth( DC_1_age, -1, true ) - 1 )*100 );
+                    printf( CYAN"\tAgr (DC=%3.2f, N-Vth) " RESET"= %4.1f %%\n", this->DC_2_age,	(getAgingRate_givDC_givVth( DC_2_age, -1, true ) - 1 )*100 );
+                    printf( CYAN"\tAgr (DC=%3.2f, N-Vth) " RESET"= %4.1f %%\n", this->DC_3_age,	(getAgingRate_givDC_givVth( DC_3_age, -1, true ) - 1 )*100 );
                     
                     
                     printf( CYAN"\t------------------------- High-Vth Clk buffer -----------------------------------\n" );
-                    printf( CYAN"\t20 %%, H-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( DC_1,  0, true )               - 1 )*100 );
-                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_1,  0 ) - 2*(tof) - 1 )*100 );
+                    printf( CYAN"\tGain(DC=%3.2f, H-Vth) " RESET"= %4.1f %%\n", this->DC_1,  	(getAgingRate_givDC_givVth( DC_1, 0, true )     - 1 )*100 );
+                    printf( CYAN"\tAgr (DC=%3.2f, H-Vth) " RESET"= %4.1f %%\n", this->DC_1,  	(getAgingRate_givDC_givVth( DC_1, 0 ) - 2*(tof) - 1 )*100 );
                     
-                    printf( CYAN"\t40 %%, H-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( DC_2,  0, true )               - 1 )*100 );
-                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_2,  0 ) - 2*(tof) - 1 )*100 );
+                    printf( CYAN"\tGain(DC=%3.2f, H-Vth) " RESET"= %4.1f %%\n", this->DC_2,		(getAgingRate_givDC_givVth( DC_2,  0, true )               - 1 )*100 );
+                    printf( CYAN"\tAgr (DC=%3.2f, H-Vth) " RESET"= %4.1f %%\n", this->DC_2,		(getAgingRate_givDC_givVth( DC_2,  0 ) - 2*(tof) - 1 )*100 );
                     
-                    printf( CYAN"\t50 %%, H-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( DC_N,  0, true )               - 1 )*100 );
-                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_N,  0 ) - 2*(tof) - 1 )*100 );
+                    printf( CYAN"\tGain(DC=%3.2f, H-Vth) " RESET"= %4.1f %%\n", this->DC_N,		(getAgingRate_givDC_givVth( DC_N,  0, true )               - 1 )*100 );
+                    printf( CYAN"\tAgr (DC=%3.2f, H-Vth) " RESET"= %4.1f %%\n", this->DC_N,		(getAgingRate_givDC_givVth( DC_N,  0 ) - 2*(tof) - 1 )*100 );
                     
-                    printf( CYAN"\t80 %%, H-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( DC_3,  0, true )               - 1 )*100 );
-                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_3,  0 ) - 2*(tof) - 1 )*100 );
+                    printf( CYAN"\tGain(DC=%3.2f, H-Vth) " RESET"= %4.1f %%\n", this->DC_3,		(getAgingRate_givDC_givVth( DC_3,  0, true )               - 1 )*100 );
+                    printf( CYAN"\tAgr (DC=%3.2f, H-Vth) " RESET"= %4.1f %%\n", this->DC_3,		(getAgingRate_givDC_givVth( DC_3,  0 ) - 2*(tof) - 1 )*100 );
                     
-                    printf( CYAN"\t2x %%, H-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( DC_1_age,  0, true )               - 1 )*100 );
-                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_1_age,  0 ) - 2*(tof) - 1 )*100 );
+                    printf( CYAN"\tGain(DC=%3.2f, H-Vth) " RESET"= %4.1f %%\n", this->DC_1_age,	(getAgingRate_givDC_givVth( DC_1_age,  0, true )               - 1 )*100 );
+                    printf( CYAN"\tAgr (DC=%3.2f, H-Vth) " RESET"= %4.1f %%\n", this->DC_1_age,	(getAgingRate_givDC_givVth( DC_1_age,  0 ) - 2*(tof) - 1 )*100 );
                     
-                    printf( CYAN"\t4x %%, H-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( DC_2_age,  0, true )               - 1 )*100 );
-                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_2_age,  0 ) - 2*(tof) - 1 )*100 );
+                    printf( CYAN"\tGain(DC=%3.2f, H-Vth) " RESET"= %4.1f %%\n", this->DC_2_age, (getAgingRate_givDC_givVth( DC_2_age,  0, true )               - 1 )*100 );
+                    printf( CYAN"\tAgr (DC=%3.2f, H-Vth) " RESET"= %4.1f %%\n", this->DC_2_age, (getAgingRate_givDC_givVth( DC_2_age,  0 ) - 2*(tof) - 1 )*100 );
                     
-                    printf( CYAN"\t8x %%, H-Vth: Delay gain " RESET"= %4.1f %%\n", (getAgingRate_givDC_givVth( DC_3_age,  0, true )               - 1 )*100 );
-                    printf( CYAN"\t             Aging rate " RESET"= %4.1f %%\n",  (getAgingRate_givDC_givVth( DC_3_age,  0 ) - 2*(tof) - 1 )*100 );
+                    printf( CYAN"\tGain(DC=%3.2f, H-Vth) " RESET"= %4.1f %%\n", this->DC_3_age, (getAgingRate_givDC_givVth( DC_3_age,  0, true )               - 1 )*100 );
+                    printf( CYAN"\tAgr (DC=%3.2f, H-Vth) " RESET"= %4.1f %%\n", this->DC_3_age, (getAgingRate_givDC_givVth( DC_3_age,  0 ) - 2*(tof) - 1 )*100 );
                     
                 }
             }
@@ -2732,7 +2732,7 @@ double ClockTree::calClkLaten_givDcc_givVTA(    vector<ClockTreeNode *> clkpath,
     double  buftime       = 0     ;
 	double  bufferinsert  = 0     ;
 	double  sleep_prob    = 0     ;
-    
+	
     for( int i = 0 ; i < clkpath.size() ; i++ )
     {
 		if( clkpath.at(i) != clkpath.back() )
@@ -2778,20 +2778,27 @@ double ClockTree::calClkLaten_givDcc_givVTA(    vector<ClockTreeNode *> clkpath,
 					else if( DC == this->DC_2 )    DC = this->DC_2_age ;
 				}
             }
+			DC = DC*( 1 - sleep_prob );
+			agingrate = getAgingRate_givDC_givVth( DC, LibVthType, 0, caging ) ;
         }
         //--- First meet VTA Header -------------------------------------------------
         if( ( clkpath.at(i) == Header ) && (!meetHeader) )
         {
             LibVthType = LibIndex ;//Need modifys
             meetHeader = true ;
+			agingrate = getAgingRate_givDC_givVth( DC, LibVthType, 0, caging ) ;
         }
 		if( clkpath.at(i)->ifClockGating() )
+		{
 			sleep_prob = clkpath.at(i)->getGatingProbability() ;
+			DC = DC*( 1 - sleep_prob );
+			agingrate = getAgingRate_givDC_givVth( DC, LibVthType, 0, caging ) ;
+		}
 			
 		
 		//-- Timing calculation ------------------------------------------------------
-		double duty_cycle = DC*( 1 - sleep_prob );
-		agingrate = getAgingRate_givDC_givVth( duty_cycle, LibVthType, 0, caging ) ;
+		//double duty_cycle = DC*( 1 - sleep_prob );
+		//agingrate = getAgingRate_givDC_givVth( duty_cycle, LibVthType, 0, caging ) ;
 		buftime *= agingrate;
 		
 		bufferinsert = ( clkpath.at(i)->ifInsertBuffer() )?( clkpath.at(i)->getInsertBufferDelay() ) : (0);;
@@ -2801,7 +2808,7 @@ double ClockTree::calClkLaten_givDcc_givVTA(    vector<ClockTreeNode *> clkpath,
         laten += ( buftime + bufferinsert ) ;
 		
 		if( set )
-			clkpath.at(i)->setDC(duty_cycle).setVthType(LibVthType).setGatingProbability(sleep_prob).setBufTime(buftime);
+			clkpath.at(i)->setDC(DC).setVthType(LibVthType).setGatingProbability(sleep_prob).setBufTime(buftime);
     }
     
     if( DCCLoc != NULL )
@@ -3881,9 +3888,6 @@ double ClockTree::getAgingRate_givDC_givVth( double DC, int Libindex, bool initi
     }else//initial
     {
 		
-		double conv_Vth = this->calConvergentVth( DC, this->getExp() ) ;//80% DCC
-		double Sv = 0;
-		
         if( Libindex == -1 )
         {
 			if( caging == false )				return 1 ;
@@ -3896,6 +3900,8 @@ double ClockTree::getAgingRate_givDC_givVth( double DC, int Libindex, bool initi
             else if( DC == this->DC_3_age )     return this->_nominal_agr[6] ;
 			else
 			{
+				double conv_Vth = this->calConvergentVth( DC, this->getExp() ) ;//80% DCC
+				double Sv = 0;
 				double Vth_offset = this->getBaseVthOffset() ;
 				Sv = this->calSv( DC , this->getBaseVthOffset(), conv_Vth ) ;
 				double Vth_nbti = ( 1 - Sv*Vth_offset )*( 0.0039/2 )*( pow( DC*( 315360000 ), this->getExp() ) );
@@ -3915,6 +3921,8 @@ double ClockTree::getAgingRate_givDC_givVth( double DC, int Libindex, bool initi
             else if( DC == this->DC_2_age )     return this->_HTV_agr[6] ;
 			else
 			{
+				double conv_Vth = this->calConvergentVth( DC, this->getExp() ) ;//80% DCC
+				double Sv = 0;
 				double Vth_offset = this->getLibList().at(Libindex)->_VTH_OFFSET + this->getBaseVthOffset() ;
 				Sv = this->calSv( DC , this->getLibList().at(Libindex)->_VTH_OFFSET + this->getBaseVthOffset(), conv_Vth ) ;
 				double Vth_nbti = ( 1 - Sv*Vth_offset )*( 0.0039/2 )*( pow( DC*( 315360000 ), this->getExp() ) );
