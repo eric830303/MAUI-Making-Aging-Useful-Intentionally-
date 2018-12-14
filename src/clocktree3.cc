@@ -297,7 +297,8 @@ void ClockTree::clockgating()
 		{
 			CTN* node = stClkPath.back();
 			node->setIfClockGating(1);
-			node->setGatingProbability( genRandomNum("float", this->_gplowbound, this->_gpupbound, 2) );
+			//node->setGatingProbability( genRandomNum("float", this->_gplowbound, this->_gpupbound, 2) );
+			node->setGatingProbability( 0.9 );
 		}
 	}
 	
@@ -320,18 +321,20 @@ void ClockTree::clockgating()
 	for( auto const &node: nodes )
 	{
 		if( node.second->ifClockGating() == 0 ) continue;
-		printf("\t%d. node(%5ld), prob = %3.2f\n", index, node.second->getNodeNumber(), node.second->getGatingProbability() );
-		fprintf( fPtr, "%ld %f\n", node.second->getNodeNumber(), node.second->getGatingProbability() );
-		index++;
+		else
+		{
+			node.second->setGatingProbability( genRandomNum("float", this->_gplowbound, this->_gpupbound, 2) );
+			printf("\t%d. node(%5ld), prob = %3.2f\n", index, node.second->getNodeNumber(), node.second->getGatingProbability() );
+			fprintf( fPtr, "%ld %f\n", node.second->getNodeNumber(), node.second->getGatingProbability() );
+			index++;
+		}
 	}
 	this->calBufInserOrClockGating(1);//0:Buf insertion, 1:Clock gating
 }
 
 void ClockTree::GatedCellRecursive( CTN* node, double thred )
 {
-	if( node == NULL ) return;
-	if( node->ifClockGating() ) return;
-	if( node->getChildren().size() == 0 ) return;
+	if( !node || node->ifClockGating() || node->getChildren().size() == 0 ) return;
 	
 	double min_prob = 1;//sleep prob
 	double ctr		= 0;
@@ -365,7 +368,7 @@ void ClockTree::GatedCellRecursive( CTN* node, double thred )
 		for( auto const & path: this->_pathlist )
 		{
 			if( path->getPathType() == NONE || path->getPathType() == PItoPO || path->getPathType() == FFtoPO ) continue;
-			if( UpdatePathTiming( path, 0, 0 ,1, 0 ) < 0 )
+			if( UpdatePathTiming( path, 0, 0, 1, 0 ) < 0 )
 			{
 				node->setIfClockGating(0);
 				node->setGatingProbability(0);
@@ -375,26 +378,5 @@ void ClockTree::GatedCellRecursive( CTN* node, double thred )
 						child->setIfClockGating(1);
 			}
 		}
-		
-		//After trying insert gated cell, checking
-		/*
-		for( auto const & path: this->_pathlist )
-		{
-			if( path->getPathType() == NONE || path->getPathType() == PItoPO || path->getPathType() == FFtoPO ) continue;
-			
-			for( auto const &node: path->getEndPonitClkPath() )
-			{
-				if( node->ifClockGating() )
-				{
-					//Cancel lifting
-					node->setIfClockGating(0);
-					node->setGatingProbability(0);
-					//recover
-					for( auto const &child: node->getChildren() )
-						if( child->getGatingProbability() ) child->setIfClockGating(1);
-				}
-			}//endclkpath
-		}//pathlist
-		 */
 	}//thred
 }

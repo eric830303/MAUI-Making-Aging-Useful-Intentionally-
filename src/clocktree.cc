@@ -2005,17 +2005,17 @@ long ClockTree::timingConstraint(void)
 		if( (path->getPathType() != PItoFF) && (path->getPathType() != FFtoPO) && (path->getPathType() != FFtoFF) ) continue;
 		//--No DCC insertion ----------------------------------
 		this->timingConstraint_ndoDCC_ndoVTA( path, 1 );//Aging
-		this->timingConstraint_ndoDCC_ndoVTA( path, 0 );//Fresh
+		//this->timingConstraint_ndoDCC_ndoVTA( path, 0 );//Fresh
         this->timingConstraint_ndoDCC_doVTA(  path, 1 );//Aging
-		this->timingConstraint_ndoDCC_doVTA(  path, 0 );//Fresh
+		//this->timingConstraint_ndoDCC_doVTA(  path, 0 );//Fresh
         
 		//--DCC Insertion && VTA ------------------------------
         if( this->_placedcc )
         {
             this->timingConstraint_doDCC_ndoVTA( path, 1 );//Aging
-			this->timingConstraint_doDCC_ndoVTA( path, 0 );//Fresh
+			//this->timingConstraint_doDCC_ndoVTA( path, 0 );//Fresh
             this->timingConstraint_doDCC_doVTA(  path, 1 );//Aging
-			this->timingConstraint_doDCC_doVTA(  path, 0 );//Fresh
+			//this->timingConstraint_doDCC_doVTA(  path, 0 );//Fresh
         }
         
 	}
