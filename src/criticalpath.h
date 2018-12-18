@@ -62,8 +62,8 @@ private:
 	long            _nodenum, _depth;
 	int             _ifused,_LibIndex;
 	bool            _iflook , _ifplacedcc, _ifclkgating, _ifinsertbuf, _ifplaceHeader, _ifMasked, _ifVTACtr ;
-    double          _dcctype,_gatingprobability, _insbufdelay ;
-    double          _buftime ;//only use in -print=path mode
+    double          _dcctype, _gatingprobability, _insbufdelay ;
+    double          _buftime, _PVrate;//only use in -print=path mode
     double          _DC      ;
     int             _VthType ;
 	vector<ClockTreeNode *> _children;
@@ -74,7 +74,7 @@ public:
 	              bool look = 0, bool placedcc = 0)
 	             : _parent(parent), _nodenum(num), _depth(depth), _ifused(used), _dcctype(type), _iflook(look),
 				   _ifplacedcc(placedcc), _ifclkgating(0), _gatingprobability(0),
-				   _ifinsertbuf(0), _insbufdelay(0), _ifplaceHeader(0), _LibIndex(-1), _buftime(0), _DC(0), _VthType(-1), _ifMasked(true), _ifVTACtr(false) { }
+				   _ifinsertbuf(0), _insbufdelay(0), _ifplaceHeader(0), _LibIndex(-1), _buftime(0), _DC(0), _VthType(-1), _ifMasked(true), _ifVTACtr(false), _PVrate(1) { }
 	~ClockTreeNode() {}
 	
 	//-- Setter methods ----------------------------------------------------------------------
@@ -97,6 +97,7 @@ public:
 	ClockTreeNode & setDepth(long depth)                        { this->_depth          = depth ; return *this ;}
     ClockTreeNode & setBufTime(double b)                        { this->_buftime        = b     ; return *this ;}//only used in -print=path mode
     ClockTreeNode & setifMasked(bool b)                         { this->_ifMasked       = b     ; return *this ;}
+	ClockTreeNode & setPVrate(double r)                         { this->_PVrate         = r     ; return *this ;}
 	//-- Getter methods ---------------------------------------------------------------------
     bool    ifMasked(void)                             { return _ifMasked   ; }
     double  getDC(void)                                { return _DC         ; }//only used in -print=path mode
@@ -110,6 +111,7 @@ public:
 	double  getInsertBufferDelay(void)                 { return _insbufdelay; }
 	double  getGatingProbability(void)                 { return _gatingprobability; }
     double  getBufTime()                               { return _buftime    ; }//only used in -print=path mode
+	double  getPVrate()                                { return _PVrate     ; }
 	vector<ClockTreeNode *>& getChildren(void)         { return _children   ; }
     ClockTreeNode   *getParent(void)                   { return _parent     ; }
     GateData        *getGateData(void)                 { return &_gatedata  ; }
@@ -140,6 +142,7 @@ private:
 	double _ci, _cj, _clkuncertainty;
 	double _tcq, _dij, _tsu, _tindelay;
 	double _arrivaltime, _requiredtime, _slack;
+	double _dij_PVrate;
 	vector<ClockTreeNode *> _startpclkpath, _endpclkpath;
 	vector<GateData *> _gatelist;
 	vector<vector<ClockTreeNode *> > _dccplacementcandi;
@@ -153,7 +156,7 @@ public:
 				 double arrivaltime = 0, double requiredtime = 0, double slack = 0)
 				: _startpointname(sname), _pathtype(type), _pathnum(pathnum), _endpointname(ename), _ci(ci),
 				_cj(cj), _clkuncertainty(clkuncert), _tcq(tcq), _dij(dij), _tsu(tsu), _tindelay(tindelay),
-				_arrivaltime(arrivaltime), _requiredtime(requiredtime), _slack(slack) {}
+				_arrivaltime(arrivaltime), _requiredtime(requiredtime), _slack(slack), _dij_PVrate(1) {}
 	~CriticalPath(void);
 	
 	//-- Setter methods ----------------------------------------------------------------------
@@ -161,6 +164,7 @@ public:
 	void    setPathType(int type)                   { this->_pathtype       = type          ; }
 	void    setCi(double ci)                        { this->_ci             = ci            ; }
 	void    setCj(double cj)                        { this->_cj             = cj            ; }
+	void    setPVrate(double r)                     { this->_dij_PVrate     = r             ; }
 	void    setTcq(double tcq)                      { this->_tcq            = tcq           ; }
 	void    setDij(double dij)                      { this->_dij            = dij           ; }
 	void    setTsu(double tsu)                      { this->_tsu            = tsu           ; }
@@ -183,6 +187,7 @@ public:
 	double  getTcq(void)                            { return _tcq                           ; }
 	double  getDij(void)                            { return _dij                           ; }
 	double  getTsu(void)                            { return _tsu                           ; }
+	double  getPVrate(void)                         { return _dij_PVrate                    ; }
 	double  getTinDelay(void)                       { return _tindelay                      ; }
 	double  getClockUncertainty(void)               { return _clkuncertainty                ; }
 	double  getArrivalTime(void)                    { return _arrivaltime                   ; }

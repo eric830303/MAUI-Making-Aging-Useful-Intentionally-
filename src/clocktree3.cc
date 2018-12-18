@@ -324,7 +324,10 @@ void ClockTree::clockgating()
 		else
 		{
 			node.second->setGatingProbability( genRandomNum("float", this->_gplowbound, this->_gpupbound, 2) );
-			printf("\t%d. node(%5ld), prob = %3.2f\n", index, node.second->getNodeNumber(), node.second->getGatingProbability() );
+			if( node.second->getChildren().size() == 0 )
+				printf("\t%d. node(%5ld), " RED"FF " RST" prob = %3.2f\n", index, node.second->getNodeNumber(), node.second->getGatingProbability() );
+			else
+				printf("\t%d. node(%5ld), " GRN"Buf" RST" prob = %3.2f\n", index, node.second->getNodeNumber(), node.second->getGatingProbability() );
 			fprintf( fPtr, "%ld %f\n", node.second->getNodeNumber(), node.second->getGatingProbability() );
 			index++;
 		}
@@ -350,15 +353,10 @@ void ClockTree::GatedCellRecursive( CTN* node, double thred )
 	
 	if( ctr/node->getChildren().size() >= thred && node != this->_clktreeroot )
 	{
-		//printf( "Try clknode(%5ld), 1 <= %ld:\n", node->getNodeNumber(), node->getChildren().size() );
 		for( auto const &child: node->getChildren() )
 		{
 			//Temporarily remove the gated cell
-			if( child->ifClockGating() ){
-				child->setIfClockGating(0);
-				//printf( RED"\tCG-cell " RST"clknode(%5ld, p = %3.2f)\n", child->getNodeNumber(), child->getGatingProbability() );
-			}//else
-				//printf("\t        clknode(%5ld)\n", child->getNodeNumber() );
+			if( child->ifClockGating() )	child->setIfClockGating(0);
 		}
 		node->setIfClockGating(1);
 		node->setGatingProbability( min_prob );
@@ -370,6 +368,7 @@ void ClockTree::GatedCellRecursive( CTN* node, double thred )
 			if( path->getPathType() == NONE || path->getPathType() == PItoPO || path->getPathType() == FFtoPO ) continue;
 			if( UpdatePathTiming( path, 0, 0, 1, 0 ) < 0 )
 			{
+				printf("Cannot merged to node(%ld) due to timing error\n", node->getNodeNumber() );
 				node->setIfClockGating(0);
 				node->setGatingProbability(0);
 				//recover
@@ -380,3 +379,117 @@ void ClockTree::GatedCellRecursive( CTN* node, double thred )
 		}
 	}//thred
 }
+
+void ClockTree::PV_simulation()
+{
+	int    ins_ctr 		= 1000;
+	double ins_Tc  		= 0;
+	double fresh_Tc		= 0;
+	double aged_Tc		= 0;
+	double *vTc    		= NULL;
+	double *vImp        = NULL;
+	double *vDei        = NULL;
+	double min_Tc 		=  10000;
+	double max_Tc 		= -10000;
+	double min_Imp 		=  10000;
+	double max_Imp 		= -10000;
+	string color  		= RED;
+	
+	readDCCVTAFile();//read Tc, DCCs, CGs and leaders from file named with "./setting/DccVTA.txt".
+	
+
+	printf("Tc = %f\n", this->_besttc );
+	printf("How many instances you wanna create?\nYour loop times: ");
+	cin >> ins_ctr ;
+	printf("Tc_fresh for the benchmark?\nYour Tc_fresh: ");
+	cin >> fresh_Tc ;
+	printf("Tc_aged for the benchmark?\nYour Tc_aged: ");
+	cin >> aged_Tc ;
+	vTc = new double [ ins_ctr + 1 ];
+	vImp= new double [ ins_ctr + 1 ];
+	vDei= new double [ ins_ctr + 1 ];
+	
+	FILE 	*fTc, *fIpv;
+	string fileTc  =  "./MonteOfTc"  + to_string( this->_tc ) + ".txt";
+	string fileIpv =  "./MonteOfIpv" + to_string( this->_tc ) + ".txt";
+	fTc = fopen(  fileTc.c_str(), "w" );
+	fIpv= fopen( fileIpv.c_str(), "w" );
+	
+	
+	
+	for( int i = 1; i <= ins_ctr; i++ )
+	{
+		this->PV_instantiation( 99, 101 );
+		ins_Tc = this->PV_Tc_estimation();
+		vTc[i] = ins_Tc;
+		min_Tc = ( ins_Tc < min_Tc )? ( ins_Tc ):( min_Tc );
+		max_Tc = ( ins_Tc > max_Tc )? ( ins_Tc ):( max_Tc );
+		vDei[i]= ( ins_Tc - this->_besttc )/( this->_besttc )*100 ;
+		vImp[i]= ( 1 - ( vTc[i] - fresh_Tc )/( aged_Tc - fresh_Tc ) )*100;
+		min_Imp = ( vImp[i] < min_Imp )? ( vImp[i] ):( min_Imp );
+		max_Imp = ( vImp[i] > max_Imp )? ( vImp[i] ):( max_Imp );
+		
+		
+		color = ( vDei[i] < 0 )? ( RED ):( GRN" " );
+		
+		printf("%4d. Tc = %f (Imp = %3.2f%%), Devi. rate = %s%3.2f%%\n" RST, i, vTc[i], vImp[i], color.c_str(), vDei[i] );
+		fprintf( fTc,  "%f\n", ins_Tc  );
+		fprintf( fIpv, "%f\n", vImp[i] );
+	}
+	printf("Min Tc = %f (Imp = %3.2f%%)\n", min_Tc, min_Imp );
+	printf("Max Tc = %f (Imp = %3.2f%%)\n", max_Tc, max_Imp );
+	
+	
+}
+
+
+void ClockTree::PV_instantiation( double LB, double UB )
+{
+	for( auto const &node: this->_buflist )
+		node.second->setPVrate( genRandomNum( "float", LB, UB, 2 ) );
+	
+	for( auto const &node: this->_ffsink )
+		node.second->setPVrate( genRandomNum( "float", LB, UB, 2 ) );
+	
+	for( auto const &path: this->_pathlist )
+		path->setPVrate( genRandomNum( "float", LB, UB, 2 ) );
+}
+
+double ClockTree::PV_Tc_estimation()
+{
+	this->_tc = this->_besttc;//from "./setting/DccVTA.txt
+	double Tc_PV = this->_tc;
+	double Min_slack = 999 ;
+	double slk		 = 0   ;
+	CP*    CP_minslk = NULL;
+	
+	for( auto const &path: this->_pathlist )
+	{
+		if( path->getPathType() == NONE || path->getPathType() == PItoPO ) continue;
+		slk = UpdatePathTiming( path, 1, 1, 1, 1, 1 );
+		
+		if( slk < Min_slack )
+		{
+			Min_slack = slk ;
+			CP_minslk = path;
+		}
+		
+	}
+	if( Min_slack < 0 )
+		Tc_PV -= Min_slack - 0.0000001;
+	else//Min_slack > 0
+		Tc_PV -= ( Min_slack - 0.0000001 );
+	
+	return Tc_PV;
+}
+
+
+
+
+
+
+
+
+
+
+

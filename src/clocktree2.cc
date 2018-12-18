@@ -55,6 +55,12 @@ bool ClockTree::DoOtherFunction()
 		this->Analysis();
 		return 0 ;
 	}
+	//-------- Analysis ------------------------------------------------
+	if( this->_program_ctl == 8  )
+	{
+		this->PV_simulation();
+		return 0 ;
+	}
     //-------- print DCC ------------------------------------------------
     if( this->ifprintCP() )
     {

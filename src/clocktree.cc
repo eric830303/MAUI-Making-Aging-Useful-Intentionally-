@@ -640,7 +640,8 @@ int ClockTree::checkParameter(int argc, char **argv, string *message)
 			this->_tcrecheck = 1;								// Recheck Tc
         else if(strcmp(argv[loop], "-print=path") == 0)
 			this->_program_ctl = 1;
-            //this->_printpath = 1;
+		else if(strcmp(argv[loop], "-PV") == 0)
+			this->_program_ctl = 8;
         else if(strcmp(argv[loop], "-dump=SAT_CNF") == 0)
 			this->_program_ctl = 2;
             //this->_dumpCNF   = 1;
@@ -2108,7 +2109,7 @@ double ClockTree::timingConstraint_ndoDCC_ndoVTA( CriticalPath *path, bool aging
  Pata:
     if update is false => The func is used to calculate the slack of pipeline
  -------------------------------------------------------------------------------------*/
-double ClockTree::UpdatePathTiming( CriticalPath * path, bool update, bool DCCVTA, bool aging, bool set )
+double ClockTree::UpdatePathTiming( CriticalPath * path, bool update, bool DCCVTA, bool aging, bool set, bool cPV )
 {
     //-- (Inserted) DCC Info -----------------------------------------------
     ClockTreeNode *stDCCLoc = NULL ;
@@ -2152,21 +2153,23 @@ double ClockTree::UpdatePathTiming( CriticalPath * path, bool update, bool DCCVT
 
     int PathType = path->getPathType() ;
     if( PathType == FFtoFF || PathType == FFtoPO )
-        ci = this->calClkLaten_givDcc_givVTA( path->getStartPonitClkPath(), stDCCType, stDCCLoc, stLibIndex, stHeader, aging, set );//Has consider aging
+        ci = this->calClkLaten_givDcc_givVTA( path->getStartPonitClkPath(), stDCCType, stDCCLoc, stLibIndex, stHeader, aging, set, cPV );//Has consider aging
     if( PathType == FFtoFF || PathType == PItoFF )
-        cj = this->calClkLaten_givDcc_givVTA( path->getEndPonitClkPath(),   edDCCType, edDCCLoc, edLibIndex, edHeader, aging, set );//Has consider aging
+        cj = this->calClkLaten_givDcc_givVTA( path->getEndPonitClkPath(),   edDCCType, edDCCLoc, edLibIndex, edHeader, aging, set, cPV );//Has consider aging
 	
     //------- Avl/Require time -------------------------------------------------------------
     double Tsu = (aging)? (path->getTsu() * this->_agingtsu) : (path->getTsu()) ;
     double Tcq = (aging)? (path->getTcq() * this->_agingtcq) : (path->getTcq()) ;
     double Dij = (aging)? (path->getDij() * this->_agingdij) : (path->getDij()) ;
+	Dij = (cPV)? ( Dij*path->getPVrate() ):( Dij );
+	//cout << path->getPVrate() << endl;
     req_time = cj + Tsu + this->_tc;
     avl_time = ci + path->getTinDelay() + Tcq + Dij ;
     
     newslack = req_time - avl_time  ;
     
     
-    if( update )
+    if( update || set )
     {
         path->setCi(ci)                  ;
         path->setCj(cj)                  ;
@@ -2711,7 +2714,8 @@ double ClockTree::calClkLaten_givDcc_givVTA(    vector<ClockTreeNode *> clkpath,
                                             double DCCType,  ClockTreeNode *DCCLoc,
                                             int    LibIndex, ClockTreeNode *Header,
 											bool   caging,//consider aging
-											bool   set
+											bool   set,
+											bool   cPV
                                             )
 {
     //-- Check ------------------------------------------------------------------------
@@ -2797,15 +2801,13 @@ double ClockTree::calClkLaten_givDcc_givVTA(    vector<ClockTreeNode *> clkpath,
 			
 		
 		//-- Timing calculation ------------------------------------------------------
-		//double duty_cycle = DC*( 1 - sleep_prob );
-		//agingrate = getAgingRate_givDC_givVth( duty_cycle, LibVthType, 0, caging ) ;
 		buftime *= agingrate;
 		
 		bufferinsert = ( clkpath.at(i)->ifInsertBuffer() )?( clkpath.at(i)->getInsertBufferDelay() ) : (0);;
 		//bufferinsert *= agingrate; buffer insetion do not consider aging
 	
-		
-        laten += ( buftime + bufferinsert ) ;
+		if( !cPV )	laten += ( buftime + bufferinsert ) ;
+		else		laten += ( buftime + bufferinsert )*( clkpath.at(i)->getPVrate() );
 		
 		if( set )
 			clkpath.at(i)->setDC(DC).setVthType(LibVthType).setGatingProbability(sleep_prob).setBufTime(buftime);
@@ -3927,6 +3929,7 @@ double ClockTree::getAgingRate_givDC_givVth( double DC, int Libindex, bool initi
 				Sv = this->calSv( DC , this->getLibList().at(Libindex)->_VTH_OFFSET + this->getBaseVthOffset(), conv_Vth ) ;
 				double Vth_nbti = ( 1 - Sv*Vth_offset )*( 0.0039/2 )*( pow( DC*( 315360000 ), this->getExp() ) );
 				double agr = (1 + Vth_nbti*2 + 2*this->getLibList().at(Libindex)->_VTH_OFFSET )  ;
+				
 				return agr;
 			}
         }

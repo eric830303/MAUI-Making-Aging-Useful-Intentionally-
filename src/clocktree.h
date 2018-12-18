@@ -304,19 +304,19 @@ public:
     void    writeClause_givDCC( string &clause, CTN* node, double DCCType  );
     void    writeClause_givVTA( string &clause, CTN* node, int    LibIndex );
     //---VTA-related -------------------------------------------------------------
-    double  getAgingRate_givDC_givVth( double DC, int LibIndex, bool initial = false, bool caging = true ) ;
+	double  getAgingRate_givDC_givVth( double DC, int LibIndex, bool initial = 0, bool cAging = 1 ) ;
     //---Timing-related ----------------------------------------------------------
     void    adjustOriginTc( void )        ;
     void    updateAllPathTiming( void )   ;
     void    tcRecheck( void )             ;
-    double  calClkLaten_givDcc_givVTA   (vector<CTN*> path, double DC, CTN* Loc1, int Lib, CTN* Loc2, bool aging=true, bool set=false );
+    double  calClkLaten_givDcc_givVTA   (vector<CTN*> path, double DC, CTN* Loc1, int Lib, CTN* Loc2, bool aging=1, bool set=0, bool cPV=0 );
     
     //---Dumper ------------------------------------------------------------------
 	void    dumpClauseToCnfFile(void)      ;
     void    dumpCNF(void)                  ;
     void    dumpToFile(void)               ;
     void    dumpDccVTALeaderToFile(void)   ;
-    double  UpdatePathTiming(CP*,bool update = true, bool DCCVTA = true, bool aging = true, bool set = false );
+    double  UpdatePathTiming(CP*,bool update = true, bool DCCVTA = true, bool aging = true, bool set = false, bool cPV = false );
     
 	//---Printer --------------------------------------------------------------------
 	void    printDccList(void)          ;
@@ -397,6 +397,10 @@ public:
 	//---- "-CG" clock gating--------------------------------------------------------------
 	void    clockgating();
 	void    GatedCellRecursive( CTN*, double thred = 0.5 );
+	//---- "-PV" -------------------------------------------------------------------
+	void	PV_simulation();
+	void    PV_instantiation( double LB=97, double UB=103 );
+	double	PV_Tc_estimation();
 	
 };
 
