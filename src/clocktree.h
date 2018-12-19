@@ -399,7 +399,7 @@ public:
 	void    GatedCellRecursive( CTN*, double thred = 0.5 );
 	//---- "-PV" -------------------------------------------------------------------
 	void	PV_simulation();
-	void    PV_instantiation( double LB=97, double UB=103 );
+	void    PV_instantiation( double LB=9700, double UB=10300, int precision=4);
 	double	PV_Tc_estimation();
 	
 };

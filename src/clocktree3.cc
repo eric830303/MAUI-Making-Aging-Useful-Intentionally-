@@ -388,7 +388,9 @@ void ClockTree::PV_simulation()
 	double aged_Tc		= 0;
 	double *vTc    		= NULL;
 	double *vImp        = NULL;
-	double *vDei        = NULL;
+	double Imp_noPV     = 0;
+	
+	
 	double min_Tc 		=  10000;
 	double max_Tc 		= -10000;
 	double min_Imp 		=  10000;
@@ -407,52 +409,103 @@ void ClockTree::PV_simulation()
 	cin >> aged_Tc ;
 	vTc = new double [ ins_ctr + 1 ];
 	vImp= new double [ ins_ctr + 1 ];
-	vDei= new double [ ins_ctr + 1 ];
+	Imp_noPV = ( 1 - ( this->_tc - fresh_Tc )/( aged_Tc - fresh_Tc ) )*100;
+	FILE *fdis;
+	string fileDis=  "./Imp_dist.txt";
 	
-	FILE 	*fTc, *fIpv;
-	string fileTc  =  "./MonteOfTc"  + to_string( this->_tc ) + ".txt";
-	string fileIpv =  "./MonteOfIpv" + to_string( this->_tc ) + ".txt";
-	fTc = fopen(  fileTc.c_str(), "w" );
-	fIpv= fopen( fileIpv.c_str(), "w" );
+	fdis= fopen( fileDis.c_str(), "w" );
 	
 	
 	
 	for( int i = 1; i <= ins_ctr; i++ )
 	{
-		this->PV_instantiation( 99, 101 );
+		this->PV_instantiation( 9900, 10100, 4 );
 		ins_Tc = this->PV_Tc_estimation();
 		vTc[i] = ins_Tc;
 		min_Tc = ( ins_Tc < min_Tc )? ( ins_Tc ):( min_Tc );
 		max_Tc = ( ins_Tc > max_Tc )? ( ins_Tc ):( max_Tc );
-		vDei[i]= ( ins_Tc - this->_besttc )/( this->_besttc )*100 ;
 		vImp[i]= ( 1 - ( vTc[i] - fresh_Tc )/( aged_Tc - fresh_Tc ) )*100;
 		min_Imp = ( vImp[i] < min_Imp )? ( vImp[i] ):( min_Imp );
 		max_Imp = ( vImp[i] > max_Imp )? ( vImp[i] ):( max_Imp );
 		
 		
-		color = ( vDei[i] < 0 )? ( RED ):( GRN" " );
+		color = ( vImp[i] < Imp_noPV )? ( RED ):( GRN );
 		
-		printf("%4d. Tc = %f (Imp = %3.2f%%), Devi. rate = %s%3.2f%%\n" RST, i, vTc[i], vImp[i], color.c_str(), vDei[i] );
-		fprintf( fTc,  "%f\n", ins_Tc  );
-		fprintf( fIpv, "%f\n", vImp[i] );
+		printf("%4d. Tc = %f (Imp = %s%3.2f%%" RST")\n" RST, i, vTc[i], color.c_str(), vImp[i] );
 	}
-	printf("Min Tc = %f (Imp = %3.2f%%)\n", min_Tc, min_Imp );
-	printf("Max Tc = %f (Imp = %3.2f%%)\n", max_Tc, max_Imp );
+	printf("Min Tc = %f (Max Imp = %3.2f%%)\n", min_Tc, max_Imp );
+	printf("Max Tc = %f (Min Imp = %3.2f%%)\n", max_Tc, min_Imp );
 	
+	int grand_ctr = 50;
+	double *Imp_index = new double [ grand_ctr+1 ];
+	int *Imp_ctr = new int [ grand_ctr+1 ];
 	
+	double grand_size = ( max_Imp - min_Imp )/grand_ctr;
+	for( int i = 0; i <= grand_ctr; i++ )
+	{
+		Imp_index[i] = min_Imp + i*grand_size;
+		Imp_ctr[i] = 0;//Initialize
+	}
+	
+	for( int i = 1; i <= ins_ctr; i++ )
+	{
+		int index = ( vImp[i] - min_Imp )/grand_size;
+		Imp_ctr[ index ]++;
+	}
+
+	//----------- Dump -----------------------------------------
+	for( int i = 0; i < grand_ctr; i++ )
+		fprintf( fdis, "%f %d\n", Imp_index[i], Imp_ctr[i] );
+	
+	delete [] Imp_index ;
+	delete [] Imp_ctr ;
 }
 
 
-void ClockTree::PV_instantiation( double LB, double UB )
+void ClockTree::PV_instantiation( double LB, double UB, int precision )
 {
+	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+	default_random_engine generator (seed);
+	normal_distribution<double> distribution( (LB+UB)/2, (UB-LB)/2 );
+	double rate = 0;
+	
 	for( auto const &node: this->_buflist )
-		node.second->setPVrate( genRandomNum( "float", LB, UB, 2 ) );
-	
+	{
+		do{
+			rate = distribution(generator) ;
+		}
+		while( rate < LB || rate > UB );
+		rate /= pow(10, precision);
+		//cout << rate << endl;
+		node.second->setPVrate( rate );
+	}
 	for( auto const &node: this->_ffsink )
-		node.second->setPVrate( genRandomNum( "float", LB, UB, 2 ) );
+	{
+		do{
+			rate = distribution(generator) ;
+		}
+		while( rate < LB || rate > UB );
+		rate /= pow(10, precision);
+		node.second->setPVrate( rate );
+	}
 	
+	double avg_rate = 0;
 	for( auto const &path: this->_pathlist )
-		path->setPVrate( genRandomNum( "float", LB, UB, 2 ) );
+	{
+		avg_rate = 0;
+		for( int i = 0; i < 10; i++ )
+		{
+			do{
+				rate = distribution(generator) ;
+			}
+			while( rate < LB || rate > UB );
+			avg_rate += rate ;
+		}
+		avg_rate /= 10;
+		avg_rate /= pow(10, precision);
+		path->setPVrate( avg_rate );
+		 
+	}
 }
 
 double ClockTree::PV_Tc_estimation()

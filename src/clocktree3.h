@@ -16,4 +16,6 @@
 #include "clocktree.h"
 #include <fcntl.h>
 #include <sys/wait.h>
+#include <chrono>
+#include <random>
 #endif /* clocktree3_hpp */
