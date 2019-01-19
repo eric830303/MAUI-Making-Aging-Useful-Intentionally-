@@ -419,6 +419,7 @@ void ClockTree::PV_simulation()
 	
 	for( int i = 1; i <= ins_ctr; i++ )
 	{
+		printf("%4d ", i );
 		this->PV_instantiation( 9900, 10100, 4 );
 		ins_Tc = this->PV_Tc_estimation();
 		vTc[i] = ins_Tc;
@@ -431,7 +432,7 @@ void ClockTree::PV_simulation()
 		
 		color = ( vImp[i] < Imp_noPV )? ( RED ):( GRN );
 		
-		printf("%4d. Tc = %f (Imp = %s%3.2f%%" RST")\n" RST, i, vTc[i], color.c_str(), vImp[i] );
+		printf("Tc = %f (Imp = %s%3.2f%%" RST")\n" RST, vTc[i], color.c_str(), vImp[i] );
 	}
 	printf("Min Tc = %f (Max Imp = %3.2f%%)\n", min_Tc, max_Imp );
 	printf("Max Tc = %f (Min Imp = %3.2f%%)\n", max_Tc, min_Imp );
@@ -532,7 +533,13 @@ double ClockTree::PV_Tc_estimation()
 		Tc_PV -= Min_slack - 0.0000001;
 	else//Min_slack > 0
 		Tc_PV -= ( Min_slack - 0.0000001 );
-	
+	if( CP_minslk )
+	{
+		string PathType = "PItoFF";
+		if( CP_minslk->getPathType() == FFtoFF ) PathType = "FFtoFF";
+		if( CP_minslk->getPathType() == FFtoPO ) PathType = "FFtoPO";
+		printf("\t MCP(%4ld, %s) \t", CP_minslk->getPathNum(), PathType.c_str() );
+	}
 	return Tc_PV;
 }
 
