@@ -144,7 +144,7 @@ bool isRealNumber(string str)
 // All combinations are stored in "comblist"
 //
 /////////////////////////////////////////////////////////////////////
-void combination(long loc, int total, int catchn, vector<long> gencomb, vector<vector<long> > *comblist)
+void combination(long loc, long int total, int catchn, vector<long> gencomb, vector<vector<long> > *comblist)
 {
 	gencomb.push_back(loc-1);
 	for( long loop = loc;loop <= (total-catchn) && (catchn > 0);loop++ )
@@ -167,3 +167,4 @@ void updateCombinationList(vector<long> *path, vector<vector<long> > *comblist)
 		for(long  loop2 = 0;loop2 < comblist->at(loop1).size();loop2++)
 			comblist->at(loop1).at(loop2) = path->at(comblist->at(loop1).at(loop2));
 }
+

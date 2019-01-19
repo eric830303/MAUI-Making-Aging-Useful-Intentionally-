@@ -27,18 +27,29 @@
 // 11 => 80% DCC
 //
 /////////////////////////////////////////////////////////////////////
-void ClockTreeNode::setDccType(int bit1, int bit2)
+ClockTreeNode & ClockTreeNode::setDccType(int Lowbit, int Highbit, double DC_1, double DC_2, double DC_N, double DC_3 )
 {
+    if( Highbit > 0 && Lowbit > 0 )//11
+        this->_dcctype = DC_3 ;
+    else if( Highbit < 0 && Lowbit > 0)//01
+        this->_dcctype = DC_1 ;
+    else if( Highbit > 0 && Lowbit < 0)//10
+        this->_dcctype = DC_2 ;
+    else if( Highbit < 0 && Lowbit < 0)//00
+        this->_dcctype = DC_N ;
+        /*
 	if((bit1 > 0) && (bit2 > 0))
-		this->_dcctype = 80;
+		this->_dcctype = 0.8;
 	else if((bit1 > 0) && (bit2 < 0))
-		this->_dcctype = 40;
+		this->_dcctype = 0.4;
 	else if((bit1 < 0) && (bit2 > 0))
-		this->_dcctype = 20;
+		this->_dcctype = 0.2;
 	else if((bit1 < 0) && (bit2 < 0))
-		this->_dcctype = 0;
+		this->_dcctype = 0.5;
 	else
-		this->_dcctype = -1;
+		this->_dcctype = 0.5;
+         */
+    return *this;
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -130,13 +141,13 @@ void CriticalPath::setDccPlacementCandidate(void)
 		// Path type: input to FF
 		case PItoFF:
 			for( auto const &nodeptr : this->_endpclkpath )
-				if( nodeptr->ifPlacedDcc() )
+				if( nodeptr->ifMasked() == false )
 					addDccPlacementCandidate(nodeptr, 1);
 			break;
 		// Path type: FF to output
 		case FFtoPO:
 			for( auto const &nodeptr : this->_startpclkpath )
-				if(nodeptr->ifPlacedDcc())
+				if( nodeptr->ifMasked() == false  )
 					addDccPlacementCandidate(nodeptr, 1);
 			break;
 		// Path type: FF to FF
@@ -150,19 +161,19 @@ void CriticalPath::setDccPlacementCandidate(void)
 				count++;
 				if( nodeptr == sameparent )
 					diffparentloc = count;
-				if( nodeptr->ifPlacedDcc() )
+				if( nodeptr->ifMasked() == false  )
 					addDccPlacementCandidate(nodeptr, 1);
 			}
 			// Deal the remain part of clock path
 			// Store every combination of DCC placement
 			for(long loop1 = diffparentloc;loop1 < this->_startpclkpath.size()-1;loop1++)
 			{
-				if(this->_startpclkpath.at(loop1)->ifPlacedDcc())
+				if(this->_startpclkpath.at(loop1)->ifMasked() == false )
 				{
 					addDccPlacementCandidate(this->_startpclkpath.at(loop1), 1);
 					for(long loop2 = diffparentloc;loop2 < this->_endpclkpath.size()-1;loop2++)
 					{
-						if(this->_endpclkpath.at(loop2)->ifPlacedDcc())
+						if(this->_endpclkpath.at(loop2)->ifMasked() == false )
 						{
 							addDccPlacementCandidate(this->_startpclkpath.at(loop1), 1);
 							addDccPlacementCandidate(this->_endpclkpath.at(loop2), 0)  ;
@@ -235,7 +246,7 @@ long CriticalPath::nodeLocationInClockPath( char who, ClockTreeNode *node )
 /////////////////////////////////////////////////////////////////////
 ClockTreeNode *CriticalPath::findLastSameParentNode(void)
 {
-	if(this->_pathtype != FFtoFF)
+	if( this->_pathtype != FFtoFF )
 		return nullptr;
 	ClockTreeNode *findnode = nullptr;
 	for( long loop = 0;;loop++ )
@@ -274,13 +285,41 @@ ClockTreeNode *CriticalPath::findDccInClockPath(char who)
 		return nullptr;
 	for(auto const &nodeptr : clkpath)
 	{
-		if(nodeptr->ifPlacedDcc())
+		if( nodeptr->ifPlacedDcc() )
 		{
 			findnode = nodeptr;
 			break;
 		}
 	}
 	return findnode;
+}
+/*---------------------------------------------------------------------------------
+ Func Name:
+    findVTAInClockPath
+ Intro:
+    Used in UpdateAllPathTiming
+-----------------------------------------------------------------------------------*/
+ClockTreeNode *CriticalPath::findVTAInClockPath(char who)
+{
+    ClockTreeNode *findnode = nullptr;
+    vector<ClockTreeNode *> clkpath;
+    // startpoint
+    if(who == 's')
+        clkpath = this->_startpclkpath;
+    // endpoint
+    else if(who == 'e')
+        clkpath = this->_endpclkpath;
+    else
+        return nullptr;
+    for(auto const &nodeptr : clkpath)
+    {
+        if( nodeptr->getVTAType() != -1 )
+        {
+            findnode = nodeptr;
+            break;
+        }
+    }
+    return findnode;
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -353,4 +392,14 @@ void CriticalPath::printDccPlacementCandidate(void)
 			cout << nodeptr->getNodeNumber() << " ";
 		cout << "\n";
 	}
+}
+
+void CriticalPath::coutPathType()
+{
+    if( this->getPathType() == FFtoFF )
+        cout << "FFtoFF" ;
+    else if( this->getPathType() == PItoFF )
+        cout << "PItoFF" ;
+    else if( this->getPathType() == FFtoPO )
+        cout << "FFtoPO" ;
 }

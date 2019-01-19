@@ -10,9 +10,9 @@ CXXFLAGS = -std=c++11 -g -w
 OBJDIR	:= obj
 BINDIR	:= bin
 SRCDIR	:= src
-SRC		:= $(wildcard $(SRCDIR)/*.cpp)
-INC		:= $(wildcard $(SRCDIR/*.cpp))
-OBJ		:= $(SRC:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)
+SRC		:= $(wildcard $(SRCDIR)/*.cc)
+INC		:= $(wildcard $(SRCDIR/*.cc))
+OBJ		:= $(SRC:$(SRCDIR)/%.cc=$(OBJDIR)/%.o)
 #CXXFLAGS += -Wall -g 
 
 
@@ -29,7 +29,7 @@ all: info $(EXE)
 $(EXE): $(OBJ)
 	@$(CXX) $(CXXFLAGS) -o $(EXE) $^
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(INC)
+$(OBJDIR)/%.o: $(SRCDIR)/%.cc $(INC)
 	@$(CXX) $(CXXFLAGS) -c $< -o $@
 
 #----------------- CLEAN --------------------------------------	
@@ -37,7 +37,7 @@ cleanall: clean deloutput
 	@printf "\033[32m[Info]:\033[0m Finish.\n"
 
 clean: clear
-	@printf "\033[32m[Info]:\033[0m Clean all exe files.\n"
+	@printf "\033[32m[Info]:\033[0m Clean all SAT and obj files.\n"
 	@rm -rf *.out $(EXE)
 	@rm -rf *_output
 clear:
@@ -46,7 +46,8 @@ clear:
 
 deloutput:
 	@printf "\033[32m[Info]:\033[0m Delete all output files.\n"
-	@rm -rf ./$(OUTPUTFILE)
+	@rm -rf *.out
+	@rm -rf *_output
 #--------------------- CHECK -----------------------------------
 info:
 	@clear
