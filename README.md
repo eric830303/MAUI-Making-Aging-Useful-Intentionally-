@@ -38,8 +38,8 @@ Here, we only introduce commonly-used arguments.
 
 2. Let our optimization framework only targets the specific groups of aging-critical paths.
 	* `-path=onlyff`: Our framework only optimizes the critical paths, starting from FFs to FFs.
-	* `-path=pi_ff`: Our framework optimizes the critical paths, starting from FFs to FFs, or starting from PI(primary input) to FFs.
-	* `-path=all` (default): Our framework targets all kinds of critical paths.
+	* `-path=pi_ff`: Our framework optimizes the critical paths, starting from FFs to FFs, and starting from PI(primary input) to FFs.
+	* `-path=all` (default): Our framework targets all groups of critical paths.
 
 3. `-nonVTA`: VTA denotes "Vth assignment" for the clock buffers. Our framework incorporates the techniques of DCC deployment and Vth assignment at default, for aging tolerance. Thus, `-nonVTA` forces the framework not to do Vth assignment for clock buffers.
 
