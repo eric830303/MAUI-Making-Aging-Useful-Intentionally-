@@ -2,20 +2,24 @@
 The program is the implementation of our framework "Making aging useful, intentionally" proposed in DATE
 
 ## Outline
-* How to run the program?
+* Preface
 * Introduction to the arguments in commandline
 * Introduction to the parameters in `/setting/Parameters.txt`
 * Example of running the program
 * How to analyze the experimental result?
 
-## How to run the program?
-* The executable is named `maui`
+## Preface
+* The executable is named `maui`.
+
+* The 2 executables of SAT solver are located in the dir `MINISATs`. One can be run on OSX, the other can be run on Linux.
+
+* You can ignore the existence of the directory `gnuplot/`, which contains the PVs (process variations) results of the benchmarks, after applying our framework. We upload the directory here, because there exist script of gnuplot to generate the figures.
 
 * Make sure that directories `obj/`, `src/`, `setting/` are located at the same path with `maui`.
 
-* Run `make` to compile/link the source/object codes in directories `src/` and `obj/`
+* Run `make` to compile/link the source/object codes in directories `src/` and `obj/`.
 
-* Here is the example of running the program, where the benchmark (i.e., timing report) is `s39418.rpt`
+* Here is the example of running the program, where the benchmark (i.e., timing report) is `s38417.rpt`
 
 	`./maui -path=onlyff -nonVTA s38417.rpt `
 
@@ -37,7 +41,7 @@ Here, we only introduce commonly-used arguments.
 
 4. `-nodcc`: The argument is similar to the above one `-nonVTA`. `-nondcc` forces the framework not to do DCC deployment.
 
-5. `-dc_for`: Let the framework considers the situations that, the duty cycles, generated from DCCs, are impacted by the aging of DCCs. For example, the duty cycle generated from an 80% DCC will not be exactly 80%, if the aging impact of DCC is considered.
+5. `-dc_for`: Let the framework consider the situations that, the duty cycles, generated from DCCs, are impacted by the aging of DCCs. For example, the duty cycle generated from an 80% DCC will not be exactly 80%, if the aging impact of DCC is considered.
 6.  `-CG`: Add clock gating in the framework.
 
 
@@ -59,14 +63,14 @@ If you wanna do the experiment with the following conditions:
 
 Hence, the corresponding command is as follows:
 
-`./maui -path=pi_ff -nonVTA -dc_for s38417.rpt`
+`./maui -path=onlyff -nonVTA -dc_for s38417.rpt`
 
 Then, if you wanna apply the technique of Vth assignment in the framework. The corresponding command:
 
-`./maui -path=pi_ff -dc_for s38417.rpt`
+`./maui -path=onlyff -dc_for s38417.rpt`
 
 Further, if you wanna see the influence of clock gating (i.e., `-CG`) on the experimental result. The corresponding command:
-`./maui -path=pi_ff -dc_for -CG s38417.rpt`
+`./maui -path=onlyff -dc_for -CG s38417.rpt`
 
 The results will be shown on the screen of your terminal. Moreover, the program will automatically generate a directory, named with `s38417_output`, which contains the files recording CNF clauses, resulting DCC deployments and leader selections.
 
