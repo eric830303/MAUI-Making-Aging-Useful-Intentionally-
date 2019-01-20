@@ -1,6 +1,10 @@
 # MAUI
 The program is the implementation of our framework "Making aging useful, intentionally" proposed in DATE
 
+## Contact
+1. Name: Tien-Hung, Tseng
+2. Email: eric830303.cs05g@g2.nctu.edu.tw 
+
 ## Outline
 * Preface
 * Introduction to the arguments in commandline
@@ -11,19 +15,19 @@ The program is the implementation of our framework "Making aging useful, intenti
 ## Preface
 * The executable is named `maui`.
 
-* The 2 executables of SAT solver are located in the dir `MINISATs`. One can be run on OSX, the other can be run on Linux.
+* The 2 executables of SAT solver are located in the dir `MINISATs/`. One can be run on OSX, the other can be run on Linux.
 
 * You can ignore the existence of the directory `gnuplot/`, which contains the PVs (process variations) results of the benchmarks, after applying our framework. We upload the directory here, because there exist script of gnuplot to generate the figures.
 
-* Make sure that directories `obj/`, `src/`, `setting/` are located at the same path with `maui`.
+* Make sure that directories `obj/`, `src/`, `setting/` are located at the same path with `maui`. The directory `obj/` does not exist here/github. You must create it youself by linux command `mkdir obj`.
 
-* Run `make` to compile/link the source/object codes in directories `src/` and `obj/`.
+* Run `make` to compile/link the source/object codes in directories `src/` and `obj/`. Also, while you are running `make`, the script will automatically detect the current platform (i.e., operating system), and put the proper executable of SAT solver from the `MINISATs/` to the current dir.
 
-* Here is the example of running the program, where the benchmark (i.e., timing report) is `s38417.rpt`
+* Run `make clean` to remove object codes in `obj/` 
 
-	`./maui -path=onlyff -nonVTA s38417.rpt `
+* Our program input is the timing report of the benchmark, e.g., `s38417.rpt`. I do not upload them here due to large file size. Please contact me if you need them.
 
-	Note that, the benchmark (e.g., `s38417.rpt`) must be placed at the same path with `maui`
+* The main output of our program is a directory, which contains the CNF clauses from iteration to iteration of binary search, and DCC deployment and high-Vth leader selection.
 
 ## Introduction to the arguments in commandline
 You can see all arguments by running `./maui -h` in the commandline. 
