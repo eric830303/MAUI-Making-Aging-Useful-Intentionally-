@@ -6,23 +6,18 @@ The program is the implementation of our framework "Making aging useful, intenti
 2. Email: eric830303.cs05g@g2.nctu.edu.tw 
 
 ## Outline
-* Preface
+* Files and Directories
 * Introduction to the arguments in commandline
 * Introduction to the parameters in `/setting/Parameters.txt`
 * Example of running the program
 * Process variations
 
-<<<<<<< HEAD
-## Preface
-* The executable is named `maui`.
+## Files and Directories
+* The executable is named `maui`
 
 * The 2 executables of SAT solver are located in the dir `MINISATs/`. One can be run on OSX, the other can be run on Linux.
 
 * You can ignore the existence of the directory `gnuplot/`, which contains the PVs (process variations) results of the benchmarks, after applying our framework. We upload the directory here, because there exist script of gnuplot to generate the figures.
-=======
-## Files and Directories?
-* The executable is named `maui`
->>>>>>> 325f44c
 
 * Make sure that directories `obj/`, `src/`, `setting/` are located at the same path with `maui`. The directory `obj/` does not exist here/github. You must create it youself by linux command `mkdir obj`.
 
@@ -95,22 +90,23 @@ After applying the our framework on `s38417.rpt` with the following cmd:
 
 A directory, named with `s38417_output/` is generated.
 
-![dir](./readme_fig/dir.jpg)
+<img src="./readme_fig/dir.jpg" width="400" height="220" />
 
 In the directory, the dcc deployments and leader selections are recoreded in the file `s38417_output/DccVTA_0.901800.txt`, where the last few characters `0.901800` represents the optimized clock period of the benchmark `s38417`.
 
-![dir](./readme_fig/files_in_dir.jpg)
+<img src="./readme_fig/files_in_dir.jpg" width="400" height="250" />
 
 Then, please copy the content in `s38417_output/DccVTA_0.901800.txt` to `setting/DccVTA.txt`, which the analysis utility of our program will read at default.
 
-![dir](./readme_fig/copy.jpg)
+<img src="./readme_fig/copy.jpg" width="530" height="40" />
+
 
 Then, do PV analysis with the following cmd:
 `./maui -path=onlyff -PV s38417.rpt`
 
 Then, there are some interaction between the user and the program--some inputs! (i.e, the count of Monte-Carlo instances, fresh Tc..etc)
 
-![dir](./readme_fig/PV_type.jpg)
+<img src="./readme_fig/PV_type.jpg" width="400" height="200" />
 
 The Tc\_fresh and Tc\_aged can be refered to the experimental results.
 
@@ -119,7 +115,7 @@ The Tc\_fresh and Tc\_aged can be refered to the experimental results.
 
 The output of the PV analysis utility is a file, name with `Imp_dist.txt`, meaning "improvement distribution"
 
-![dir](./readme_fig/Imp_dist.jpg) 
+<img src="./readme_fig/Imp_dist.jpg" width="400" height="240" />
 
 Then, you can use the gnuplot to plot the improment distributions of Monte-Carlo instances. The template of the gnuplot script (*.gp) can be refered to the dir `gnuplot/`
 
