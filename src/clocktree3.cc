@@ -309,6 +309,8 @@ void ClockTree::clockgating()
 	
 	this->calBufInserOrClockGating(1);//0:Buf insertion, 1:Clock gating
 	double thd = 0;
+    printf("Your merging threshold:");
+    
 	cin >> thd ;
 	this->GatedCellRecursive( this->_clktreeroot, thd );
 	
