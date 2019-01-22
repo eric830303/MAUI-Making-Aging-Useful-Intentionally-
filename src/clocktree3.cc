@@ -274,7 +274,7 @@ void ClockTree::clockgating()
 	this->_tc = this->_tcAfterAdjust;
 	this->SortCPbySlack( 0 /*Do not consider DCC*/, 0);
 	
-	if( this->_program_ctl != 8 ) return;
+	if( this->_program_ctl != 10 ) return;
 	for( auto pptr: this->_pathlist )
 	{
 		if( pptr->getPathType() == NONE || pptr->getPathType() == PItoPO ) continue;

@@ -644,8 +644,6 @@ int ClockTree::checkParameter(int argc, char **argv, string *message)
 			this->_program_ctl = 8;
         else if(strcmp(argv[loop], "-dump=SAT_CNF") == 0)
 			this->_program_ctl = 2;
-            //this->_dumpCNF   = 1;
-		
         else if(strcmp(argv[loop], "-dc_for") == 0)
             this->_dc_formulation = 1;
         else if(strcmp(argv[loop], "-checkFile") == 0)
@@ -662,7 +660,7 @@ int ClockTree::checkParameter(int argc, char **argv, string *message)
         else if(strcmp(argv[loop], "-print=Node") == 0)
 			this->_program_ctl = 6;
 		else if(strcmp(argv[loop], "-CG") == 0)
-			this->_program_ctl = 8;
+			this->_program_ctl = 10;
             //this->_printClkNode  = 1;
         else if(strcmp(argv[loop], "-aging=Senior") == 0)
             this->_usingSeniorAging = 1;
