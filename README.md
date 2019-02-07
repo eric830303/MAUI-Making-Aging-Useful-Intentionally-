@@ -6,12 +6,12 @@ The program is the implementation of our framework "Making aging useful, intenti
 2. Email: eric830303.cs05g@g2.nctu.edu.tw 
 
 ## Outline
-* [Files and Directories] (#1)
-* [Introduction to the arguments in commandline] (#2)
-* [Introduction to the parameters in `/setting/Parameters.txt`] (#3)
-* [Example of running the program] (#4)
-* [Process variations] (#5)
-* [Aging model] (#6)
+* [Files and Directories](#1)
+* [Introduction to the arguments in commandline](#2)
+* [Introduction to the parameters in `/setting/Parameters.txt`](#3)
+* [Example of running the program](#4)
+* [Process variations](#5)
+* [Aging model](#6)
 
 ## <h2 name="1"> Files and Directories </h1>
 * The executable is named `maui`
