@@ -123,7 +123,7 @@ The output of the PV analysis utility is a file, named with `Imp_dist.txt`, mean
 Then, you can use the gnuplot to plot the improment distributions of Monte-Carlo instances. The template of the gnuplot script (*.gp) can be refered to the dir `gnuplot/`
 
 ## <h2 name="6"> Aging model </h6>
-The aging model can be referred to the function `getAgingRate_givDC_givVth()`, which is located in the file [src/clocktree.cc](./src/clocktree.cc)
+The aging model can be referred to the function `getAgingRate_givDC_givVth()`, which is located in the file [src/clocktree.cc](./src/clocktree.cc) (line 3800)
 
 ```c++
 double ClockTree::getAgingRate_givDC_givVth( double DC, int Libindex, bool initial, bool caging )
@@ -152,7 +152,8 @@ double ClockTree::getAgingRate_givDC_givVth( double DC, int Libindex, bool initi
     ....
 }
 ```
-       
-        
+The above function is often called in the function `calClkLaten_givDcc_givVTA()`, which is also located in [src/clocktree.cc](./src/clocktree.cc) (line 2711).
+The function is used to calculate the clock latency of one clock path, with the given DCC type, DCC location, leader type and leader location.
+    
 
 
