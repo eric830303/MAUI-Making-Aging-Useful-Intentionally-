@@ -169,7 +169,7 @@ double ClockTree::getAgingRate_givDC_givVth( double DC, int Libindex, bool initi
             .....
 
         }else{
-			this->_HTV_fresh = (1 + 2*this->getLibList().at(Libindex)->_VTH_OFFSET ) ;
+        	  this->_HTV_fresh = (1 + 2*this->getLibList().at(Libindex)->_VTH_OFFSET ) ;
             if(      DC == this->DC_N ) this->_HTV_agr[2] = agr  ;
             else if( DC == this->DC_1 )	this->_HTV_agr[0] = agr  ;
             ...
@@ -177,13 +177,12 @@ double ClockTree::getAgingRate_givDC_givVth( double DC, int Libindex, bool initi
         return agr ;
     }else//initial
     {
-		
         if( Libindex == -1 )
         {
         	if( caging == false )	return 1 ;
         	else if( DC == this->DC_N )	return this->_nominal_agr[2] ;
-            ...
-          else if( DC == this->DC_3_age )return this->_nominal_agr[6] ;
+         	...
+         	else if( DC == this->DC_3_age )return this->_nominal_agr[6] ;
 			else
 			{
 				double conv_Vth = this->calConvergentVth( DC, this->getExp() ) ;//80% DCC
@@ -197,11 +196,11 @@ double ClockTree::getAgingRate_givDC_givVth( double DC, int Libindex, bool initi
 			
         }else
         {
-			if( caging == false )	return this->_HTV_fresh  ;
-          else if( DC == this->DC_N ) return this->_HTV_agr[2] ;
-          else if( DC == this->DC_2_age ) return this->_HTV_agr[6] ;
-			else
-			{
+        	if( caging == false )	return this->_HTV_fresh  ;
+        	else if( DC == this->DC_N ) return this->_HTV_agr[2] ;
+        	else if( DC == this->DC_2_age ) return this->_HTV_agr[6] ;
+        	else
+        	{
 				double conv_Vth = this->calConvergentVth( DC, this->getExp() ) ;//80% DCC
 				double Sv = 0;
 				double Vth_offset = this->getLibList().at(Libindex)->_VTH_OFFSET + this->getBaseVthOffset() ;
