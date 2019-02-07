@@ -129,8 +129,8 @@ The aging model can be referred to the function `getAgingRate_givDC_givVth()`, w
 double ClockTree::getAgingRate_givDC_givVth( double DC, int Libindex, bool initial, bool caging )
 {
 	if( DC == -1 || DC == 0 ) DC = this->DC_N ;
-    if( initial )
-    {
+	if( initial )
+	{
         //---- Sv ------------------------------------------------------
         double Sv = 0 ;
         if( this->_usingSeniorAging == true  )
@@ -164,14 +164,14 @@ double ClockTree::getAgingRate_givDC_givVth( double DC, int Libindex, bool initi
 		
 		
         if( Libindex == -1 ){
-            if(      DC == this->DC_N )     this->_nominal_agr[2] = agr ;
-            else if( DC == this->DC_1 )     this->_nominal_agr[0] = agr ;
+            if(      DC == this->DC_N )	this->_nominal_agr[2] = agr ;
+            else if( DC == this->DC_1 )	this->_nominal_agr[0] = agr ;
             .....
 
         }else{
 			this->_HTV_fresh = (1 + 2*this->getLibList().at(Libindex)->_VTH_OFFSET ) ;
-            if(      DC == this->DC_N ) 	this->_HTV_agr[2] = agr  ;
-            else if( DC == this->DC_1 )     this->_HTV_agr[0] = agr  ;
+            if(      DC == this->DC_N ) this->_HTV_agr[2] = agr  ;
+            else if( DC == this->DC_1 )	this->_HTV_agr[0] = agr  ;
             ...
         }
         return agr ;
@@ -180,10 +180,10 @@ double ClockTree::getAgingRate_givDC_givVth( double DC, int Libindex, bool initi
 		
         if( Libindex == -1 )
         {
-			if( caging == false )				return 1 ;
-            else if( DC == this->DC_N )  		return this->_nominal_agr[2] ;
+        	if( caging == false )	return 1 ;
+        	else if( DC == this->DC_N )	return this->_nominal_agr[2] ;
             ...
-            else if( DC == this->DC_3_age )     return this->_nominal_agr[6] ;
+          else if( DC == this->DC_3_age )return this->_nominal_agr[6] ;
 			else
 			{
 				double conv_Vth = this->calConvergentVth( DC, this->getExp() ) ;//80% DCC
@@ -197,9 +197,9 @@ double ClockTree::getAgingRate_givDC_givVth( double DC, int Libindex, bool initi
 			
         }else
         {
-			if( caging == false )				return this->_HTV_fresh  ;
-            else if( DC == this->DC_N ) 		return this->_HTV_agr[2] ;
-            else if( DC == this->DC_2_age )     return this->_HTV_agr[6] ;
+			if( caging == false )	return this->_HTV_fresh  ;
+          else if( DC == this->DC_N ) return this->_HTV_agr[2] ;
+          else if( DC == this->DC_2_age ) return this->_HTV_agr[6] ;
 			else
 			{
 				double conv_Vth = this->calConvergentVth( DC, this->getExp() ) ;//80% DCC
