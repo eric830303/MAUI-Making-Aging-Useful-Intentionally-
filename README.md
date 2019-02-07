@@ -6,18 +6,19 @@ The program is the implementation of our framework "Making aging useful, intenti
 2. Email: eric830303.cs05g@g2.nctu.edu.tw 
 
 ## Outline
-* Files and Directories
-* Introduction to the arguments in commandline
-* Introduction to the parameters in `/setting/Parameters.txt`
-* Example of running the program
-* Process variations
+* [Files and Directories] (#1)
+* [Introduction to the arguments in commandline] (#2)
+* [Introduction to the parameters in `/setting/Parameters.txt`] (#3)
+* [Example of running the program] (#4)
+* [Process variations] (#5)
+* [Aging model] (#6)
 
-## Files and Directories
+## <h2 name="1"> Files and Directories </h1>
 * The executable is named `maui`
 
 * The 2 executables of SAT solver are located in the dir `MINISATs/`. One can be run on OSX, the other can be run on Linux.
 
-* You can ignore the existence of the directory `gnuplot/`, which contains the PVs (process variations) results of the benchmarks, after applying our framework. We upload the directory here, because there exist script of gnuplot to generate the figures.
+* You can ignore the existence of the directory `gnuplot/`, which contains the PVs (process variations) results of the benchmarks, after applying our framework. We upload the directory here, because there exist some scripts of gnuplot to generate the figures.
 
 * Make sure that directories `obj/`, `src/`, `setting/` are located at the same path with `maui`. The directory `obj/` does not exist here/github. You must create it youself by linux command `mkdir obj`.
 
@@ -29,7 +30,8 @@ The program is the implementation of our framework "Making aging useful, intenti
 
 * The main output of our program is a directory, which contains the CNF clauses from iteration to iteration of binary search, and DCC deployment and high-Vth leader selection.
 
-## Introduction to the arguments in commandline
+
+## <h2 name="2"> Introduction to the arguments in commandline</h2>
 You can see all arguments by running `./maui -h` in the commandline. 
 
 Here, we only introduce commonly-used arguments.
@@ -43,13 +45,13 @@ Here, we only introduce commonly-used arguments.
 
 3. `-nonVTA`: VTA denotes "Vth assignment" for the clock buffers. Our framework incorporates the techniques of DCC deployment and Vth assignment at default, for aging tolerance. Thus, `-nonVTA` forces the framework not to do Vth assignment for clock buffers.
 
-4. `-nodcc`: The argument is similar to the above one `-nonVTA`. `-nondcc` forces the framework not to do DCC deployment.
+4. `-nodcc`: The argument is similar to the above one `-nonVTA`. `-nodcc` forces the framework not to do DCC deployment.
 
 5. `-dc_for`: Let the framework consider the situations that, the duty cycles, generated from DCCs, are impacted by the aging of DCCs. For example, the duty cycle generated from an 80% DCC will not be exactly 80%, if the aging impact of DCC is considered.
 6.  `-CG`: Add clock gating in the framework.
 
 
-## Introduction to the parameters in `/setting/Parameters.txt`
+## <h2 name="3"> Introduction to the parameters in `/setting/Parameters.txt` </h3>
 1. `FIN_CONVERGENT_YEAR`: Used in the aging model. It denotes "finally convergent year".
 2. `EXP`: Used in the aging model. It denotes the exponential term in the aging model.
 3. `BASE_VTH`: Used in the aging model. 
@@ -57,7 +59,7 @@ Here, we only introduce commonly-used arguments.
 5. `DC_1_F`, `DC_2_F` and `DC_3_F`: They denote the duty cycles generated from DCCs, if the aging impact of DCC is considered (i.e., argument`-dc_for`)
 6. `LIV_VTH_TECH_OFFSET`: The Vth offset between nominal Vth and high Vth.
 
-## Example of running the program
+## <h2 name="4"> Example of running the program </h4>
 If you wanna do the experiment with the following conditions:
 
 1. Benchmark: `s38417.rpt`
@@ -79,7 +81,8 @@ Further, if you wanna see the influence of clock gating (i.e., `-CG`) on the exp
 The results will be shown on the screen of your terminal. Moreover, the program will automatically generate a directory, named with `s38417_output`, which contains the files recording CNF clauses, resulting DCC deployments and leader selections.
 
 
-## Process Variations
+
+## <h2 name="5"> Process Variations </h5>
 In the section, we focuss on analyzing the impact of PVs (process variations) on the aging tolerance.
 
 Let's see an example.
@@ -104,7 +107,7 @@ Then, please copy the content in `s38417_output/DccVTA_0.901800.txt` to `setting
 Then, do PV analysis with the following cmd:
 `./maui -path=onlyff -PV s38417.rpt`
 
-Then, there are some interaction between the user and the program--some inputs! (i.e, the count of Monte-Carlo instances, fresh Tc..etc)
+Then, there are some interaction between the user and the program, by some interactive inputs! (i.e, the count of Monte-Carlo instances, fresh Tc..etc)
 
 <img src="./readme_fig/PV_type.jpg" width="400" height="200" />
 
@@ -113,13 +116,14 @@ The Tc\_fresh and Tc\_aged can be refered to the experimental results.
 <img src="./readme_fig/Tc.jpg" width="320" height="200" />
 
 
-The output of the PV analysis utility is a file, name with `Imp_dist.txt`, meaning "improvement distribution"
+The output of the PV analysis utility is a file, named with `Imp_dist.txt`, meaning "improvement distribution"
 
 <img src="./readme_fig/Imp_dist.jpg" width="400" height="240" />
 
 Then, you can use the gnuplot to plot the improment distributions of Monte-Carlo instances. The template of the gnuplot script (*.gp) can be refered to the dir `gnuplot/`
 
-
+## <h2 name="6"> Aging model </h6>
+The aging model can be refered...
 
 
 
