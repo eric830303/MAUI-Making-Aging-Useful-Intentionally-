@@ -123,7 +123,100 @@ The output of the PV analysis utility is a file, named with `Imp_dist.txt`, mean
 Then, you can use the gnuplot to plot the improment distributions of Monte-Carlo instances. The template of the gnuplot script (*.gp) can be refered to the dir `gnuplot/`
 
 ## <h2 name="6"> Aging model </h6>
-The aging model can be refered...
+The aging model can be referred to the function `getAgingRate_givDC_givVth()`, which is located in the file [src/clocktree.cc](./src/clocktree.cc)
 
+```c++
+double ClockTree::getAgingRate_givDC_givVth( double DC, int Libindex, bool initial, bool caging )
+{
+	if( DC == -1 || DC == 0 ) DC = this->DC_N ;
+    if( initial )
+    {
+        //---- Sv ------------------------------------------------------
+        double Sv = 0 ;
+        if( this->_usingSeniorAging == true  )
+            return (1 + (((-0.117083333333337) * (DC) * (DC)) + (0.248750000000004 * (DC)) + 0.0400333333333325));
+        
+        if( Libindex != -1 )
+        {
+            if( DC == this->DC_1 )
+                Sv = this->getLibList().at(Libindex)->_Sv[7] ;
+            ....
+        }
+        else
+        {
+            if( DC == this->DC_1 )
+                Sv = this->getLibList().at(0)->_Sv[0] ;
+            else if( DC == this->DC_2 )
+            .....
+         }
+        
+        //---- Vth offset -----------------------------------------------
+        double Vth_offset = 0 ;
+        if( Libindex != -1 )
+            Vth_offset = this->getLibList().at(Libindex)->_VTH_OFFSET + this->getBaseVthOffset() ;
+        else
+            Vth_offset = this->getBaseVthOffset() ;
+        //---- Aging rate -----------------------------------------------
+        double Vth_nbti = ( 1 - Sv*Vth_offset )*( 0.0039/2 )*( pow( DC*( 315360000 ), this->getExp() ) );
+        double agr = 0 ;
+        if( Libindex == -1 )    agr = (1 + Vth_nbti*2 + 0 ) ;
+        else                    agr = (1 + Vth_nbti*2 + 2*this->getLibList().at(Libindex)->_VTH_OFFSET ) ;
+		
+		
+        if( Libindex == -1 ){
+            if(      DC == this->DC_N )     this->_nominal_agr[2] = agr ;
+            else if( DC == this->DC_1 )     this->_nominal_agr[0] = agr ;
+            .....
+
+        }else{
+			this->_HTV_fresh = (1 + 2*this->getLibList().at(Libindex)->_VTH_OFFSET ) ;
+            if(      DC == this->DC_N ) 	this->_HTV_agr[2] = agr  ;
+            else if( DC == this->DC_1 )     this->_HTV_agr[0] = agr  ;
+            ...
+        }
+        return agr ;
+    }else//initial
+    {
+		
+        if( Libindex == -1 )
+        {
+			if( caging == false )				return 1 ;
+            else if( DC == this->DC_N )  		return this->_nominal_agr[2] ;
+            ...
+            else if( DC == this->DC_3_age )     return this->_nominal_agr[6] ;
+			else
+			{
+				double conv_Vth = this->calConvergentVth( DC, this->getExp() ) ;//80% DCC
+				double Sv = 0;
+				double Vth_offset = this->getBaseVthOffset() ;
+				Sv = this->calSv( DC , this->getBaseVthOffset(), conv_Vth ) ;
+				double Vth_nbti = ( 1 - Sv*Vth_offset )*( 0.0039/2 )*( pow( DC*( 315360000 ), this->getExp() ) );
+				double agr = (1 + Vth_nbti*2 + 0 ) ;
+				return agr;
+			}
+			
+        }else
+        {
+			if( caging == false )				return this->_HTV_fresh  ;
+            else if( DC == this->DC_N ) 		return this->_HTV_agr[2] ;
+            else if( DC == this->DC_2_age )     return this->_HTV_agr[6] ;
+			else
+			{
+				double conv_Vth = this->calConvergentVth( DC, this->getExp() ) ;//80% DCC
+				double Sv = 0;
+				double Vth_offset = this->getLibList().at(Libindex)->_VTH_OFFSET + this->getBaseVthOffset() ;
+				Sv = this->calSv( DC , this->getLibList().at(Libindex)->_VTH_OFFSET + this->getBaseVthOffset(), conv_Vth ) ;
+				double Vth_nbti = ( 1 - Sv*Vth_offset )*( 0.0039/2 )*( pow( DC*( 315360000 ), this->getExp() ) );
+				double agr = (1 + Vth_nbti*2 + 2*this->getLibList().at(Libindex)->_VTH_OFFSET )  ;
+				
+				return agr;
+			}
+        }
+    }
+    return -1 ;
+}
+```
+       
+        
 
 
